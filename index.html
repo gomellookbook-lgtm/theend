@@ -311,8 +311,217 @@
   }
 
   /* ===================================
-     ABOUT СЕКЦИЯ
+     PROJECTS / СЕТКА ПЛИТОК
      =================================== */
+  .projects {
+    position: relative;
+    padding: 160px 8vw;
+    background: var(--black);
+  }
+
+  .projects-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 80px;
+    flex-wrap: wrap;
+    gap: 24px;
+  }
+
+  .projects-title {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(40px, 8vw, 120px);
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    color: var(--white);
+  }
+
+  .projects-title .red {
+    color: var(--red);
+  }
+
+  .projects-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    max-width: 280px;
+    line-height: 1.6;
+  }
+
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  /* Первая плитка крупнее (на 2 колонки) */
+  .project-card:first-child {
+    grid-column: span 2;
+  }
+
+  .project-card {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: #111;
+    text-decoration: none;
+    color: inherit;
+    cursor: none;
+  }
+
+  .project-card:first-child {
+    aspect-ratio: 8 / 3;
+  }
+
+  /* Плейсхолдер-обложка */
+  .project-cover {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                filter 0.5s ease;
+  }
+
+  /* Каждый проект — свой градиент */
+  .project-card[data-project="duo"]  .project-cover {
+    background: radial-gradient(circle at 30% 40%, #2a2a2a, #0a0a0a 70%);
+  }
+  .project-card[data-project="red"]  .project-cover {
+    background: radial-gradient(circle at 70% 50%, #3a1614, #0a0a0a 70%);
+  }
+  .project-card[data-project="lime"] .project-cover {
+    background: radial-gradient(circle at 40% 60%, #1a2818, #0a0a0a 70%);
+  }
+  .project-card[data-project="vgrd"] .project-cover {
+    background: radial-gradient(circle at 60% 30%, #1f1f2e, #0a0a0a 70%);
+  }
+  .project-card[data-project="echo"] .project-cover {
+    background: radial-gradient(circle at 50% 50%, #2a1f1a, #0a0a0a 70%);
+  }
+
+  .project-card:hover .project-cover {
+    transform: scale(1.05);
+    filter: brightness(0.5);
+  }
+
+  /* Декоративный код-символ на каждой плитке */
+  .project-deco {
+    position: absolute;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: clamp(40px, 10vw, 200px);
+    color: rgba(255,255,255,0.04);
+    letter-spacing: -0.05em;
+    line-height: 1;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  .project-card:nth-child(1) .project-deco { top: 8%; left: 6%; }
+  .project-card:nth-child(2) .project-deco { bottom: 6%; right: 6%; }
+  .project-card:nth-child(3) .project-deco { top: 8%; right: 8%; }
+  .project-card:nth-child(4) .project-deco { bottom: 6%; left: 6%; }
+  .project-card:nth-child(5) .project-deco { top: 8%; left: 8%; }
+
+  /* Главная информация плитки */
+  .project-info {
+    position: absolute;
+    z-index: 2;
+    bottom: 32px;
+    left: 32px;
+    right: 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px;
+  }
+
+  .project-name {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(36px, 5vw, 72px);
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    line-height: 0.9;
+    color: var(--white);
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                color 0.4s ease;
+  }
+
+  .project-card:hover .project-name {
+    color: var(--red);
+    transform: translateX(-8px);
+  }
+
+  /* Бейдж сверху-слева — id проекта */
+  .project-badge {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    z-index: 2;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .project-badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--red);
+    border-radius: 50%;
+  }
+
+  /* CTA "ENTER →" появляется при наведении */
+  .project-cta {
+    position: absolute;
+    z-index: 2;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) translateY(20px);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--white);
+    opacity: 0;
+    transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+    white-space: nowrap;
+    border: 1px solid var(--white);
+    padding: 14px 28px;
+  }
+
+  .project-card:hover .project-cta {
+    opacity: 1;
+    transform: translate(-50%, -50%) translateY(0);
+  }
+
+  /* Адаптив проектов */
+  @media (max-width: 900px) {
+    .projects-grid {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto;
+    }
+    .project-card,
+    .project-card:first-child {
+      grid-column: span 1;
+      aspect-ratio: 4 / 3;
+    }
+    .project-name { font-size: 48px; }
+  }
   .about {
     position: relative;
     padding: 160px 8vw;
@@ -692,8 +901,78 @@
 
 </section>
 
+<!-- ============ PROJECTS / 5 ПЛИТОК ============ -->
+<section class="projects" id="works">
+
+  <div class="projects-header">
+    <h2 class="projects-title reveal">
+      ПЯТЬ <span class="red">ЛИНЕЕК.</span><br>
+      ПЯТЬ ИСТОРИЙ.
+    </h2>
+    <div class="projects-sub reveal">
+      [ PROJECTS / 02 ]<br><br>
+      Под зонтиком THE END работают пять самостоятельных линеек.
+      У каждой — свой характер.
+    </div>
+  </div>
+
+  <div class="projects-grid">
+
+    <a class="project-card reveal" data-project="duo" href="https://theend.school/ember">
+      <div class="project-cover"></div>
+      <div class="project-deco">01</div>
+      <div class="project-badge">DUO / 01</div>
+      <div class="project-info">
+        <div class="project-name">DUO</div>
+      </div>
+      <div class="project-cta">ENTER →</div>
+    </a>
+
+    <a class="project-card reveal" data-project="red" href="https://theend.school/red">
+      <div class="project-cover"></div>
+      <div class="project-deco">02</div>
+      <div class="project-badge">RED / 02</div>
+      <div class="project-info">
+        <div class="project-name">RED</div>
+      </div>
+      <div class="project-cta">ENTER →</div>
+    </a>
+
+    <a class="project-card reveal" data-project="lime" href="https://theend.school/lime">
+      <div class="project-cover"></div>
+      <div class="project-deco">03</div>
+      <div class="project-badge">LIME / 03</div>
+      <div class="project-info">
+        <div class="project-name">LIME</div>
+      </div>
+      <div class="project-cta">ENTER →</div>
+    </a>
+
+    <a class="project-card reveal" data-project="vgrd" href="https://theend.school/indevelopment">
+      <div class="project-cover"></div>
+      <div class="project-deco">04</div>
+      <div class="project-badge">VGRD / 04</div>
+      <div class="project-info">
+        <div class="project-name">VGRD</div>
+      </div>
+      <div class="project-cta">ENTER →</div>
+    </a>
+
+    <a class="project-card reveal" data-project="echo" href="https://theend.school/indevelopment">
+      <div class="project-cover"></div>
+      <div class="project-deco">05</div>
+      <div class="project-badge">ECHO / 05</div>
+      <div class="project-info">
+        <div class="project-name">ECHO</div>
+      </div>
+      <div class="project-cta">ENTER →</div>
+    </a>
+
+  </div>
+
+</section>
+
 <!-- Заглушки для оставшихся секций -->
-<section class="placeholder-section" id="works">— проекты DUO / RED / LIME / VGRD / ECHO (скоро) —</section>
 <section class="placeholder-section" id="portfolio">— портфолио (скоро) —</section>
 <section class="placeholder-section" id="contact">— контакты (скоро) —</section>
 
