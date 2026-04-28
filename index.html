@@ -120,20 +120,22 @@
     inset: 0;
     z-index: 1;
     overflow: hidden;
-    pointer-events: none; /* чтобы клики проходили сквозь видео на курсор */
+    pointer-events: none;
+    background: var(--black);
   }
 
+  /* iframe c видео — растягиваем с запасом, чтобы гарантированно покрыть экран
+     и не было дёрганий по краям */
   .hero-video-wrap iframe {
-    /* Растягиваем видео так, чтобы оно покрыло весь экран без чёрных полос */
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 100vw;
-    height: 56.25vw;            /* 16:9 от ширины */
-    min-height: 100vh;
-    min-width: 177.77vh;        /* 16:9 от высоты */
+    /* Берём с запасом: 110vw × 110vh — чтобы скрыть UI Vimeo по краям */
+    width: max(110vw, calc(110vh * 16 / 9));
+    height: max(110vh, calc(110vw * 9 / 16));
     transform: translate(-50%, -50%);
     border: 0;
+    pointer-events: none;
   }
 
   .hero-overlay {
@@ -305,6 +307,219 @@
     text-transform: uppercase;
   }
 
+  /* ===================================
+     ABOUT СЕКЦИЯ
+     =================================== */
+  .about {
+    position: relative;
+    padding: 160px 8vw;
+    background: var(--black);
+    overflow: hidden;
+  }
+
+  .about-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 48px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .about-label::before {
+    content: '';
+    width: 32px;
+    height: 1px;
+    background: var(--red);
+  }
+
+  .about-title {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(48px, 11vw, 180px);
+    line-height: 0.85;
+    letter-spacing: -0.05em;
+    text-transform: uppercase;
+    color: var(--white);
+    margin-bottom: 80px;
+  }
+
+  .about-title .red {
+    color: var(--red);
+  }
+
+  .about-manifest {
+    max-width: 800px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: clamp(18px, 2.2vw, 28px);
+    line-height: 1.4;
+    color: rgba(255,255,255,0.85);
+    margin-bottom: 80px;
+  }
+
+  .about-manifest p {
+    margin-bottom: 24px;
+  }
+
+  .about-manifest strong {
+    font-weight: 900;
+    color: var(--white);
+  }
+
+  /* Блок с цифрами */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+    margin: 120px 0;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding: 60px 0;
+  }
+
+  .stat {
+    text-align: left;
+  }
+
+  .stat-number {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(60px, 9vw, 140px);
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+    color: var(--white);
+    display: flex;
+    align-items: baseline;
+  }
+
+  .stat-number .suffix {
+    color: var(--red);
+    font-size: 0.6em;
+    margin-left: 4px;
+  }
+
+  .stat-label {
+    margin-top: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.5;
+  }
+
+  /* Бегущая строка */
+  .marquee {
+    overflow: hidden;
+    white-space: nowrap;
+    margin: 80px -8vw;
+    padding: 24px 0;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .marquee-track {
+    display: inline-block;
+    animation: marquee-scroll 30s linear infinite;
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(24px, 4vw, 56px);
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    color: var(--white);
+  }
+
+  .marquee-track .dot {
+    color: var(--red);
+    margin: 0 32px;
+  }
+
+  @keyframes marquee-scroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* Цитата-вставка "Это болезнь" */
+  .quote-block {
+    text-align: center;
+    margin: 160px auto;
+    max-width: 1000px;
+  }
+
+  .quote-block .q {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(40px, 8vw, 120px);
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+    text-transform: uppercase;
+    color: var(--white);
+  }
+
+  .quote-block .q-red {
+    color: var(--red);
+    display: block;
+  }
+
+  /* Бегущая галерея фото */
+  .photo-marquee {
+    margin: 120px -8vw;
+    overflow: hidden;
+  }
+
+  .photo-track {
+    display: flex;
+    gap: 24px;
+    animation: photo-scroll 60s linear infinite;
+    width: max-content;
+  }
+
+  .photo-track:hover {
+    animation-play-state: paused;
+  }
+
+  .photo-track img {
+    height: 380px;
+    width: auto;
+    object-fit: cover;
+    filter: grayscale(20%) brightness(0.9);
+    transition: filter 0.4s ease, transform 0.4s ease;
+  }
+
+  .photo-track img:hover {
+    filter: grayscale(0%) brightness(1);
+    transform: scale(1.02);
+  }
+
+  @keyframes photo-scroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* Появление при скролле */
+  .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @media (max-width: 768px) {
+    .about { padding: 100px 6vw; }
+    .stats { grid-template-columns: 1fr; gap: 60px; }
+    .photo-track img { height: 240px; }
+    .marquee, .photo-marquee { margin-left: -6vw; margin-right: -6vw; }
+  }
+
   @media (max-width: 768px) {
     .corner { font-size: 9px; letter-spacing: 1px; }
     .corner-tl, .corner-tr { top: 16px; }
@@ -377,8 +592,121 @@
   </div>
 </section>
 
-<!-- Заглушки -->
-<section class="placeholder-section">— about (скоро) —</section>
+<!-- ============ ABOUT ============ -->
+<section class="about" id="about">
+
+  <div class="about-label reveal">[ ABOUT / 01 ]</div>
+
+  <h2 class="about-title reveal" id="about-title">
+    КОГДА ХОЧЕТСЯ<br>
+    <span class="red">БОЛЬШЕГО.</span>
+  </h2>
+
+  <div class="about-manifest reveal">
+    <p>
+      Мы делаем альбомы, которые <strong>не хочется убирать на полку.</strong>
+      Которые листаешь сам, показываешь гостям, достаёшь через десять лет
+      и думаешь — вот это да.
+    </p>
+    <p>
+      Нас называют по-разному. Одни говорят — лучшая студия в Москве.
+      Другие — слишком дорого и непонятно зачем так заморачиваться.
+      Третьи молча копируют наши решения — и это, наверное,
+      <strong>самый честный комплимент.</strong>
+    </p>
+    <p>
+      Обе реакции нас устраивают. Мы давно перестали делать альбомы для всех.
+    </p>
+  </div>
+
+  <!-- Бегущая строка -->
+  <div class="marquee">
+    <div class="marquee-track">
+      THE END <span class="dot">●</span>
+      MADE BY LYKBOOK <span class="dot">●</span>
+      ВЫПУСКНЫЕ АЛЬБОМЫ <span class="dot">●</span>
+      МОСКВА <span class="dot">●</span>
+      ПРЕМИАЛЬНЫЙ ДИЗАЙН <span class="dot">●</span>
+      THE END <span class="dot">●</span>
+      MADE BY LYKBOOK <span class="dot">●</span>
+      ВЫПУСКНЫЕ АЛЬБОМЫ <span class="dot">●</span>
+      МОСКВА <span class="dot">●</span>
+      ПРЕМИАЛЬНЫЙ ДИЗАЙН <span class="dot">●</span>
+    </div>
+  </div>
+
+  <!-- Цифры (счётчики) -->
+  <div class="stats reveal">
+    <div class="stat">
+      <div class="stat-number" data-target="604">0</div>
+      <div class="stat-label">классов в год<br>с нами работают</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">
+        <span data-target="50">0</span><span class="suffix">+</span>
+      </div>
+      <div class="stat-label">проектов<br>под линейкой THE END</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number" data-target="15">0</div>
+      <div class="stat-label">лет<br>в индустрии</div>
+    </div>
+  </div>
+
+  <!-- Цитата -->
+  <div class="quote-block reveal">
+    <div class="q">
+      Каждый проект начинается с нуля.
+      Иногда мы переделываем разворот три раза —
+      не потому что клиент просит, а потому что
+      <span class="q-red">сами не можем остановиться.</span>
+    </div>
+  </div>
+
+  <!-- Бегущая галерея фото -->
+  <div class="photo-marquee">
+    <div class="photo-track">
+      <img src="https://i.ibb.co/6cFzHCdZ/1-4.jpg" alt="">
+      <img src="https://i.ibb.co/3mWH90nD/1-5.jpg" alt="">
+      <img src="https://i.ibb.co/fzBgv3Bh/1-12.jpg" alt="">
+      <img src="https://i.ibb.co/XfPBVJ0Z/1-25.jpg" alt="">
+      <img src="https://i.ibb.co/BDNNxGZ/1-29.jpg" alt="">
+      <img src="https://i.ibb.co/bg9FM3BB/1-42.jpg" alt="">
+      <img src="https://i.ibb.co/YTXTW2t1/1-37.jpg" alt="">
+      <img src="https://i.ibb.co/pjCmNv86/1-35.jpg" alt="">
+      <img src="https://i.ibb.co/TBLpBHsf/1-32.jpg" alt="">
+      <!-- Дубль для бесшовной прокрутки -->
+      <img src="https://i.ibb.co/6cFzHCdZ/1-4.jpg" alt="">
+      <img src="https://i.ibb.co/3mWH90nD/1-5.jpg" alt="">
+      <img src="https://i.ibb.co/fzBgv3Bh/1-12.jpg" alt="">
+      <img src="https://i.ibb.co/XfPBVJ0Z/1-25.jpg" alt="">
+      <img src="https://i.ibb.co/BDNNxGZ/1-29.jpg" alt="">
+      <img src="https://i.ibb.co/bg9FM3BB/1-42.jpg" alt="">
+      <img src="https://i.ibb.co/YTXTW2t1/1-37.jpg" alt="">
+      <img src="https://i.ibb.co/pjCmNv86/1-35.jpg" alt="">
+      <img src="https://i.ibb.co/TBLpBHsf/1-32.jpg" alt="">
+    </div>
+  </div>
+
+  <!-- Финальная цитата -->
+  <div class="quote-block reveal">
+    <div class="q">
+      Это болезнь.<br>
+      <span class="q-red">Но красивая.</span>
+    </div>
+  </div>
+
+  <div class="about-manifest reveal" style="margin-top: 80px;">
+    <p>
+      В команде нет случайных людей. Каждый прошёл через проекты, после которых
+      понимаешь — либо ты горишь этим, либо нет. <strong>Середины не бывает.</strong>
+    </p>
+  </div>
+
+</section>
+
+<!-- Заглушки для оставшихся секций -->
+<section class="placeholder-section">— проекты DUO / RED / LIME / VGRD / ECHO (скоро) —</section>
 <section class="placeholder-section">— портфолио (скоро) —</section>
 <section class="placeholder-section">— контакты (скоро) —</section>
 
@@ -561,6 +889,138 @@
 
   window.addEventListener('scroll', updateScroll, { passive: true });
   updateScroll();
+})();
+
+/* ============ 4. ПОЯВЛЕНИЕ ЭЛЕМЕНТОВ ПРИ СКРОЛЛЕ ============ */
+(function() {
+  const reveals = document.querySelectorAll('.reveal');
+  if (!reveals.length || !('IntersectionObserver' in window)) {
+    // Если IntersectionObserver не поддерживается — просто показываем всё
+    reveals.forEach(el => el.classList.add('visible'));
+    return;
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, {
+    threshold: 0.15,
+    rootMargin: '0px 0px -80px 0px'
+  });
+
+  reveals.forEach(el => observer.observe(el));
+})();
+
+/* ============ 5. СЧЁТЧИКИ ЦИФР ============ */
+(function() {
+  const numbers = document.querySelectorAll('[data-target]');
+  if (!numbers.length) return;
+
+  function animateCount(el) {
+    const target = parseInt(el.dataset.target, 10);
+    const duration = 2000;
+    const startTime = performance.now();
+
+    function tick(now) {
+      const elapsed = now - startTime;
+      const p = Math.min(elapsed / duration, 1);
+      // Easing: ease-out cubic
+      const eased = 1 - Math.pow(1 - p, 3);
+      const current = Math.round(target * eased);
+      el.textContent = current;
+
+      if (p < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        el.textContent = target;
+      }
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        animateCount(entry.target);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.5 });
+
+  numbers.forEach(el => observer.observe(el));
+})();
+
+/* ============ 6. ГЛИТЧ НА ЗАГОЛОВКЕ ABOUT ============ */
+(function() {
+  const titleEl = document.getElementById('about-title');
+  if (!titleEl) return;
+
+  // Сохраняем оригинальный HTML (с <br> и <span>)
+  const originalHTML = titleEl.innerHTML;
+  const originalText = titleEl.textContent.trim();
+
+  const chars = '的一是不了人我在有他这为之大来以个中上们到说国和地也子时道出而要于就下得可你年生自会那后能对着事其里所去行过家十用发天如然作方成者多';
+  const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const symbols = '!@#$%&*+=?<>/\\|';
+  const allChars = chars + latin + symbols;
+
+  let played = false;
+
+  function glitchTitle() {
+    if (played) return;
+    played = true;
+
+    const duration = 1000;
+    const startT = performance.now();
+    let lastT = 0;
+
+    function tick(now) {
+      const elapsed = now - startT;
+      const p = Math.min(elapsed / duration, 1);
+
+      if (now - lastT >= 50) {
+        lastT = now;
+        // Заменяем буквы случайными, кроме пробелов и переносов
+        let result = '';
+        for (let i = 0; i < originalText.length; i++) {
+          const ch = originalText[i];
+          if (ch === ' ' || ch === '\n') {
+            result += ch;
+          } else if (Math.random() < p) {
+            result += ch;
+          } else {
+            result += allChars[Math.floor(Math.random() * allChars.length)];
+          }
+        }
+        titleEl.textContent = result;
+      }
+
+      if (p < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        // Восстанавливаем оригинальный HTML с разметкой (br, red span)
+        titleEl.innerHTML = originalHTML;
+      }
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        glitchTitle();
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.5 });
+
+  observer.observe(titleEl);
 })();
 </script>
 
