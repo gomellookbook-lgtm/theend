@@ -215,10 +215,10 @@
     padding: 100px 24px 80px;
   }
 
-  /* НАВ-СТРОКА ПРОЕКТОВ (СВЕРХУ) */
+  /* НАВ-СТРОКИ С КНОПКАМИ */
   .nav-projects, .nav-sections {
     display: flex;
-    gap: clamp(24px, 4vw, 64px);
+    gap: clamp(8px, 1vw, 14px);
     justify-content: center;
     flex-wrap: wrap;
     opacity: 0;
@@ -237,34 +237,67 @@
     transform: translateY(0);
   }
 
+  /* Кнопка-капсула */
   .nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    letter-spacing: 3px;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 2.5px;
     text-transform: uppercase;
     color: rgba(255,255,255,0.85);
     text-decoration: none;
-    background: none;
-    border: none;
-    padding: 0;
+    background: rgba(10,10,10,0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.25);
+    padding: 10px 16px;
+    cursor: pointer;
     position: relative;
-    transition: color 0.3s ease, transform 0.3s ease;
+    transition: background 0.3s ease,
+                border-color 0.3s ease,
+                color 0.3s ease,
+                transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
+  /* Стрелка как отдельный элемент */
+  .nav-link .arrow {
+    display: inline-block;
+    font-size: 11px;
+    opacity: 0.6;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  /* Hover-эффект */
   .nav-link:hover {
-    color: var(--red);
-    transform: translateY(-2px);
+    background: var(--red);
+    border-color: var(--red);
+    color: var(--white);
+    transform: translateY(-3px);
   }
 
+  .nav-link:hover .arrow {
+    opacity: 1;
+    transform: translate(2px, -2px);
+  }
+
+  /* Для разделов — стрелка вниз, движение чуть другое */
+  .nav-sections .nav-link:hover .arrow {
+    transform: translateY(2px);
+  }
+
+  /* Маленькая цифра-номер сверху */
   .nav-link::before {
     content: attr(data-num);
     position: absolute;
-    top: -14px;
+    top: -16px;
     left: 50%;
     transform: translateX(-50%);
     font-size: 8px;
-    color: rgba(255,255,255,0.3);
-    letter-spacing: 1px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 1.5px;
   }
 
   /* Центральный заголовок */
@@ -1298,8 +1331,8 @@
     .corner-tr, .corner-br { right: 16px; }
     .corner-bl, .corner-br { bottom: 16px; }
 
-    .nav-link { font-size: 10px; letter-spacing: 2px; }
-    .nav-projects, .nav-sections { gap: 16px; }
+    .nav-link { font-size: 10px; letter-spacing: 1.5px; padding: 8px 12px; }
+    .nav-projects, .nav-sections { gap: 6px; }
 
     .hero-content { padding: 80px 16px 60px; }
     .hero-subtitle { font-size: 10px; letter-spacing: 2px; }
@@ -1394,11 +1427,11 @@
 
     <!-- ВЕРХ: ПРОЕКТЫ (внешние ссылки) -->
     <nav class="nav-projects">
-      <a class="nav-link" data-num="01" href="https://theend.school/lime">LIME</a>
-      <a class="nav-link" data-num="02" href="https://theend.school/indevelopment">ECHO</a>
-      <a class="nav-link" data-num="03" href="https://theend.school/red">RED</a>
-      <a class="nav-link" data-num="04" href="https://theend.school/ember">DUO</a>
-      <a class="nav-link" data-num="05" href="https://theend.school/indevelopment">VGRD</a>
+      <a class="nav-link" data-num="01" href="https://theend.school/lime">LIME <span class="arrow">↗</span></a>
+      <a class="nav-link" data-num="02" href="https://theend.school/indevelopment">ECHO <span class="arrow">↗</span></a>
+      <a class="nav-link" data-num="03" href="https://theend.school/red">RED <span class="arrow">↗</span></a>
+      <a class="nav-link" data-num="04" href="https://theend.school/ember">DUO <span class="arrow">↗</span></a>
+      <a class="nav-link" data-num="05" href="https://theend.school/indevelopment">VGRD <span class="arrow">↗</span></a>
     </nav>
 
     <!-- ЦЕНТР: ЗАГОЛОВОК -->
@@ -1409,11 +1442,11 @@
 
     <!-- НИЗ: РАЗДЕЛЫ (открывают оверлеи) -->
     <nav class="nav-sections">
-      <button class="nav-link" data-num="01" data-overlay="works">WORKS</button>
-      <button class="nav-link" data-num="02" data-overlay="reels">REELS</button>
-      <button class="nav-link" data-num="03" data-overlay="about">ABOUT</button>
-      <button class="nav-link" data-num="04" data-overlay="photo">PHOTO</button>
-      <button class="nav-link" data-num="05" data-overlay="contact">CONTACT</button>
+      <button class="nav-link" data-num="01" data-overlay="works">WORKS <span class="arrow">↓</span></button>
+      <button class="nav-link" data-num="02" data-overlay="reels">REELS <span class="arrow">↓</span></button>
+      <button class="nav-link" data-num="03" data-overlay="about">ABOUT <span class="arrow">↓</span></button>
+      <button class="nav-link" data-num="04" data-overlay="photo">PHOTO <span class="arrow">↓</span></button>
+      <button class="nav-link" data-num="05" data-overlay="contact">CONTACT <span class="arrow">↓</span></button>
     </nav>
 
   </div>
