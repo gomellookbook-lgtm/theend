@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -181,13 +182,13 @@
         rgba(10,10,10,0.55) 0%,
         rgba(10,10,10,0.35) 40%,
         rgba(10,10,10,0.75) 100%);
-    z-index: 2;
+    z-index: 3;
   }
 
   .hero-grain {
     position: absolute;
     inset: 0;
-    z-index: 3;
+    z-index: 5;
     opacity: 0.08;
     pointer-events: none;
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
@@ -206,7 +207,7 @@
   .hero-content {
     position: absolute;
     inset: 0;
-    z-index: 4;
+    z-index: 6;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -315,15 +316,29 @@
     width: 100%;
   }
 
+  /* WebGL canvas с шейдером поверх видео */
+  .hero-shader {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Canvas с частицами THE END */
+  .hero-particles {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Старый CSS-заголовок прячем — заменён частицами */
   .hero-title {
-    font-family: 'Inter', sans-serif;
-    font-weight: 900;
-    font-size: clamp(60px, 14vw, 200px);
-    line-height: 0.85;
-    letter-spacing: -0.05em;
-    color: var(--white);
-    text-transform: uppercase;
-    user-select: none;
+    display: none;
   }
 
   .hero-subtitle {
@@ -1500,6 +1515,13 @@
   </div>
 
   <div class="hero-overlay"></div>
+
+  <!-- WebGL canvas для шейдера искажения видео -->
+  <canvas id="shader-canvas" class="hero-shader"></canvas>
+
+  <!-- 3D canvas для частиц THE END -->
+  <canvas id="particles-canvas" class="hero-particles"></canvas>
+
   <div class="hero-grain"></div>
 
   <!-- ВЕСЬ КОНТЕНТ ГЛАВНОЙ -->
@@ -2243,7 +2265,400 @@
   }
 })();
 
-/* ============ 4. FULLSCREEN ПЛЕЕР ДЛЯ РИЛСОВ ============ */
+/* ============ 4. THREE.JS — ЧАСТИЦЫ "THE END" ============ */
+(function() {
+  if (typeof THREE === 'undefined') return;
+
+  const canvas = document.getElementById('particles-canvas');
+  if (!canvas) return;
+
+  // === Сцена, камера, рендерер ===
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(
+    50, window.innerWidth / window.innerHeight, 0.1, 1000
+  );
+  camera.position.z = 30;
+
+  const renderer = new THREE.WebGLRenderer({
+    canvas: canvas,
+    alpha: true,
+    antialias: true
+  });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  // === Получаем контуры букв "THE END" из Canvas 2D ===
+  function getTextPoints(text, fontSize) {
+    const off = document.createElement('canvas');
+    const ctx = off.getContext('2d');
+    off.width = 1200;
+    off.height = 300;
+
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, off.width, off.height);
+    ctx.fillStyle = '#fff';
+    ctx.font = `900 ${fontSize}px Inter, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, off.width / 2, off.height / 2);
+
+    const data = ctx.getImageData(0, 0, off.width, off.height).data;
+    const points = [];
+    // шаг между точками — определяет плотность
+    const step = 3;
+    for (let y = 0; y < off.height; y += step) {
+      for (let x = 0; x < off.width; x += step) {
+        const idx = (y * off.width + x) * 4;
+        // Если пиксель белый — добавляем точку
+        if (data[idx] > 128) {
+          // Перевод в координаты сцены (по центру)
+          const px = (x - off.width / 2) * 0.04;
+          const py = -(y - off.height / 2) * 0.04;
+          points.push({ x: px, y: py });
+        }
+      }
+    }
+    return points;
+  }
+
+  // === Создаём частицы ===
+  const isMobile = window.innerWidth < 768;
+  const fontSize = isMobile ? 180 : 240;
+  const points = getTextPoints('THE END', fontSize);
+
+  const count = points.length;
+  const positions = new Float32Array(count * 3);
+  const targets = new Float32Array(count * 3);
+  const sizes = new Float32Array(count);
+  const colors = new Float32Array(count * 3);
+  const velocities = new Float32Array(count * 3);
+
+  for (let i = 0; i < count; i++) {
+    // Целевая позиция — точка из текста
+    targets[i * 3 + 0] = points[i].x;
+    targets[i * 3 + 1] = points[i].y;
+    targets[i * 3 + 2] = (Math.random() - 0.5) * 0.5;
+
+    // Стартовая позиция — случайная вокруг
+    positions[i * 3 + 0] = (Math.random() - 0.5) * 60;
+    positions[i * 3 + 1] = (Math.random() - 0.5) * 40;
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 30;
+
+    // Разные размеры (текстура пыли)
+    sizes[i] = Math.random() * 1.5 + 0.3;
+
+    // Все белые, но с разной яркостью
+    const brightness = 0.7 + Math.random() * 0.3;
+    colors[i * 3 + 0] = brightness;
+    colors[i * 3 + 1] = brightness;
+    colors[i * 3 + 2] = brightness;
+
+    velocities[i * 3 + 0] = 0;
+    velocities[i * 3 + 1] = 0;
+    velocities[i * 3 + 2] = 0;
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+  // Текстура — мягкий круг с прозрачностью по краям
+  function makeCircleTexture() {
+    const c = document.createElement('canvas');
+    c.width = c.height = 64;
+    const cx = c.getContext('2d');
+    const grad = cx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    grad.addColorStop(0,   'rgba(255,255,255,1)');
+    grad.addColorStop(0.4, 'rgba(255,255,255,0.6)');
+    grad.addColorStop(1,   'rgba(255,255,255,0)');
+    cx.fillStyle = grad;
+    cx.fillRect(0, 0, 64, 64);
+    return new THREE.CanvasTexture(c);
+  }
+
+  const material = new THREE.PointsMaterial({
+    size: 0.18,
+    map: makeCircleTexture(),
+    vertexColors: true,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    sizeAttenuation: true
+  });
+
+  // Используем sizes attribute через onBeforeCompile (упрощённо: просто разные базовые размеры)
+  // Чтобы было заметно — сделаем 2-3 группы частиц с разным размером
+  const points3D = new THREE.Points(geometry, material);
+  scene.add(points3D);
+
+  // Вторая группа — крупные частицы
+  const bigGeo = new THREE.BufferGeometry();
+  const bigCount = Math.floor(count * 0.15);
+  const bigPos = new Float32Array(bigCount * 3);
+  const bigTargets = new Float32Array(bigCount * 3);
+  for (let i = 0; i < bigCount; i++) {
+    const idx = Math.floor(Math.random() * count);
+    bigTargets[i * 3 + 0] = targets[idx * 3 + 0];
+    bigTargets[i * 3 + 1] = targets[idx * 3 + 1];
+    bigTargets[i * 3 + 2] = targets[idx * 3 + 2];
+    bigPos[i * 3 + 0] = (Math.random() - 0.5) * 60;
+    bigPos[i * 3 + 1] = (Math.random() - 0.5) * 40;
+    bigPos[i * 3 + 2] = (Math.random() - 0.5) * 30;
+  }
+  bigGeo.setAttribute('position', new THREE.BufferAttribute(bigPos, 3));
+  const bigMat = new THREE.PointsMaterial({
+    size: 0.4,
+    map: makeCircleTexture(),
+    color: 0xffffff,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    sizeAttenuation: true,
+    opacity: 0.7
+  });
+  const bigPoints = new THREE.Points(bigGeo, bigMat);
+  scene.add(bigPoints);
+
+  // === Курсор для интерактивности ===
+  const mouse = new THREE.Vector3(1000, 1000, 0);
+  let mouseVisible = false;
+
+  window.addEventListener('mousemove', (e) => {
+    // Преобразуем координаты экрана в координаты сцены
+    const x = (e.clientX / window.innerWidth) * 2 - 1;
+    const y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+    // raycaster style: проектируем на плоскость z=0
+    const vector = new THREE.Vector3(x, y, 0.5);
+    vector.unproject(camera);
+    const dir = vector.sub(camera.position).normalize();
+    const distance = -camera.position.z / dir.z;
+    mouse.copy(camera.position).add(dir.multiplyScalar(distance));
+    mouseVisible = true;
+  });
+
+  window.addEventListener('mouseleave', () => {
+    mouse.set(1000, 1000, 0);
+    mouseVisible = false;
+  });
+
+  // === Анимация ===
+  let time = 0;
+  const repulsionRadius = 3.5;
+  const repulsionStrength = 0.15;
+
+  function animate() {
+    requestAnimationFrame(animate);
+    time += 0.01;
+
+    const pos = geometry.attributes.position.array;
+
+    for (let i = 0; i < count; i++) {
+      const ix = i * 3;
+      const tx = targets[ix + 0];
+      const ty = targets[ix + 1];
+      const tz = targets[ix + 2];
+
+      // Сила к цели
+      let dx = tx - pos[ix + 0];
+      let dy = ty - pos[ix + 1];
+      let dz = tz - pos[ix + 2];
+
+      // Лёгкий "дыхательный" дрифт
+      const drift = Math.sin(time + i * 0.1) * 0.15;
+      dy += drift * 0.02;
+
+      // Расталкивание от курсора
+      if (mouseVisible) {
+        const mdx = pos[ix + 0] - mouse.x;
+        const mdy = pos[ix + 1] - mouse.y;
+        const distSq = mdx * mdx + mdy * mdy;
+        if (distSq < repulsionRadius * repulsionRadius) {
+          const dist = Math.sqrt(distSq) || 0.001;
+          const force = (1 - dist / repulsionRadius) * repulsionStrength;
+          velocities[ix + 0] += (mdx / dist) * force;
+          velocities[ix + 1] += (mdy / dist) * force;
+        }
+      }
+
+      // Применяем силы
+      velocities[ix + 0] += dx * 0.012;
+      velocities[ix + 1] += dy * 0.012;
+      velocities[ix + 2] += dz * 0.02;
+
+      // Демпфирование (трение)
+      velocities[ix + 0] *= 0.88;
+      velocities[ix + 1] *= 0.88;
+      velocities[ix + 2] *= 0.88;
+
+      pos[ix + 0] += velocities[ix + 0];
+      pos[ix + 1] += velocities[ix + 1];
+      pos[ix + 2] += velocities[ix + 2];
+    }
+
+    geometry.attributes.position.needsUpdate = true;
+
+    // Лёгкое вращение всей группы (0.5° / сек)
+    points3D.rotation.y = Math.sin(time * 0.2) * 0.05;
+    bigPoints.rotation.y = Math.sin(time * 0.2) * 0.05;
+
+    renderer.render(scene, camera);
+  }
+
+  animate();
+
+  // === Resize ===
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+})();
+
+/* ============ 5. WebGL ШЕЙДЕР ПОВЕРХ ВИДЕО ============ */
+(function() {
+  if (typeof THREE === 'undefined') return;
+
+  const canvas = document.getElementById('shader-canvas');
+  if (!canvas) return;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+  const renderer = new THREE.WebGLRenderer({
+    canvas: canvas,
+    alpha: true,
+    antialias: false
+  });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  // Шейдер: рябь от курсора + RGB-сдвиг + плёночные полосы
+  const vertexShader = `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = vec4(position, 1.0);
+    }
+  `;
+
+  const fragmentShader = `
+    precision highp float;
+    varying vec2 vUv;
+    uniform float uTime;
+    uniform vec2 uMouse;
+    uniform vec2 uResolution;
+
+    // Псевдослучайные числа
+    float rand(vec2 co) {
+      return fract(sin(dot(co.xy, vec2(12.9898, 78.233))) * 43758.5453);
+    }
+
+    void main() {
+      vec2 uv = vUv;
+      vec2 m = uMouse;
+
+      // Расстояние до курсора
+      float dist = distance(uv, m);
+
+      // === 1. Рябь от курсора (распространяется) ===
+      float ripple = sin(dist * 30.0 - uTime * 4.0) * 0.5 + 0.5;
+      float rippleStrength = smoothstep(0.4, 0.0, dist) * 0.04;
+
+      // === 2. Плёночные горизонтальные полосы (scanlines) ===
+      float scanline = sin(uv.y * uResolution.y * 1.2) * 0.04;
+
+      // === 3. Виньетка по краям ===
+      float vignette = smoothstep(1.2, 0.5, distance(uv, vec2(0.5)));
+
+      // === 4. Зерно ===
+      float noise = rand(uv * uResolution + uTime * 100.0) * 0.06;
+
+      // === 5. Случайные горизонтальные глитч-линии ===
+      float glitchLine = step(0.997, rand(vec2(floor(uv.y * 80.0), floor(uTime * 8.0))));
+      float glitchOffset = glitchLine * (rand(vec2(uTime)) - 0.5) * 0.04;
+
+      // Финальный цвет: тёмно-красный оттенок + все эффекты
+      vec3 color = vec3(0.0);
+
+      // Лёгкий красный отблеск рядом с курсором
+      vec3 mouseGlow = vec3(0.91, 0.19, 0.16) * smoothstep(0.3, 0.0, dist) * 0.15;
+      color += mouseGlow;
+
+      // Рябь как красный пульс
+      color += vec3(0.91, 0.19, 0.16) * ripple * rippleStrength;
+
+      // Scanlines (полупрозрачные тёмные)
+      float scanAlpha = 0.08 + abs(scanline);
+
+      // Зерно
+      color += vec3(noise);
+
+      // Глитч-линии
+      if (glitchLine > 0.5) {
+        color += vec3(0.91, 0.19, 0.16) * 0.3;
+      }
+
+      // Виньетка затемняет всё
+      color *= vignette * 0.5 + 0.5;
+
+      // Прозрачность
+      float alpha = scanAlpha + ripple * rippleStrength * 8.0 + noise * 1.5 + glitchLine * 0.4;
+      alpha = clamp(alpha, 0.0, 0.5);
+
+      gl_FragColor = vec4(color, alpha);
+    }
+  `;
+
+  const uniforms = {
+    uTime:       { value: 0 },
+    uMouse:      { value: new THREE.Vector2(0.5, 0.5) },
+    uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+  };
+
+  const material = new THREE.ShaderMaterial({
+    vertexShader,
+    fragmentShader,
+    uniforms,
+    transparent: true,
+    blending: THREE.NormalBlending,
+    depthWrite: false
+  });
+
+  const geometry = new THREE.PlaneGeometry(2, 2);
+  const mesh = new THREE.Mesh(geometry, material);
+  scene.add(mesh);
+
+  // Курсор → uniform
+  let targetMouseX = 0.5, targetMouseY = 0.5;
+  let smoothMouseX = 0.5, smoothMouseY = 0.5;
+
+  window.addEventListener('mousemove', (e) => {
+    targetMouseX = e.clientX / window.innerWidth;
+    targetMouseY = 1.0 - e.clientY / window.innerHeight;
+  });
+
+  function animate() {
+    requestAnimationFrame(animate);
+    uniforms.uTime.value += 0.016;
+
+    // Плавное следование курсора
+    smoothMouseX += (targetMouseX - smoothMouseX) * 0.08;
+    smoothMouseY += (targetMouseY - smoothMouseY) * 0.08;
+    uniforms.uMouse.value.set(smoothMouseX, smoothMouseY);
+
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize', () => {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
+  });
+})();
+
+/* ============ 6. FULLSCREEN ПЛЕЕР ДЛЯ РИЛСОВ ============ */
 (function() {
   const player = document.getElementById('reel-player');
   const playerFrame = document.getElementById('reel-player-frame');
