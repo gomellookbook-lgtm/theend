@@ -1585,7 +1585,7 @@
 
     <div class="about-label reveal">[ ABOUT / 03 ]</div>
 
-    <h2 class="about-title reveal" id="about-title">
+    <h2 class="about-title glitch-title reveal" id="about-title">
       КОГДА ХОЧЕТСЯ<br>
       <span class="red">БОЛЬШЕГО.</span>
     </h2>
@@ -1679,7 +1679,7 @@
   <section class="projects">
 
     <div class="projects-header">
-      <h2 class="projects-title reveal">
+      <h2 class="projects-title glitch-title reveal">
         ПЯТЬ <span class="red">ЛИНЕЕК.</span><br>
         ПЯТЬ ИСТОРИЙ.
       </h2>
@@ -1753,7 +1753,7 @@
 
     <div class="reels-label reveal">[ REELS / 02 ]</div>
 
-    <h2 class="reels-title reveal">
+    <h2 class="reels-title glitch-title reveal">
       ДВИГАЕТСЯ?<br>
       <span class="red">ЗНАЧИТ ЖИВОЕ.</span>
     </h2>
@@ -1849,7 +1849,7 @@
 
     <div class="photo-label reveal">[ PHOTO / 04 ]</div>
 
-    <h2 class="photo-title reveal">
+    <h2 class="photo-title glitch-title reveal">
       АРХИВ <span class="red">КАДРОВ.</span>
     </h2>
 
@@ -1898,7 +1898,7 @@
 
     <div class="contact-label reveal">[ CONTACT / 05 ]</div>
 
-    <h2 class="contact-title reveal">
+    <h2 class="contact-title glitch-title reveal">
       ПОГОВОРИМ?<br>
       <span class="red">МЫ ЗДЕСЬ.</span>
     </h2>
@@ -2194,14 +2194,27 @@
     // Запускаем счётчики если в оверлее есть data-target
     setTimeout(() => triggerCounters(overlay), 600);
 
-    // Глитч заголовка About
-    if (name === 'about') {
-      setTimeout(() => glitchAboutTitle(), 500);
-    }
+    // Глитч-эффект для всех заголовков с классом .glitch-title в этом оверлее
+    setTimeout(() => triggerGlitchTitles(overlay), 500);
   }
 
   function closeOverlay() {
     if (!activeOverlay) return;
+
+    // Сбрасываем флаги глитча и счётчиков, чтобы при повторном открытии
+    // эффект сыграл заново
+    activeOverlay.querySelectorAll('.glitch-title').forEach(el => {
+      delete el.dataset.glitched;
+    });
+    activeOverlay.querySelectorAll('[data-target]').forEach(el => {
+      delete el.dataset.counted;
+      el.textContent = '0';
+    });
+    // Скрываем reveal-элементы — пусть появятся заново при следующем открытии
+    activeOverlay.querySelectorAll('.reveal').forEach(el => {
+      el.classList.remove('visible');
+    });
+
     activeOverlay.classList.remove('open');
     document.body.classList.remove('overlay-open');
     closeBtn.classList.remove('visible');
@@ -2261,9 +2274,16 @@
     requestAnimationFrame(tick);
   }
 
-  /* === Глитч заголовка About === */
-  function glitchAboutTitle() {
-    const titleEl = document.getElementById('about-title');
+  /* === Глитч-эффект для всех заголовков с классом .glitch-title === */
+  function triggerGlitchTitles(container) {
+    const titles = container.querySelectorAll('.glitch-title');
+    titles.forEach((titleEl, idx) => {
+      // Небольшая задержка между разными заголовками если их несколько
+      setTimeout(() => glitchTitle(titleEl), idx * 200);
+    });
+  }
+
+  function glitchTitle(titleEl) {
     if (!titleEl || titleEl.dataset.glitched) return;
     titleEl.dataset.glitched = '1';
 
@@ -2302,9 +2322,12 @@
       if (p < 1) {
         requestAnimationFrame(tick);
       } else {
+        // Восстанавливаем оригинальную HTML-разметку (с красными span и br)
         titleEl.innerHTML = originalHTML;
       }
     }
+
+    titleEl.textContent = originalText;
     requestAnimationFrame(tick);
   }
 })();
