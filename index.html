@@ -343,17 +343,26 @@
 
   .hero-subtitle {
     margin-top: 28px;
+    /* Сдвигаем вниз, ближе к нижней нав-панели,
+       чтобы он был под облаком частиц, а не внутри */
+    position: absolute;
+    bottom: 18%;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
     font-family: 'JetBrains Mono', monospace;
     font-size: 12px;
     letter-spacing: 4px;
     text-transform: uppercase;
     color: rgba(255,255,255,0.6);
     opacity: 0;
-    transform: translateY(20px);
     transition: opacity 0.8s ease 1.5s, transform 0.8s ease 1.5s;
+    white-space: nowrap;
   }
 
-  .hero.visible .hero-subtitle { opacity: 1; transform: translateY(0); }
+  .hero.visible .hero-subtitle {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 
   /* ============ OVERLAY (выезжающие секции) ============ */
   .overlay {
@@ -2334,15 +2343,15 @@
   const velocities = new Float32Array(count * 3);
 
   for (let i = 0; i < count; i++) {
-    // Целевая позиция — точка из текста
+    // Целевая позиция — точка из текста (поднимаем на 3 единицы вверх)
     targets[i * 3 + 0] = points[i].x;
-    targets[i * 3 + 1] = points[i].y;
-    targets[i * 3 + 2] = (Math.random() - 0.5) * 0.5;
+    targets[i * 3 + 1] = points[i].y + 3.0;
+    targets[i * 3 + 2] = (Math.random() - 0.5) * 0.3;
 
-    // Стартовая позиция — случайная вокруг
-    positions[i * 3 + 0] = (Math.random() - 0.5) * 60;
-    positions[i * 3 + 1] = (Math.random() - 0.5) * 40;
-    positions[i * 3 + 2] = (Math.random() - 0.5) * 30;
+    // Стартовая позиция — близко к цели (не по всему экрану)
+    positions[i * 3 + 0] = targets[i * 3 + 0] + (Math.random() - 0.5) * 8;
+    positions[i * 3 + 1] = targets[i * 3 + 1] + (Math.random() - 0.5) * 6;
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 4;
 
     // Разные размеры (текстура пыли)
     sizes[i] = Math.random() * 1.5 + 0.3;
@@ -2392,34 +2401,6 @@
   const points3D = new THREE.Points(geometry, material);
   scene.add(points3D);
 
-  // Вторая группа — крупные частицы
-  const bigGeo = new THREE.BufferGeometry();
-  const bigCount = Math.floor(count * 0.15);
-  const bigPos = new Float32Array(bigCount * 3);
-  const bigTargets = new Float32Array(bigCount * 3);
-  for (let i = 0; i < bigCount; i++) {
-    const idx = Math.floor(Math.random() * count);
-    bigTargets[i * 3 + 0] = targets[idx * 3 + 0];
-    bigTargets[i * 3 + 1] = targets[idx * 3 + 1];
-    bigTargets[i * 3 + 2] = targets[idx * 3 + 2];
-    bigPos[i * 3 + 0] = (Math.random() - 0.5) * 60;
-    bigPos[i * 3 + 1] = (Math.random() - 0.5) * 40;
-    bigPos[i * 3 + 2] = (Math.random() - 0.5) * 30;
-  }
-  bigGeo.setAttribute('position', new THREE.BufferAttribute(bigPos, 3));
-  const bigMat = new THREE.PointsMaterial({
-    size: 0.4,
-    map: makeCircleTexture(),
-    color: 0xffffff,
-    transparent: true,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-    sizeAttenuation: true,
-    opacity: 0.7
-  });
-  const bigPoints = new THREE.Points(bigGeo, bigMat);
-  scene.add(bigPoints);
-
   // === Курсор для интерактивности ===
   const mouse = new THREE.Vector3(1000, 1000, 0);
   let mouseVisible = false;
@@ -2445,8 +2426,8 @@
 
   // === Анимация ===
   let time = 0;
-  const repulsionRadius = 3.5;
-  const repulsionStrength = 0.15;
+  const repulsionRadius = 2.5;
+  const repulsionStrength = 0.10;
 
   function animate() {
     requestAnimationFrame(animate);
@@ -2465,10 +2446,6 @@
       let dy = ty - pos[ix + 1];
       let dz = tz - pos[ix + 2];
 
-      // Лёгкий "дыхательный" дрифт
-      const drift = Math.sin(time + i * 0.1) * 0.15;
-      dy += drift * 0.02;
-
       // Расталкивание от курсора
       if (mouseVisible) {
         const mdx = pos[ix + 0] - mouse.x;
@@ -2482,15 +2459,15 @@
         }
       }
 
-      // Применяем силы
-      velocities[ix + 0] += dx * 0.012;
-      velocities[ix + 1] += dy * 0.012;
-      velocities[ix + 2] += dz * 0.02;
+      // Сильнее тянем обратно к цели — собираются быстро
+      velocities[ix + 0] += dx * 0.025;
+      velocities[ix + 1] += dy * 0.025;
+      velocities[ix + 2] += dz * 0.03;
 
-      // Демпфирование (трение)
-      velocities[ix + 0] *= 0.88;
-      velocities[ix + 1] *= 0.88;
-      velocities[ix + 2] *= 0.88;
+      // Сильное демпфирование — без "плавающих" частиц
+      velocities[ix + 0] *= 0.82;
+      velocities[ix + 1] *= 0.82;
+      velocities[ix + 2] *= 0.82;
 
       pos[ix + 0] += velocities[ix + 0];
       pos[ix + 1] += velocities[ix + 1];
@@ -2501,7 +2478,6 @@
 
     // Лёгкое вращение всей группы (0.5° / сек)
     points3D.rotation.y = Math.sin(time * 0.2) * 0.05;
-    bigPoints.rotation.y = Math.sin(time * 0.2) * 0.05;
 
     renderer.render(scene, camera);
   }
