@@ -154,6 +154,27 @@
 
   .hero.visible { opacity: 1; }
 
+  /* Видео и шейдер невидимы пока идёт переход */
+  .hero-video-wrap,
+  .hero-shader,
+  .hero-overlay,
+  .hero-grain {
+    opacity: 0;
+    transition: opacity 1.5s ease;
+  }
+
+  .hero.intro-done .hero-video-wrap,
+  .hero.intro-done .hero-shader,
+  .hero.intro-done .hero-overlay,
+  .hero.intro-done .hero-grain {
+    opacity: 1;
+  }
+
+  /* Шейдер по умолчанию полупрозрачный (он накладывается) */
+  .hero.intro-done .hero-shader {
+    opacity: 0.85;
+  }
+
   .hero-video-wrap {
     position: absolute;
     inset: 0;
@@ -2034,11 +2055,33 @@
       glitchEl.classList.add('flash');
       setTimeout(() => glitchEl.classList.remove('flash'), 150);
     }, 250);
+
+    // Через 500мс: запускаем 3D-переход
     setTimeout(() => {
-      loader.classList.add('hidden');
+      // Сигнал Three.js системе: "буквы загрузчика — это твой стартовый кадр"
+      // Получаем экранную позицию центра прелоадера
+      const rect = glitchEl.getBoundingClientRect();
+      const startX = rect.left + rect.width / 2;
+      const startY = rect.top + rect.height / 2;
+
+      // Скрываем текстовые буквы загрузчика (плавно)
+      glitchEl.style.transition = 'opacity 0.3s ease';
+      glitchEl.style.opacity = '0';
+
+      // Запускаем интро-режим у частиц
+      window.dispatchEvent(new CustomEvent('startParticlesIntro', {
+        detail: { x: startX, y: startY }
+      }));
+
+      // Скрываем чёрный фон загрузчика и показываем hero
+      // (чёрный уйдёт плавно, под ним появится видео+эффекты)
+      loader.style.transition = 'opacity 1.2s ease';
+      loader.style.opacity = '0';
+      setTimeout(() => loader.classList.add('hidden'), 1300);
+
       hero.classList.add('visible');
-      animateHeroTitle();
-    }, 1200);
+      // hero.classList.add('intro-done') добавим позже после завершения сборки
+    }, 500);
   }
 
   function animateHeroTitle() {
@@ -2272,7 +2315,7 @@
   }
 })();
 
-/* ============ 4. THREE.JS — ЧАСТИЦЫ "THE END" ============ */
+/* ============ 4. THREE.JS — ЧАСТИЦЫ "THE END" С КИНОШНЫМ ИНТРО ============ */
 (function() {
   if (typeof THREE === 'undefined') return;
 
@@ -2294,7 +2337,7 @@
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(window.innerWidth, window.innerHeight);
 
-  // === Получаем контуры букв "THE END" из Canvas 2D ===
+  // === Получаем контуры букв из Canvas 2D ===
   function getTextPoints(text, fontSize) {
     const off = document.createElement('canvas');
     const ctx = off.getContext('2d');
@@ -2311,14 +2354,11 @@
 
     const data = ctx.getImageData(0, 0, off.width, off.height).data;
     const points = [];
-    // шаг между точками — определяет плотность
     const step = 3;
     for (let y = 0; y < off.height; y += step) {
       for (let x = 0; x < off.width; x += step) {
         const idx = (y * off.width + x) * 4;
-        // Если пиксель белый — добавляем точку
         if (data[idx] > 128) {
-          // Перевод в координаты сцены (по центру)
           const px = (x - off.width / 2) * 0.04;
           const py = -(y - off.height / 2) * 0.04;
           points.push({ x: px, y: py });
@@ -2326,6 +2366,17 @@
       }
     }
     return points;
+  }
+
+  // Утилита: переводим экранные координаты (px) в координаты Three.js сцены на плоскости z=0
+  function screenToScene(screenX, screenY) {
+    const x = (screenX / window.innerWidth) * 2 - 1;
+    const y = -(screenY / window.innerHeight) * 2 + 1;
+    const vector = new THREE.Vector3(x, y, 0.5);
+    vector.unproject(camera);
+    const dir = vector.sub(camera.position).normalize();
+    const distance = -camera.position.z / dir.z;
+    return camera.position.clone().add(dir.multiplyScalar(distance));
   }
 
   // === Создаём частицы ===
@@ -2336,41 +2387,34 @@
   const count = points.length;
   const positions = new Float32Array(count * 3);
   const targets = new Float32Array(count * 3);
-  const sizes = new Float32Array(count);
-  const colors = new Float32Array(count * 3);
   const velocities = new Float32Array(count * 3);
+  const colors = new Float32Array(count * 3);
 
   for (let i = 0; i < count; i++) {
-    // Целевая позиция — точка из текста (поднимаем на 3 единицы вверх)
+    // Целевая позиция (большая надпись THE END в верхней трети)
     targets[i * 3 + 0] = points[i].x;
     targets[i * 3 + 1] = points[i].y + 3.0;
     targets[i * 3 + 2] = (Math.random() - 0.5) * 0.3;
 
-    // Стартовая позиция — близко к цели (не по всему экрану)
-    positions[i * 3 + 0] = targets[i * 3 + 0] + (Math.random() - 0.5) * 8;
-    positions[i * 3 + 1] = targets[i * 3 + 1] + (Math.random() - 0.5) * 6;
-    positions[i * 3 + 2] = (Math.random() - 0.5) * 4;
-
-    // Разные размеры (текстура пыли)
-    sizes[i] = Math.random() * 1.5 + 0.3;
-
-    // Все белые, но с разной яркостью
-    const brightness = 0.7 + Math.random() * 0.3;
-    colors[i * 3 + 0] = brightness;
-    colors[i * 3 + 1] = brightness;
-    colors[i * 3 + 2] = brightness;
+    // Стартовая позиция — пока за экраном (или будет переопределена в startIntro)
+    positions[i * 3 + 0] = (Math.random() - 0.5) * 100;
+    positions[i * 3 + 1] = (Math.random() - 0.5) * 100;
+    positions[i * 3 + 2] = -50;
 
     velocities[i * 3 + 0] = 0;
     velocities[i * 3 + 1] = 0;
     velocities[i * 3 + 2] = 0;
+
+    const brightness = 0.7 + Math.random() * 0.3;
+    colors[i * 3 + 0] = brightness;
+    colors[i * 3 + 1] = brightness;
+    colors[i * 3 + 2] = brightness;
   }
 
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
   geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
-  // Текстура — мягкий круг с прозрачностью по краям
   function makeCircleTexture() {
     const c = document.createElement('canvas');
     c.width = c.height = 64;
@@ -2391,35 +2435,63 @@
     transparent: true,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
-    sizeAttenuation: true
+    sizeAttenuation: true,
+    opacity: 0  // начинаем невидимыми
   });
 
-  // Используем sizes attribute через onBeforeCompile (упрощённо: просто разные базовые размеры)
-  // Чтобы было заметно — сделаем 2-3 группы частиц с разным размером
   const points3D = new THREE.Points(geometry, material);
   scene.add(points3D);
 
-  // === Курсор для интерактивности ===
+  // === Курсор ===
   const mouse = new THREE.Vector3(1000, 1000, 0);
   let mouseVisible = false;
 
   window.addEventListener('mousemove', (e) => {
-    // Преобразуем координаты экрана в координаты сцены
-    const x = (e.clientX / window.innerWidth) * 2 - 1;
-    const y = -(e.clientY / window.innerHeight) * 2 + 1;
-
-    // raycaster style: проектируем на плоскость z=0
-    const vector = new THREE.Vector3(x, y, 0.5);
-    vector.unproject(camera);
-    const dir = vector.sub(camera.position).normalize();
-    const distance = -camera.position.z / dir.z;
-    mouse.copy(camera.position).add(dir.multiplyScalar(distance));
+    if (mode !== 'idle') return; // во время интро курсор не реагирует
+    mouse.copy(screenToScene(e.clientX, e.clientY));
     mouseVisible = true;
   });
-
   window.addEventListener('mouseleave', () => {
     mouse.set(1000, 1000, 0);
     mouseVisible = false;
+  });
+
+  // === СОСТОЯНИЯ ===
+  // 'waiting' — ждём сигнала из загрузчика
+  // 'explode' — взрыв (частицы разлетаются)
+  // 'gather'  — сборка (частицы летят на свои места в большой надписи)
+  // 'idle'    — обычный режим (реагируют на курсор)
+  let mode = 'waiting';
+  let modeStart = 0;
+
+  // Слушаем событие из прелоадера
+  window.addEventListener('startParticlesIntro', (e) => {
+    const { x, y } = e.detail;
+    // Ставим все частицы в точку откуда стартует прелоадер (центр экрана)
+    const startScene = screenToScene(x, y);
+    const pos = geometry.attributes.position.array;
+
+    for (let i = 0; i < count; i++) {
+      const ix = i * 3;
+      // Стартовая позиция — около точки прелоадера, мелкий разброс (имитация букв)
+      pos[ix + 0] = startScene.x + (Math.random() - 0.5) * 1.0;
+      pos[ix + 1] = startScene.y + (Math.random() - 0.5) * 0.4;
+      pos[ix + 2] = (Math.random() - 0.5) * 0.5;
+
+      // Случайные скорости разлёта — взрыв во все стороны
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 0.4 + Math.random() * 0.6;
+      velocities[ix + 0] = Math.cos(angle) * speed;
+      velocities[ix + 1] = Math.sin(angle) * speed;
+      velocities[ix + 2] = (Math.random() - 0.5) * 0.4;
+    }
+    geometry.attributes.position.needsUpdate = true;
+
+    // Делаем частицы видимыми
+    material.opacity = 1.0;
+
+    mode = 'explode';
+    modeStart = performance.now();
   });
 
   // === Анимация ===
@@ -2432,40 +2504,87 @@
     time += 0.01;
 
     const pos = geometry.attributes.position.array;
+    const now = performance.now();
+    const elapsed = now - modeStart;
 
+    // === Переходы между режимами по времени ===
+    if (mode === 'explode' && elapsed > 600) {
+      // через 0.6 сек после взрыва — начинаем сборку
+      mode = 'gather';
+      modeStart = now;
+      // Сообщаем странице: можно проявлять видео/шейдер
+      const hero = document.getElementById('hero');
+      if (hero) hero.classList.add('intro-done');
+    }
+    if (mode === 'gather' && elapsed > 1800) {
+      // через 1.8 сек — переход в обычный режим
+      mode = 'idle';
+      modeStart = now;
+    }
+
+    if (mode === 'waiting') {
+      // ничего не делаем, ждём сигнала
+      renderer.render(scene, camera);
+      return;
+    }
+
+    // === Обновление позиций ===
     for (let i = 0; i < count; i++) {
       const ix = i * 3;
-      const tx = targets[ix + 0];
-      const ty = targets[ix + 1];
-      const tz = targets[ix + 2];
 
-      // Сила к цели
-      let dx = tx - pos[ix + 0];
-      let dy = ty - pos[ix + 1];
-      let dz = tz - pos[ix + 2];
+      if (mode === 'explode') {
+        // Чистая баллистика, без притяжения к цели
+        // Слабое замедление чтобы не улетели слишком далеко
+        velocities[ix + 0] *= 0.97;
+        velocities[ix + 1] *= 0.97;
+        velocities[ix + 2] *= 0.97;
+      } else if (mode === 'gather') {
+        // Магнетизм к цели
+        const tx = targets[ix + 0];
+        const ty = targets[ix + 1];
+        const tz = targets[ix + 2];
+        const dx = tx - pos[ix + 0];
+        const dy = ty - pos[ix + 1];
+        const dz = tz - pos[ix + 2];
 
-      // Расталкивание от курсора
-      if (mouseVisible) {
-        const mdx = pos[ix + 0] - mouse.x;
-        const mdy = pos[ix + 1] - mouse.y;
-        const distSq = mdx * mdx + mdy * mdy;
-        if (distSq < repulsionRadius * repulsionRadius) {
-          const dist = Math.sqrt(distSq) || 0.001;
-          const force = (1 - dist / repulsionRadius) * repulsionStrength;
-          velocities[ix + 0] += (mdx / dist) * force;
-          velocities[ix + 1] += (mdy / dist) * force;
+        // Сила к цели нарастает по ходу
+        const gatherProgress = Math.min(elapsed / 1800, 1);
+        const pull = 0.015 + gatherProgress * 0.03;
+
+        velocities[ix + 0] += dx * pull;
+        velocities[ix + 1] += dy * pull;
+        velocities[ix + 2] += dz * pull;
+        velocities[ix + 0] *= 0.86;
+        velocities[ix + 1] *= 0.86;
+        velocities[ix + 2] *= 0.86;
+      } else if (mode === 'idle') {
+        // Обычный режим: магнетизм + расталкивание от курсора
+        const tx = targets[ix + 0];
+        const ty = targets[ix + 1];
+        const tz = targets[ix + 2];
+        const dx = tx - pos[ix + 0];
+        const dy = ty - pos[ix + 1];
+        const dz = tz - pos[ix + 2];
+
+        if (mouseVisible) {
+          const mdx = pos[ix + 0] - mouse.x;
+          const mdy = pos[ix + 1] - mouse.y;
+          const distSq = mdx * mdx + mdy * mdy;
+          if (distSq < repulsionRadius * repulsionRadius) {
+            const dist = Math.sqrt(distSq) || 0.001;
+            const force = (1 - dist / repulsionRadius) * repulsionStrength;
+            velocities[ix + 0] += (mdx / dist) * force;
+            velocities[ix + 1] += (mdy / dist) * force;
+          }
         }
+
+        velocities[ix + 0] += dx * 0.025;
+        velocities[ix + 1] += dy * 0.025;
+        velocities[ix + 2] += dz * 0.03;
+        velocities[ix + 0] *= 0.82;
+        velocities[ix + 1] *= 0.82;
+        velocities[ix + 2] *= 0.82;
       }
-
-      // Сильнее тянем обратно к цели — собираются быстро
-      velocities[ix + 0] += dx * 0.025;
-      velocities[ix + 1] += dy * 0.025;
-      velocities[ix + 2] += dz * 0.03;
-
-      // Сильное демпфирование — без "плавающих" частиц
-      velocities[ix + 0] *= 0.82;
-      velocities[ix + 1] *= 0.82;
-      velocities[ix + 2] *= 0.82;
 
       pos[ix + 0] += velocities[ix + 0];
       pos[ix + 1] += velocities[ix + 1];
@@ -2474,15 +2593,16 @@
 
     geometry.attributes.position.needsUpdate = true;
 
-    // Лёгкое вращение всей группы (0.5° / сек)
-    points3D.rotation.y = Math.sin(time * 0.2) * 0.05;
+    // Лёгкое вращение всей группы в idle
+    if (mode === 'idle') {
+      points3D.rotation.y = Math.sin(time * 0.2) * 0.05;
+    }
 
     renderer.render(scene, camera);
   }
 
   animate();
 
-  // === Resize ===
   window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
