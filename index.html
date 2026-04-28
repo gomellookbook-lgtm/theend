@@ -218,7 +218,7 @@
   /* НАВ-СТРОКИ С КНОПКАМИ */
   .nav-projects, .nav-sections {
     display: flex;
-    gap: clamp(8px, 1vw, 14px);
+    gap: clamp(20px, 3vw, 48px);
     justify-content: center;
     flex-wrap: wrap;
     opacity: 0;
@@ -237,67 +237,72 @@
     transform: translateY(0);
   }
 
-  /* Кнопка-капсула */
+  /* Кнопка-ссылка в стиле кода: [ ↗ NAME ] */
   .nav-link {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     font-family: 'JetBrains Mono', monospace;
     font-weight: 700;
-    font-size: 12px;
+    font-size: 13px;
     letter-spacing: 2.5px;
     text-transform: uppercase;
     color: rgba(255,255,255,0.85);
     text-decoration: none;
-    background: rgba(10,10,10,0.4);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(255,255,255,0.25);
-    padding: 10px 16px;
+    background: none;
+    border: none;
+    padding: 6px 4px;
     cursor: pointer;
     position: relative;
-    transition: background 0.3s ease,
-                border-color 0.3s ease,
-                color 0.3s ease,
-                transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: color 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  /* Стрелка как отдельный элемент */
+  /* Скобки [ ] вокруг каждой кнопки */
+  .nav-link::before,
+  .nav-link::after {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 13px;
+    color: rgba(255,255,255,0.4);
+    transition: color 0.3s ease, transform 0.3s ease;
+  }
+
+  .nav-link::before {
+    content: '[';
+    margin-right: 4px;
+  }
+
+  .nav-link::after {
+    content: ']';
+    margin-left: 4px;
+  }
+
+  /* Стрелка */
   .nav-link .arrow {
     display: inline-block;
-    font-size: 11px;
-    opacity: 0.6;
-    transition: opacity 0.3s ease, transform 0.3s ease;
+    color: rgba(255,255,255,0.5);
+    font-size: 12px;
+    transition: color 0.3s ease, transform 0.3s ease;
   }
 
-  /* Hover-эффект */
+  /* Hover */
   .nav-link:hover {
-    background: var(--red);
-    border-color: var(--red);
-    color: var(--white);
-    transform: translateY(-3px);
+    color: var(--red);
+    transform: translateY(-2px);
+  }
+
+  .nav-link:hover::before,
+  .nav-link:hover::after {
+    color: var(--red);
   }
 
   .nav-link:hover .arrow {
-    opacity: 1;
+    color: var(--red);
     transform: translate(2px, -2px);
   }
 
-  /* Для разделов — стрелка вниз, движение чуть другое */
   .nav-sections .nav-link:hover .arrow {
     transform: translateY(2px);
-  }
-
-  /* Маленькая цифра-номер сверху */
-  .nav-link::before {
-    content: attr(data-num);
-    position: absolute;
-    top: -16px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 8px;
-    color: rgba(255,255,255,0.4);
-    letter-spacing: 1.5px;
   }
 
   /* Центральный заголовок */
@@ -1261,12 +1266,86 @@
     width: min(420px, 90vw);
     aspect-ratio: 9 / 16;
     max-height: 90vh;
+    transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .reel-player-frame.switching {
+    opacity: 0;
+    transform: scale(0.95);
   }
 
   .reel-player-frame iframe {
     width: 100%;
     height: 100%;
     border: 0;
+  }
+
+  /* Кнопки переключения */
+  .reel-player-nav {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 310;
+    width: 56px;
+    height: 56px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 32px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .reel-player-prev { left: 24px; }
+  .reel-player-next { right: 24px; }
+
+  .reel-player-nav:hover {
+    background: var(--red);
+    border-color: var(--red);
+    transform: translateY(-50%) scale(1.08);
+  }
+
+  /* Счётчик внизу */
+  .reel-player-counter {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 310;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 4px;
+    color: rgba(255,255,255,0.7);
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 10px 18px;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  /* Адаптив для плеера на мобильных */
+  @media (max-width: 600px) {
+    .reel-player-nav {
+      width: 44px;
+      height: 44px;
+      font-size: 24px;
+    }
+    .reel-player-prev { left: 12px; }
+    .reel-player-next { right: 12px; }
+    .reel-player-counter {
+      font-size: 11px;
+      letter-spacing: 3px;
+      padding: 8px 14px;
+      bottom: 20px;
+    }
   }
 
   /* ============ COMING SOON ОВЕРЛЕИ ============ */
@@ -1331,8 +1410,9 @@
     .corner-tr, .corner-br { right: 16px; }
     .corner-bl, .corner-br { bottom: 16px; }
 
-    .nav-link { font-size: 10px; letter-spacing: 1.5px; padding: 8px 12px; }
-    .nav-projects, .nav-sections { gap: 6px; }
+    .nav-link { font-size: 11px; letter-spacing: 1.5px; padding: 4px 2px; }
+    .nav-link::before, .nav-link::after { font-size: 11px; }
+    .nav-projects, .nav-sections { gap: 14px; }
 
     .hero-content { padding: 80px 16px 60px; }
     .hero-subtitle { font-size: 10px; letter-spacing: 2px; }
@@ -1427,11 +1507,11 @@
 
     <!-- ВЕРХ: ПРОЕКТЫ (внешние ссылки) -->
     <nav class="nav-projects">
-      <a class="nav-link" data-num="01" href="https://theend.school/lime">LIME <span class="arrow">↗</span></a>
-      <a class="nav-link" data-num="02" href="https://theend.school/indevelopment">ECHO <span class="arrow">↗</span></a>
-      <a class="nav-link" data-num="03" href="https://theend.school/red">RED <span class="arrow">↗</span></a>
-      <a class="nav-link" data-num="04" href="https://theend.school/ember">DUO <span class="arrow">↗</span></a>
-      <a class="nav-link" data-num="05" href="https://theend.school/indevelopment">VGRD <span class="arrow">↗</span></a>
+      <a class="nav-link" href="https://theend.school/lime"><span class="arrow">↗</span> LIME</a>
+      <a class="nav-link" href="https://theend.school/indevelopment"><span class="arrow">↗</span> ECHO</a>
+      <a class="nav-link" href="https://theend.school/red"><span class="arrow">↗</span> RED</a>
+      <a class="nav-link" href="https://theend.school/ember"><span class="arrow">↗</span> DUO</a>
+      <a class="nav-link" href="https://theend.school/indevelopment"><span class="arrow">↗</span> VGRD</a>
     </nav>
 
     <!-- ЦЕНТР: ЗАГОЛОВОК -->
@@ -1442,11 +1522,11 @@
 
     <!-- НИЗ: РАЗДЕЛЫ (открывают оверлеи) -->
     <nav class="nav-sections">
-      <button class="nav-link" data-num="01" data-overlay="works">WORKS <span class="arrow">↓</span></button>
-      <button class="nav-link" data-num="02" data-overlay="reels">REELS <span class="arrow">↓</span></button>
-      <button class="nav-link" data-num="03" data-overlay="about">ABOUT <span class="arrow">↓</span></button>
-      <button class="nav-link" data-num="04" data-overlay="photo">PHOTO <span class="arrow">↓</span></button>
-      <button class="nav-link" data-num="05" data-overlay="contact">CONTACT <span class="arrow">↓</span></button>
+      <button class="nav-link" data-overlay="works"><span class="arrow">↓</span> WORKS</button>
+      <button class="nav-link" data-overlay="reels"><span class="arrow">↓</span> REELS</button>
+      <button class="nav-link" data-overlay="about"><span class="arrow">↓</span> ABOUT</button>
+      <button class="nav-link" data-overlay="photo"><span class="arrow">↓</span> PHOTO</button>
+      <button class="nav-link" data-overlay="contact"><span class="arrow">↓</span> CONTACT</button>
     </nav>
 
   </div>
@@ -1713,6 +1793,9 @@
 <!-- ============ FULLSCREEN ВИДЕО ПЛЕЕР ============ -->
 <div class="reel-player" id="reel-player">
   <button class="reel-player-close" id="reel-player-close" aria-label="Закрыть">×</button>
+  <button class="reel-player-nav reel-player-prev" id="reel-player-prev" aria-label="Предыдущее">‹</button>
+  <button class="reel-player-nav reel-player-next" id="reel-player-next" aria-label="Следующее">›</button>
+  <div class="reel-player-counter" id="reel-player-counter">01 / 04</div>
   <div class="reel-player-frame" id="reel-player-frame"></div>
 </div>
 
@@ -2165,51 +2248,124 @@
   const player = document.getElementById('reel-player');
   const playerFrame = document.getElementById('reel-player-frame');
   const playerClose = document.getElementById('reel-player-close');
+  const playerPrev = document.getElementById('reel-player-prev');
+  const playerNext = document.getElementById('reel-player-next');
+  const playerCounter = document.getElementById('reel-player-counter');
 
   if (!player || !playerFrame) return;
 
+  // Собираем список всех видео из карточек на странице (в порядке появления)
+  const reelCards = Array.from(document.querySelectorAll('.reel-card'));
+  const reelIds = reelCards.map(c => c.dataset.vimeo).filter(Boolean);
+  let currentIndex = 0;
+
+  function pad2(n) { return n.toString().padStart(2, '0'); }
+
+  function updateCounter() {
+    if (playerCounter) {
+      playerCounter.textContent = pad2(currentIndex + 1) + ' / ' + pad2(reelIds.length);
+    }
+  }
+
+  function loadReel(index) {
+    const total = reelIds.length;
+    if (total === 0) return;
+
+    // Зацикливаем индекс
+    currentIndex = ((index % total) + total) % total;
+    const vimeoId = reelIds[currentIndex];
+
+    // Анимация переключения
+    playerFrame.classList.add('switching');
+
+    setTimeout(() => {
+      playerFrame.innerHTML = `
+        <iframe
+          src="https://player.vimeo.com/video/${vimeoId}?autoplay=1&loop=1&muted=0&autopause=0&controls=1&badge=0"
+          frameborder="0"
+          allow="autoplay; fullscreen; picture-in-picture"
+          allowfullscreen></iframe>
+      `;
+      playerFrame.classList.remove('switching');
+      updateCounter();
+    }, 250);
+  }
+
   function openReel(vimeoId) {
-    // Создаём новый iframe с включенными контролами и звуком
+    const idx = reelIds.indexOf(vimeoId);
+    currentIndex = idx >= 0 ? idx : 0;
+
+    // Сразу вставляем без анимации (первое открытие)
     playerFrame.innerHTML = `
       <iframe
-        src="https://player.vimeo.com/video/${vimeoId}?autoplay=1&loop=1&muted=0&autopause=0&controls=1&badge=0"
+        src="https://player.vimeo.com/video/${reelIds[currentIndex]}?autoplay=1&loop=1&muted=0&autopause=0&controls=1&badge=0"
         frameborder="0"
         allow="autoplay; fullscreen; picture-in-picture"
         allowfullscreen></iframe>
     `;
+    updateCounter();
+
     player.classList.add('active');
     document.body.classList.add('overlay-open');
   }
 
   function closeReel() {
     player.classList.remove('active');
-    // Очищаем iframe чтобы видео остановилось
     setTimeout(() => { playerFrame.innerHTML = ''; }, 300);
   }
 
-  // Привязываем клики на карточки рилсов
-  document.querySelectorAll('.reel-card').forEach(card => {
+  function nextReel() { loadReel(currentIndex + 1); }
+  function prevReel() { loadReel(currentIndex - 1); }
+
+  // Клик на карточки в галерее
+  reelCards.forEach(card => {
     card.addEventListener('click', () => {
       const vimeoId = card.dataset.vimeo;
       if (vimeoId) openReel(vimeoId);
     });
   });
 
-  // Закрытие
+  // Кнопки управления
   playerClose.addEventListener('click', closeReel);
+  if (playerPrev) playerPrev.addEventListener('click', prevReel);
+  if (playerNext) playerNext.addEventListener('click', nextReel);
 
-  // ESC для закрытия (но только если оверлей рилсов открыт)
+  // Клавиши: ESC закрыть, ←→ листать
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && player.classList.contains('active')) {
+    if (!player.classList.contains('active')) return;
+
+    if (e.key === 'Escape') {
       closeReel();
-      e.stopPropagation(); // чтобы не закрывался ещё и оверлей REELS
+      e.stopPropagation();
+    } else if (e.key === 'ArrowLeft') {
+      prevReel();
+    } else if (e.key === 'ArrowRight') {
+      nextReel();
     }
   });
 
-  // Клик по фону тоже закрывает
+  // Клик по тёмному фону — закрытие
   player.addEventListener('click', (e) => {
     if (e.target === player) closeReel();
   });
+
+  // Свайпы на мобильных
+  let touchStartX = 0;
+  let touchEndX = 0;
+
+  player.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+  }, { passive: true });
+
+  player.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    const diff = touchEndX - touchStartX;
+    // Минимальный свайп 50px
+    if (Math.abs(diff) > 50) {
+      if (diff < 0) nextReel();
+      else prevReel();
+    }
+  }, { passive: true });
 })();
 </script>
 
