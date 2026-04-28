@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE END — Премиальные выпускные альбомы</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --black: #0a0a0a;
+    --white: #fff;
+    --red: #e8312a;
+  }
+
+  html, body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  /* Скрываем системный курсор только на десктопе */
+  @media (hover: hover) and (pointer: fine) {
+    html, body, * {
+      cursor: none !important;
+    }
+  }
+
+  /* ============ ЭКРАН ЗАГРУЗКИ ============ */
+  #loader {
+    position: fixed;
+    inset: 0;
+    background: var(--black);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    transition: opacity 0.6s ease, visibility 0.6s ease;
+  }
+
+  #loader.hidden {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  #glitch-text {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: var(--white);
+    white-space: nowrap;
+    user-select: none;
+    transition: color 0.2s ease;
+  }
+
+  #glitch-text.flash { color: var(--red); }
+
+  /* ============ КАСТОМНЫЙ КУРСОР ============ */
+  .cursor-dot,
+  .cursor-ring {
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 10000;
+    transform: translate(-50%, -50%);
+    will-change: transform;
+  }
+
+  .cursor-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--red);
+    border-radius: 50%;
+    transition: opacity 0.2s ease;
+  }
+
+  .cursor-ring {
+    width: 36px;
+    height: 36px;
+    border: 1.5px solid var(--red);
+    border-radius: 50%;
+    transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                height 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                background 0.3s ease,
+                opacity 0.2s ease;
+  }
+
+  .cursor-ring.hover {
+    width: 70px;
+    height: 70px;
+    background: rgba(232, 49, 42, 0.1);
+  }
+
+  @media (hover: none) or (pointer: coarse) {
+    .cursor-dot, .cursor-ring { display: none; }
+  }
+
+  /* ============ ГЛАВНЫЙ ЭКРАН ============ */
+  .hero {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 1s ease 0.3s;
+  }
+
+  .hero.visible { opacity: 1; }
+
+  /* Vimeo iframe в фоне */
+  .hero-video-wrap {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+    pointer-events: none; /* чтобы клики проходили сквозь видео на курсор */
+  }
+
+  .hero-video-wrap iframe {
+    /* Растягиваем видео так, чтобы оно покрыло весь экран без чёрных полос */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100vw;
+    height: 56.25vw;            /* 16:9 от ширины */
+    min-height: 100vh;
+    min-width: 177.77vh;        /* 16:9 от высоты */
+    transform: translate(-50%, -50%);
+    border: 0;
+  }
+
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(180deg,
+        rgba(10,10,10,0.55) 0%,
+        rgba(10,10,10,0.35) 40%,
+        rgba(10,10,10,0.75) 100%);
+    z-index: 2;
+  }
+
+  .hero-grain {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    opacity: 0.08;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    animation: grain 0.5s steps(2) infinite;
+  }
+
+  @keyframes grain {
+    0%   { transform: translate(0,0); }
+    25%  { transform: translate(-2%,1%); }
+    50%  { transform: translate(1%,-2%); }
+    75%  { transform: translate(-1%,2%); }
+    100% { transform: translate(2%,-1%); }
+  }
+
+  /* Угловые надписи */
+  .corner {
+    position: absolute;
+    z-index: 5;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.5;
+  }
+
+  .corner-tl { top: 24px; left: 24px; }
+  .corner-tr { top: 24px; right: 24px; text-align: right; }
+  .corner-bl { bottom: 24px; left: 24px; }
+  .corner-br {
+    bottom: 24px;
+    right: 24px;
+    text-align: right;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .corner .red-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--red);
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+    animation: blink 1.5s ease-in-out infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .scroll-progress-bar {
+    width: 80px;
+    height: 1px;
+    background: rgba(255,255,255,0.2);
+    position: relative;
+  }
+
+  .scroll-progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    height: 100%;
+    width: var(--progress, 0%);
+    background: var(--red);
+    transition: width 0.1s ease;
+  }
+
+  /* Контент по центру */
+  .hero-content {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0 24px;
+  }
+
+  /* THE END — компактно по центру, не на всю ширину */
+  .hero-title {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(60px, 14vw, 200px);
+    line-height: 0.85;
+    letter-spacing: -0.05em;
+    color: var(--white);
+    text-transform: uppercase;
+    user-select: none;
+  }
+
+  .hero-subtitle {
+    margin-top: 28px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.8s ease 1.5s, transform 0.8s ease 1.5s;
+  }
+
+  .hero.visible .hero-subtitle {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .scroll-hint {
+    position: absolute;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 5;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    text-align: center;
+    opacity: 0;
+    transition: opacity 1s ease 2s;
+  }
+
+  .hero.visible .scroll-hint { opacity: 1; }
+
+  .scroll-hint .arrow {
+    display: block;
+    margin-top: 8px;
+    animation: bounce 2s ease-in-out infinite;
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(8px); }
+  }
+
+  .placeholder-section {
+    height: 50vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 768px) {
+    .corner { font-size: 9px; letter-spacing: 1px; }
+    .corner-tl, .corner-tr { top: 16px; }
+    .corner-tl, .corner-bl { left: 16px; }
+    .corner-tr, .corner-br { right: 16px; }
+    .corner-bl, .corner-br { bottom: 16px; }
+    .scroll-progress-bar { width: 50px; }
+    .hero-subtitle { font-size: 10px; letter-spacing: 2px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ ЭКРАН ЗАГРУЗКИ ============ -->
+<div id="loader">
+  <div id="glitch-text">·</div>
+</div>
+
+<!-- ============ КАСТОМНЫЙ КУРСОР ============ -->
+<div class="cursor-dot"></div>
+<div class="cursor-ring"></div>
+
+<!-- ============ ГЛАВНЫЙ ЭКРАН ============ -->
+<section class="hero" id="hero">
+
+  <!-- VIMEO ВИДЕО ФОН -->
+  <div class="hero-video-wrap">
+    <iframe
+      src="https://player.vimeo.com/video/1012912314?background=1&autoplay=1&loop=1&muted=1&autopause=0&controls=0&badge=0&app_id=58479"
+      frameborder="0"
+      allow="autoplay; fullscreen; picture-in-picture"
+      title="THE END">
+    </iframe>
+  </div>
+
+  <div class="hero-overlay"></div>
+  <div class="hero-grain"></div>
+
+  <!-- Угловые надписи -->
+  <div class="corner corner-tl">
+    THE END<br>
+    EST. 2022
+  </div>
+
+  <div class="corner corner-tr">
+    <span class="red-dot"></span>RECORDING<br>
+    BY LYKBOOK
+  </div>
+
+  <div class="corner corner-bl">
+    PREMIUM LINE<br>
+    BY LYKBOOK
+  </div>
+
+  <div class="corner corner-br">
+    <span id="scroll-percent">00</span>%
+    <div class="scroll-progress-bar" id="scroll-bar"></div>
+  </div>
+
+  <!-- Заголовок -->
+  <div class="hero-content">
+    <h1 class="hero-title" id="hero-title">THE END</h1>
+    <div class="hero-subtitle">— ПРЕМИАЛЬНЫЕ ВЫПУСКНЫЕ АЛЬБОМЫ —</div>
+  </div>
+
+  <!-- Скролл подсказка -->
+  <div class="scroll-hint">
+    SCROLL
+    <span class="arrow">↓</span>
+  </div>
+</section>
+
+<!-- Заглушки -->
+<section class="placeholder-section">— about (скоро) —</section>
+<section class="placeholder-section">— портфолио (скоро) —</section>
+<section class="placeholder-section">— контакты (скоро) —</section>
+
+<script>
+/* ============ 1. ЗАГРУЗКА С ГЛИТЧЕМ ============ */
+(function() {
+  const glitchEl = document.getElementById('glitch-text');
+  const loader = document.getElementById('loader');
+  const hero = document.getElementById('hero');
+
+  const chars = '的一是不了人我在有他这为之大来以个中上们到说国和地也子时道出而要于就下得可你年生自会那后能对着事其里所去行过家十用发天如然作方成者多';
+  const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const digits = '0123456789';
+  const symbols = '!@#$%&*+=?<>/\\|';
+  const allChars = chars + latin + digits + symbols;
+
+  const finalText = 'THE END';
+  const totalDuration = 2500;
+  const startTime = performance.now();
+
+  function getRandomString(length) {
+    let s = '';
+    for (let i = 0; i < length; i++) {
+      s += allChars[Math.floor(Math.random() * allChars.length)];
+    }
+    return s;
+  }
+
+  let lastUpdate = 0;
+
+  function animate(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / totalDuration, 1);
+    const interval = 40 + progress * 80;
+
+    if (now - lastUpdate >= interval) {
+      lastUpdate = now;
+      const len = Math.max(1, Math.round(1 + progress * 6));
+
+      if (progress < 0.85) {
+        glitchEl.textContent = getRandomString(len);
+      } else if (progress < 1) {
+        const revealProgress = (progress - 0.85) / 0.15;
+        let result = '';
+        for (let i = 0; i < finalText.length; i++) {
+          if (Math.random() < revealProgress) {
+            result += finalText[i];
+          } else {
+            result += finalText[i] === ' '
+              ? ' '
+              : allChars[Math.floor(Math.random() * allChars.length)];
+          }
+        }
+        glitchEl.textContent = result;
+      }
+    }
+
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      finishLoader();
+    }
+  }
+
+  function finishLoader() {
+    glitchEl.textContent = finalText;
+    setTimeout(() => {
+      glitchEl.classList.add('flash');
+      setTimeout(() => glitchEl.classList.remove('flash'), 150);
+    }, 250);
+    setTimeout(() => {
+      loader.classList.add('hidden');
+      hero.classList.add('visible');
+      animateHeroTitle();
+    }, 1200);
+  }
+
+  function animateHeroTitle() {
+    const titleEl = document.getElementById('hero-title');
+    const finalTitle = 'THE END';
+    const duration = 1000;
+    const startT = performance.now();
+    let lastT = 0;
+
+    function tick(now) {
+      const elapsed = now - startT;
+      const p = Math.min(elapsed / duration, 1);
+
+      if (now - lastT >= 50) {
+        lastT = now;
+        let result = '';
+        for (let i = 0; i < finalTitle.length; i++) {
+          if (finalTitle[i] === ' ') {
+            result += ' ';
+          } else if (Math.random() < p) {
+            result += finalTitle[i];
+          } else {
+            result += allChars[Math.floor(Math.random() * allChars.length)];
+          }
+        }
+        titleEl.textContent = result;
+      }
+
+      if (p < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        titleEl.textContent = finalTitle;
+      }
+    }
+
+    titleEl.textContent = getRandomString(finalTitle.length);
+    requestAnimationFrame(tick);
+  }
+
+  requestAnimationFrame(animate);
+})();
+
+/* ============ 2. КАСТОМНЫЙ КУРСОР ============ */
+(function() {
+  const dot = document.querySelector('.cursor-dot');
+  const ring = document.querySelector('.cursor-ring');
+  if (!dot || !ring) return;
+
+  let mouseX = window.innerWidth / 2;
+  let mouseY = window.innerHeight / 2;
+  let dotX = mouseX, dotY = mouseY;
+  let ringX = mouseX, ringY = mouseY;
+
+  document.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+  });
+
+  function loop() {
+    dotX += (mouseX - dotX) * 0.9;
+    dotY += (mouseY - dotY) * 0.9;
+    ringX += (mouseX - ringX) * 0.15;
+    ringY += (mouseY - ringY) * 0.15;
+
+    dot.style.transform = `translate(${dotX}px, ${dotY}px) translate(-50%, -50%)`;
+    ring.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
+
+    requestAnimationFrame(loop);
+  }
+  loop();
+
+  const hoverables = 'a, button, .hero-title, [data-magnet]';
+  document.addEventListener('mouseover', (e) => {
+    if (e.target.closest(hoverables)) ring.classList.add('hover');
+  });
+  document.addEventListener('mouseout', (e) => {
+    if (e.target.closest(hoverables)) ring.classList.remove('hover');
+  });
+
+  document.addEventListener('mouseleave', () => {
+    dot.style.opacity = '0';
+    ring.style.opacity = '0';
+  });
+  document.addEventListener('mouseenter', () => {
+    dot.style.opacity = '1';
+    ring.style.opacity = '1';
+  });
+})();
+
+/* ============ 3. СКРОЛЛ-ИНДИКАТОР ============ */
+(function() {
+  const percentEl = document.getElementById('scroll-percent');
+  const barEl = document.getElementById('scroll-bar');
+  if (!percentEl || !barEl) return;
+
+  function updateScroll() {
+    const scrollTop = window.scrollY;
+    const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const percent = scrollHeight > 0
+      ? Math.round((scrollTop / scrollHeight) * 100)
+      : 0;
+    percentEl.textContent = percent.toString().padStart(2, '0');
+    barEl.style.setProperty('--progress', percent + '%');
+  }
+
+  window.addEventListener('scroll', updateScroll, { passive: true });
+  updateScroll();
+})();
+</script>
+
+</body>
+</html>
