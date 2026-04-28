@@ -168,15 +168,18 @@
   }
 
   /* Угловые надписи */
+  /* Угловые надписи — FIXED, видны всегда при скролле */
   .corner {
-    position: absolute;
-    z-index: 5;
+    position: fixed;
+    z-index: 50;
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
     letter-spacing: 1.5px;
     text-transform: uppercase;
     color: rgba(255,255,255,0.7);
     line-height: 1.5;
+    mix-blend-mode: difference; /* делает текст читаемым на любом фоне */
+    pointer-events: none;
   }
 
   .corner-tl { top: 24px; left: 24px; }
@@ -339,9 +342,9 @@
   .about-title {
     font-family: 'Inter', sans-serif;
     font-weight: 900;
-    font-size: clamp(48px, 11vw, 180px);
-    line-height: 0.85;
-    letter-spacing: -0.05em;
+    font-size: clamp(48px, 10vw, 160px);
+    line-height: 1.0;
+    letter-spacing: -0.03em;
     text-transform: uppercase;
     color: var(--white);
     margin-bottom: 80px;
@@ -542,6 +545,27 @@
 <div class="cursor-dot"></div>
 <div class="cursor-ring"></div>
 
+<!-- ============ FIXED УГЛОВЫЕ НАДПИСИ (видны всегда) ============ -->
+<div class="corner corner-tl">
+  THE END<br>
+  EST. 2022
+</div>
+
+<div class="corner corner-tr">
+  <span class="red-dot"></span>RECORDING<br>
+  BY LYKBOOK
+</div>
+
+<div class="corner corner-bl">
+  <span id="section-name">INTRO</span><br>
+  PREMIUM LINE
+</div>
+
+<div class="corner corner-br">
+  <span id="scroll-percent">00</span>%
+  <div class="scroll-progress-bar" id="scroll-bar"></div>
+</div>
+
 <!-- ============ ГЛАВНЫЙ ЭКРАН ============ -->
 <section class="hero" id="hero">
 
@@ -557,27 +581,6 @@
 
   <div class="hero-overlay"></div>
   <div class="hero-grain"></div>
-
-  <!-- Угловые надписи -->
-  <div class="corner corner-tl">
-    THE END<br>
-    EST. 2022
-  </div>
-
-  <div class="corner corner-tr">
-    <span class="red-dot"></span>RECORDING<br>
-    BY LYKBOOK
-  </div>
-
-  <div class="corner corner-bl">
-    PREMIUM LINE<br>
-    BY LYKBOOK
-  </div>
-
-  <div class="corner corner-br">
-    <span id="scroll-percent">00</span>%
-    <div class="scroll-progress-bar" id="scroll-bar"></div>
-  </div>
 
   <!-- Заголовок -->
   <div class="hero-content">
@@ -617,22 +620,6 @@
     <p>
       Обе реакции нас устраивают. Мы давно перестали делать альбомы для всех.
     </p>
-  </div>
-
-  <!-- Бегущая строка -->
-  <div class="marquee">
-    <div class="marquee-track">
-      THE END <span class="dot">●</span>
-      MADE BY LYKBOOK <span class="dot">●</span>
-      ВЫПУСКНЫЕ АЛЬБОМЫ <span class="dot">●</span>
-      МОСКВА <span class="dot">●</span>
-      ПРЕМИАЛЬНЫЙ ДИЗАЙН <span class="dot">●</span>
-      THE END <span class="dot">●</span>
-      MADE BY LYKBOOK <span class="dot">●</span>
-      ВЫПУСКНЫЕ АЛЬБОМЫ <span class="dot">●</span>
-      МОСКВА <span class="dot">●</span>
-      ПРЕМИАЛЬНЫЙ ДИЗАЙН <span class="dot">●</span>
-    </div>
   </div>
 
   <!-- Цифры (счётчики) -->
@@ -706,9 +693,9 @@
 </section>
 
 <!-- Заглушки для оставшихся секций -->
-<section class="placeholder-section">— проекты DUO / RED / LIME / VGRD / ECHO (скоро) —</section>
-<section class="placeholder-section">— портфолио (скоро) —</section>
-<section class="placeholder-section">— контакты (скоро) —</section>
+<section class="placeholder-section" id="works">— проекты DUO / RED / LIME / VGRD / ECHO (скоро) —</section>
+<section class="placeholder-section" id="portfolio">— портфолио (скоро) —</section>
+<section class="placeholder-section" id="contact">— контакты (скоро) —</section>
 
 <script>
 /* ============ 1. ЗАГРУЗКА С ГЛИТЧЕМ ============ */
@@ -1021,6 +1008,41 @@
   }, { threshold: 0.5 });
 
   observer.observe(titleEl);
+})();
+
+/* ============ 7. ОТСЛЕЖИВАНИЕ ТЕКУЩЕЙ СЕКЦИИ ============ */
+(function() {
+  const sectionLabel = document.getElementById('section-name');
+  if (!sectionLabel) return;
+
+  const sections = [
+    { id: 'hero',       label: 'INTRO' },
+    { id: 'about',      label: 'ABOUT' },
+    { id: 'works',      label: 'PROJECTS' },
+    { id: 'portfolio',  label: 'PORTFOLIO' },
+    { id: 'contact',    label: 'CONTACT' }
+  ];
+
+  function updateSection() {
+    const scrollPos = window.scrollY + window.innerHeight * 0.4;
+    let active = sections[0].label;
+
+    for (const sec of sections) {
+      const el = document.getElementById(sec.id);
+      if (!el) continue;
+      const top = el.offsetTop;
+      if (scrollPos >= top) {
+        active = sec.label;
+      }
+    }
+
+    if (sectionLabel.textContent !== active) {
+      sectionLabel.textContent = active;
+    }
+  }
+
+  window.addEventListener('scroll', updateSection, { passive: true });
+  updateSection();
 })();
 </script>
 
