@@ -20,15 +20,17 @@
     background: var(--black);
     color: var(--white);
     font-family: 'Inter', sans-serif;
-    overflow-x: hidden;
-    min-height: 100vh;
+    overflow: hidden;             /* НЕТ скролла на главной */
+    height: 100vh;
+    width: 100%;
   }
 
-  /* Скрываем системный курсор только на десктопе */
+  body.overlay-open {
+    overflow: hidden;
+  }
+
   @media (hover: hover) and (pointer: fine) {
-    html, body, * {
-      cursor: none !important;
-    }
+    html, body, * { cursor: none !important; }
   }
 
   /* ============ ЭКРАН ЗАГРУЗКИ ============ */
@@ -43,10 +45,7 @@
     transition: opacity 0.6s ease, visibility 0.6s ease;
   }
 
-  #loader.hidden {
-    opacity: 0;
-    visibility: hidden;
-  }
+  #loader.hidden { opacity: 0; visibility: hidden; }
 
   #glitch-text {
     font-family: 'Inter', sans-serif;
@@ -62,8 +61,7 @@
   #glitch-text.flash { color: var(--red); }
 
   /* ============ КАСТОМНЫЙ КУРСОР ============ */
-  .cursor-dot,
-  .cursor-ring {
+  .cursor-dot, .cursor-ring {
     position: fixed;
     top: 0;
     left: 0;
@@ -102,11 +100,52 @@
     .cursor-dot, .cursor-ring { display: none; }
   }
 
+  /* ============ FIXED УГЛОВЫЕ НАДПИСИ ============ */
+  .corner {
+    position: fixed;
+    z-index: 50;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.5;
+    mix-blend-mode: difference;
+    pointer-events: none;
+  }
+
+  .corner-tl { top: 24px; left: 24px; }
+  .corner-tr { top: 24px; right: 24px; text-align: right; }
+  .corner-bl { bottom: 24px; left: 24px; }
+  .corner-br {
+    bottom: 24px;
+    right: 24px;
+    text-align: right;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .corner .red-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--red);
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+    animation: blink 1.5s ease-in-out infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
   /* ============ ГЛАВНЫЙ ЭКРАН ============ */
   .hero {
-    position: relative;
-    width: 100%;
-    height: 100vh;
+    position: fixed;
+    inset: 0;
     overflow: hidden;
     opacity: 0;
     transition: opacity 1s ease 0.3s;
@@ -114,7 +153,6 @@
 
   .hero.visible { opacity: 1; }
 
-  /* Vimeo iframe в фоне */
   .hero-video-wrap {
     position: absolute;
     inset: 0;
@@ -124,13 +162,10 @@
     background: var(--black);
   }
 
-  /* iframe c видео — растягиваем с запасом, чтобы гарантированно покрыть экран
-     и не было дёрганий по краям */
   .hero-video-wrap iframe {
     position: absolute;
     top: 50%;
     left: 50%;
-    /* Берём с запасом: 110vw × 110vh — чтобы скрыть UI Vimeo по краям */
     width: max(110vw, calc(110vh * 16 / 9));
     height: max(110vh, calc(110vw * 9 / 16));
     transform: translate(-50%, -50%);
@@ -167,67 +202,7 @@
     100% { transform: translate(2%,-1%); }
   }
 
-  /* Угловые надписи */
-  /* Угловые надписи — FIXED, видны всегда при скролле */
-  .corner {
-    position: fixed;
-    z-index: 50;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.7);
-    line-height: 1.5;
-    mix-blend-mode: difference; /* делает текст читаемым на любом фоне */
-    pointer-events: none;
-  }
-
-  .corner-tl { top: 24px; left: 24px; }
-  .corner-tr { top: 24px; right: 24px; text-align: right; }
-  .corner-bl { bottom: 24px; left: 24px; }
-  .corner-br {
-    bottom: 24px;
-    right: 24px;
-    text-align: right;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .corner .red-dot {
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    background: var(--red);
-    border-radius: 50%;
-    margin-right: 6px;
-    vertical-align: middle;
-    animation: blink 1.5s ease-in-out infinite;
-  }
-
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-  }
-
-  .scroll-progress-bar {
-    width: 80px;
-    height: 1px;
-    background: rgba(255,255,255,0.2);
-    position: relative;
-  }
-
-  .scroll-progress-bar::after {
-    content: '';
-    position: absolute;
-    top: 0; left: 0;
-    height: 100%;
-    width: var(--progress, 0%);
-    background: var(--red);
-    transition: width 0.1s ease;
-  }
-
-  /* Контент по центру */
+  /* Центральный контент главного экрана */
   .hero-content {
     position: absolute;
     inset: 0;
@@ -235,12 +210,73 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     text-align: center;
-    padding: 0 24px;
+    padding: 100px 24px 80px;
   }
 
-  /* THE END — компактно по центру, не на всю ширину */
+  /* НАВ-СТРОКА ПРОЕКТОВ (СВЕРХУ) */
+  .nav-projects, .nav-sections {
+    display: flex;
+    gap: clamp(24px, 4vw, 64px);
+    justify-content: center;
+    flex-wrap: wrap;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: opacity 0.8s ease 1.6s, transform 0.8s ease 1.6s;
+  }
+
+  .nav-sections {
+    transform: translateY(20px);
+    transition: opacity 0.8s ease 1.8s, transform 0.8s ease 1.8s;
+  }
+
+  .hero.visible .nav-projects,
+  .hero.visible .nav-sections {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .nav-link {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.85);
+    text-decoration: none;
+    background: none;
+    border: none;
+    padding: 0;
+    position: relative;
+    transition: color 0.3s ease, transform 0.3s ease;
+  }
+
+  .nav-link:hover {
+    color: var(--red);
+    transform: translateY(-2px);
+  }
+
+  .nav-link::before {
+    content: attr(data-num);
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 8px;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 1px;
+  }
+
+  /* Центральный заголовок */
+  .hero-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    width: 100%;
+  }
+
   .hero-title {
     font-family: 'Inter', sans-serif;
     font-weight: 900;
@@ -264,269 +300,61 @@
     transition: opacity 0.8s ease 1.5s, transform 0.8s ease 1.5s;
   }
 
-  .hero.visible .hero-subtitle {
-    opacity: 1;
+  .hero.visible .hero-subtitle { opacity: 1; transform: translateY(0); }
+
+  /* ============ OVERLAY (выезжающие секции) ============ */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: var(--black);
+    transform: translateY(100%);
+    transition: transform 0.7s cubic-bezier(0.76, 0, 0.24, 1);
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .overlay.open {
     transform: translateY(0);
   }
 
-  .scroll-hint {
-    position: absolute;
-    bottom: 60px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 5;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.5);
-    text-align: center;
-    opacity: 0;
-    transition: opacity 1s ease 2s;
-  }
-
-  .hero.visible .scroll-hint { opacity: 1; }
-
-  .scroll-hint .arrow {
-    display: block;
-    margin-top: 8px;
-    animation: bounce 2s ease-in-out infinite;
-  }
-
-  @keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(8px); }
-  }
-
-  .placeholder-section {
-    height: 50vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #333;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-  }
-
-  /* ===================================
-     PROJECTS / СЕТКА ПЛИТОК
-     =================================== */
-  .projects {
-    position: relative;
-    padding: 160px 8vw;
-    background: var(--black);
-  }
-
-  .projects-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-bottom: 80px;
-    flex-wrap: wrap;
-    gap: 24px;
-  }
-
-  .projects-title {
-    font-family: 'Inter', sans-serif;
-    font-weight: 900;
-    font-size: clamp(40px, 8vw, 120px);
-    line-height: 1.0;
-    letter-spacing: -0.03em;
-    text-transform: uppercase;
-    color: var(--white);
-  }
-
-  .projects-title .red {
-    color: var(--red);
-  }
-
-  .projects-sub {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.5);
-    max-width: 280px;
-    line-height: 1.6;
-  }
-
-  .projects-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(2, 1fr);
-    gap: 16px;
-  }
-
-  /* Первая плитка крупнее (на 2 колонки) */
-  .project-card:first-child {
-    grid-column: span 2;
-  }
-
-  .project-card {
-    position: relative;
-    aspect-ratio: 4 / 3;
-    overflow: hidden;
-    background: #111;
-    text-decoration: none;
-    color: inherit;
-    cursor: none;
-  }
-
-  .project-card:first-child {
-    aspect-ratio: 8 / 3;
-  }
-
-  /* Плейсхолдер-обложка */
-  .project-cover {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1),
-                filter 0.5s ease;
-  }
-
-  /* Каждый проект — свой градиент */
-  .project-card[data-project="duo"]  .project-cover {
-    background: radial-gradient(circle at 30% 40%, #2a2a2a, #0a0a0a 70%);
-  }
-  .project-card[data-project="red"]  .project-cover {
-    background: radial-gradient(circle at 70% 50%, #3a1614, #0a0a0a 70%);
-  }
-  .project-card[data-project="lime"] .project-cover {
-    background: radial-gradient(circle at 40% 60%, #1a2818, #0a0a0a 70%);
-  }
-  .project-card[data-project="vgrd"] .project-cover {
-    background: radial-gradient(circle at 60% 30%, #1f1f2e, #0a0a0a 70%);
-  }
-  .project-card[data-project="echo"] .project-cover {
-    background: radial-gradient(circle at 50% 50%, #2a1f1a, #0a0a0a 70%);
-  }
-
-  .project-card:hover .project-cover {
-    transform: scale(1.05);
-    filter: brightness(0.5);
-  }
-
-  /* Декоративный код-символ на каждой плитке */
-  .project-deco {
-    position: absolute;
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 700;
-    font-size: clamp(40px, 10vw, 200px);
-    color: rgba(255,255,255,0.04);
-    letter-spacing: -0.05em;
-    line-height: 1;
-    user-select: none;
-    pointer-events: none;
-  }
-
-  .project-card:nth-child(1) .project-deco { top: 8%; left: 6%; }
-  .project-card:nth-child(2) .project-deco { bottom: 6%; right: 6%; }
-  .project-card:nth-child(3) .project-deco { top: 8%; right: 8%; }
-  .project-card:nth-child(4) .project-deco { bottom: 6%; left: 6%; }
-  .project-card:nth-child(5) .project-deco { top: 8%; left: 8%; }
-
-  /* Главная информация плитки */
-  .project-info {
-    position: absolute;
-    z-index: 2;
-    bottom: 32px;
-    left: 32px;
-    right: 32px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    gap: 16px;
-  }
-
-  .project-name {
-    font-family: 'Inter', sans-serif;
-    font-weight: 900;
-    font-size: clamp(36px, 5vw, 72px);
-    letter-spacing: -0.02em;
-    text-transform: uppercase;
-    line-height: 0.9;
-    color: var(--white);
-    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-                color 0.4s ease;
-  }
-
-  .project-card:hover .project-name {
-    color: var(--red);
-    transform: translateX(-8px);
-  }
-
-  /* Бейдж сверху-слева — id проекта */
-  .project-badge {
-    position: absolute;
+  /* Кнопка закрытия */
+  .overlay-close {
+    position: fixed;
     top: 24px;
-    left: 24px;
-    z-index: 2;
+    right: 24px;
+    z-index: 200;
+    width: 48px;
+    height: 48px;
+    background: none;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: var(--white);
     font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.4);
+    font-size: 18px;
     display: flex;
     align-items: center;
-    gap: 8px;
-  }
-
-  .project-badge::before {
-    content: '';
-    width: 6px;
-    height: 6px;
-    background: var(--red);
-    border-radius: 50%;
-  }
-
-  /* CTA "ENTER →" появляется при наведении */
-  .project-cta {
-    position: absolute;
-    z-index: 2;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) translateY(20px);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    color: var(--white);
+    justify-content: center;
+    transition: background 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
     opacity: 0;
-    transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     pointer-events: none;
-    white-space: nowrap;
-    border: 1px solid var(--white);
-    padding: 14px 28px;
   }
 
-  .project-card:hover .project-cta {
+  .overlay-close.visible {
     opacity: 1;
-    transform: translate(-50%, -50%) translateY(0);
+    pointer-events: auto;
   }
 
-  /* Адаптив проектов */
-  @media (max-width: 900px) {
-    .projects-grid {
-      grid-template-columns: 1fr;
-      grid-template-rows: auto;
-    }
-    .project-card,
-    .project-card:first-child {
-      grid-column: span 1;
-      aspect-ratio: 4 / 3;
-    }
-    .project-name { font-size: 48px; }
+  .overlay-close:hover {
+    background: var(--red);
+    border-color: var(--red);
+    transform: rotate(90deg);
   }
+
+  /* ============ ABOUT ОВЕРЛЕЙ ============ */
   .about {
     position: relative;
-    padding: 160px 8vw;
+    padding: 120px 8vw 120px;
     background: var(--black);
-    overflow: hidden;
   }
 
   .about-label {
@@ -559,9 +387,7 @@
     margin-bottom: 80px;
   }
 
-  .about-title .red {
-    color: var(--red);
-  }
+  .about-title .red { color: var(--red); }
 
   .about-manifest {
     max-width: 800px;
@@ -573,28 +399,18 @@
     margin-bottom: 80px;
   }
 
-  .about-manifest p {
-    margin-bottom: 24px;
-  }
+  .about-manifest p { margin-bottom: 24px; }
+  .about-manifest strong { font-weight: 900; color: var(--white); }
 
-  .about-manifest strong {
-    font-weight: 900;
-    color: var(--white);
-  }
-
-  /* Блок с цифрами */
+  /* Цифры */
   .stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 40px;
-    margin: 120px 0;
+    margin: 80px 0;
     border-top: 1px solid rgba(255,255,255,0.1);
     border-bottom: 1px solid rgba(255,255,255,0.1);
     padding: 60px 0;
-  }
-
-  .stat {
-    text-align: left;
   }
 
   .stat-number {
@@ -624,62 +440,28 @@
     line-height: 1.5;
   }
 
-  /* Бегущая строка */
-  .marquee {
-    overflow: hidden;
-    white-space: nowrap;
-    margin: 80px -8vw;
-    padding: 24px 0;
-    border-top: 1px solid rgba(255,255,255,0.1);
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-  }
-
-  .marquee-track {
-    display: inline-block;
-    animation: marquee-scroll 30s linear infinite;
-    font-family: 'Inter', sans-serif;
-    font-weight: 900;
-    font-size: clamp(24px, 4vw, 56px);
-    letter-spacing: -0.02em;
-    text-transform: uppercase;
-    color: var(--white);
-  }
-
-  .marquee-track .dot {
-    color: var(--red);
-    margin: 0 32px;
-  }
-
-  @keyframes marquee-scroll {
-    0%   { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
-  }
-
-  /* Цитата-вставка "Это болезнь" */
+  /* Цитата */
   .quote-block {
     text-align: center;
-    margin: 160px auto;
+    margin: 120px auto;
     max-width: 1000px;
   }
 
   .quote-block .q {
     font-family: 'Inter', sans-serif;
     font-weight: 900;
-    font-size: clamp(40px, 8vw, 120px);
+    font-size: clamp(36px, 7vw, 100px);
     line-height: 0.95;
-    letter-spacing: -0.04em;
+    letter-spacing: -0.03em;
     text-transform: uppercase;
     color: var(--white);
   }
 
-  .quote-block .q-red {
-    color: var(--red);
-    display: block;
-  }
+  .quote-block .q-red { color: var(--red); display: block; }
 
   /* Бегущая галерея фото */
   .photo-marquee {
-    margin: 120px -8vw;
+    margin: 100px -8vw;
     overflow: hidden;
   }
 
@@ -690,9 +472,7 @@
     width: max-content;
   }
 
-  .photo-track:hover {
-    animation-play-state: paused;
-  }
+  .photo-track:hover { animation-play-state: paused; }
 
   .photo-track img {
     height: 380px;
@@ -712,7 +492,48 @@
     100% { transform: translateX(-50%); }
   }
 
-  /* Появление при скролле */
+  /* ============ COMING SOON ОВЕРЛЕИ ============ */
+  .coming-soon {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 24px;
+    text-align: center;
+  }
+
+  .coming-soon-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 32px;
+  }
+
+  .coming-soon-title {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(60px, 14vw, 200px);
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+    text-transform: uppercase;
+    color: var(--white);
+  }
+
+  .coming-soon-title .red { color: var(--red); }
+
+  .coming-soon-text {
+    margin-top: 48px;
+    font-family: 'Inter', sans-serif;
+    font-size: 18px;
+    color: rgba(255,255,255,0.6);
+    max-width: 500px;
+    line-height: 1.6;
+  }
+
+  /* Появление при скролле внутри оверлеев */
   .reveal {
     opacity: 0;
     transform: translateY(40px);
@@ -725,21 +546,24 @@
     transform: translateY(0);
   }
 
-  @media (max-width: 768px) {
-    .about { padding: 100px 6vw; }
-    .stats { grid-template-columns: 1fr; gap: 60px; }
-    .photo-track img { height: 240px; }
-    .marquee, .photo-marquee { margin-left: -6vw; margin-right: -6vw; }
-  }
-
+  /* Адаптив */
   @media (max-width: 768px) {
     .corner { font-size: 9px; letter-spacing: 1px; }
     .corner-tl, .corner-tr { top: 16px; }
     .corner-tl, .corner-bl { left: 16px; }
     .corner-tr, .corner-br { right: 16px; }
     .corner-bl, .corner-br { bottom: 16px; }
-    .scroll-progress-bar { width: 50px; }
+
+    .nav-link { font-size: 10px; letter-spacing: 2px; }
+    .nav-projects, .nav-sections { gap: 16px; }
+
+    .hero-content { padding: 80px 16px 60px; }
     .hero-subtitle { font-size: 10px; letter-spacing: 2px; }
+
+    .about { padding: 80px 6vw; }
+    .stats { grid-template-columns: 1fr; gap: 60px; }
+    .photo-track img { height: 240px; }
+    .photo-marquee { margin-left: -6vw; margin-right: -6vw; }
   }
 </style>
 </head>
@@ -754,7 +578,7 @@
 <div class="cursor-dot"></div>
 <div class="cursor-ring"></div>
 
-<!-- ============ FIXED УГЛОВЫЕ НАДПИСИ (видны всегда) ============ -->
+<!-- ============ FIXED УГЛОВЫЕ НАДПИСИ ============ -->
 <div class="corner corner-tl">
   THE END<br>
   EST. 2022
@@ -771,8 +595,7 @@
 </div>
 
 <div class="corner corner-br">
-  <span id="scroll-percent">00</span>%
-  <div class="scroll-progress-bar" id="scroll-bar"></div>
+  BY LYKBOOK
 </div>
 
 <!-- ============ ГЛАВНЫЙ ЭКРАН ============ -->
@@ -791,190 +614,175 @@
   <div class="hero-overlay"></div>
   <div class="hero-grain"></div>
 
-  <!-- Заголовок -->
+  <!-- ВЕСЬ КОНТЕНТ ГЛАВНОЙ -->
   <div class="hero-content">
-    <h1 class="hero-title" id="hero-title">THE END</h1>
-    <div class="hero-subtitle">— ПРЕМИАЛЬНЫЕ ВЫПУСКНЫЕ АЛЬБОМЫ —</div>
-  </div>
 
-  <!-- Скролл подсказка -->
-  <div class="scroll-hint">
-    SCROLL
-    <span class="arrow">↓</span>
+    <!-- ВЕРХ: ПРОЕКТЫ (внешние ссылки) -->
+    <nav class="nav-projects">
+      <a class="nav-link" data-num="01" href="https://theend.school/lime">LIME</a>
+      <a class="nav-link" data-num="02" href="https://theend.school/indevelopment">ECHO</a>
+      <a class="nav-link" data-num="03" href="https://theend.school/red">RED</a>
+      <a class="nav-link" data-num="04" href="https://theend.school/ember">DUO</a>
+      <a class="nav-link" data-num="05" href="https://theend.school/indevelopment">VGRD</a>
+    </nav>
+
+    <!-- ЦЕНТР: ЗАГОЛОВОК -->
+    <div class="hero-center">
+      <h1 class="hero-title" id="hero-title">THE END</h1>
+      <div class="hero-subtitle">— ПРЕМИАЛЬНЫЕ ВЫПУСКНЫЕ АЛЬБОМЫ —</div>
+    </div>
+
+    <!-- НИЗ: РАЗДЕЛЫ (открывают оверлеи) -->
+    <nav class="nav-sections">
+      <button class="nav-link" data-num="01" data-overlay="works">WORKS</button>
+      <button class="nav-link" data-num="02" data-overlay="reels">REELS</button>
+      <button class="nav-link" data-num="03" data-overlay="about">ABOUT</button>
+      <button class="nav-link" data-num="04" data-overlay="photo">PHOTO</button>
+      <button class="nav-link" data-num="05" data-overlay="contact">CONTACT</button>
+    </nav>
+
   </div>
 </section>
 
-<!-- ============ ABOUT ============ -->
-<section class="about" id="about">
+<!-- Кнопка закрытия оверлея -->
+<button class="overlay-close" id="overlay-close" aria-label="Закрыть">×</button>
 
-  <div class="about-label reveal">[ ABOUT / 01 ]</div>
+<!-- ============ ОВЕРЛЕЙ: ABOUT ============ -->
+<div class="overlay" id="overlay-about" data-name="ABOUT">
+  <section class="about">
 
-  <h2 class="about-title reveal" id="about-title">
-    КОГДА ХОЧЕТСЯ<br>
-    <span class="red">БОЛЬШЕГО.</span>
-  </h2>
+    <div class="about-label reveal">[ ABOUT / 03 ]</div>
 
-  <div class="about-manifest reveal">
-    <p>
-      Мы делаем альбомы, которые <strong>не хочется убирать на полку.</strong>
-      Которые листаешь сам, показываешь гостям, достаёшь через десять лет
-      и думаешь — вот это да.
-    </p>
-    <p>
-      Нас называют по-разному. Одни говорят — лучшая студия в Москве.
-      Другие — слишком дорого и непонятно зачем так заморачиваться.
-      Третьи молча копируют наши решения — и это, наверное,
-      <strong>самый честный комплимент.</strong>
-    </p>
-    <p>
-      Обе реакции нас устраивают. Мы давно перестали делать альбомы для всех.
-    </p>
-  </div>
-
-  <!-- Цифры (счётчики) -->
-  <div class="stats reveal">
-    <div class="stat">
-      <div class="stat-number" data-target="604">0</div>
-      <div class="stat-label">классов в год<br>с нами работают</div>
-    </div>
-    <div class="stat">
-      <div class="stat-number">
-        <span data-target="50">0</span><span class="suffix">+</span>
-      </div>
-      <div class="stat-label">проектов<br>под линейкой THE END</div>
-    </div>
-    <div class="stat">
-      <div class="stat-number" data-target="15">0</div>
-      <div class="stat-label">лет<br>в индустрии</div>
-    </div>
-  </div>
-
-  <!-- Цитата -->
-  <div class="quote-block reveal">
-    <div class="q">
-      Каждый проект начинается с нуля.
-      Иногда мы переделываем разворот три раза —
-      не потому что клиент просит, а потому что
-      <span class="q-red">сами не можем остановиться.</span>
-    </div>
-  </div>
-
-  <!-- Бегущая галерея фото -->
-  <div class="photo-marquee">
-    <div class="photo-track">
-      <img src="https://i.ibb.co/6cFzHCdZ/1-4.jpg" alt="">
-      <img src="https://i.ibb.co/3mWH90nD/1-5.jpg" alt="">
-      <img src="https://i.ibb.co/fzBgv3Bh/1-12.jpg" alt="">
-      <img src="https://i.ibb.co/XfPBVJ0Z/1-25.jpg" alt="">
-      <img src="https://i.ibb.co/BDNNxGZ/1-29.jpg" alt="">
-      <img src="https://i.ibb.co/bg9FM3BB/1-42.jpg" alt="">
-      <img src="https://i.ibb.co/YTXTW2t1/1-37.jpg" alt="">
-      <img src="https://i.ibb.co/pjCmNv86/1-35.jpg" alt="">
-      <img src="https://i.ibb.co/TBLpBHsf/1-32.jpg" alt="">
-      <!-- Дубль для бесшовной прокрутки -->
-      <img src="https://i.ibb.co/6cFzHCdZ/1-4.jpg" alt="">
-      <img src="https://i.ibb.co/3mWH90nD/1-5.jpg" alt="">
-      <img src="https://i.ibb.co/fzBgv3Bh/1-12.jpg" alt="">
-      <img src="https://i.ibb.co/XfPBVJ0Z/1-25.jpg" alt="">
-      <img src="https://i.ibb.co/BDNNxGZ/1-29.jpg" alt="">
-      <img src="https://i.ibb.co/bg9FM3BB/1-42.jpg" alt="">
-      <img src="https://i.ibb.co/YTXTW2t1/1-37.jpg" alt="">
-      <img src="https://i.ibb.co/pjCmNv86/1-35.jpg" alt="">
-      <img src="https://i.ibb.co/TBLpBHsf/1-32.jpg" alt="">
-    </div>
-  </div>
-
-  <!-- Финальная цитата -->
-  <div class="quote-block reveal">
-    <div class="q">
-      Это болезнь.<br>
-      <span class="q-red">Но красивая.</span>
-    </div>
-  </div>
-
-  <div class="about-manifest reveal" style="margin-top: 80px;">
-    <p>
-      В команде нет случайных людей. Каждый прошёл через проекты, после которых
-      понимаешь — либо ты горишь этим, либо нет. <strong>Середины не бывает.</strong>
-    </p>
-  </div>
-
-</section>
-
-<!-- ============ PROJECTS / 5 ПЛИТОК ============ -->
-<section class="projects" id="works">
-
-  <div class="projects-header">
-    <h2 class="projects-title reveal">
-      ПЯТЬ <span class="red">ЛИНЕЕК.</span><br>
-      ПЯТЬ ИСТОРИЙ.
+    <h2 class="about-title reveal" id="about-title">
+      КОГДА ХОЧЕТСЯ<br>
+      <span class="red">БОЛЬШЕГО.</span>
     </h2>
-    <div class="projects-sub reveal">
-      [ PROJECTS / 02 ]<br><br>
-      Под зонтиком THE END работают пять самостоятельных линеек.
-      У каждой — свой характер.
+
+    <div class="about-manifest reveal">
+      <p>
+        Мы делаем альбомы, которые <strong>не хочется убирать на полку.</strong>
+        Которые листаешь сам, показываешь гостям, достаёшь через десять лет
+        и думаешь — вот это да.
+      </p>
+      <p>
+        Нас называют по-разному. Одни говорят — лучшая студия в Москве.
+        Другие — слишком дорого и непонятно зачем так заморачиваться.
+        Третьи молча копируют наши решения — и это, наверное,
+        <strong>самый честный комплимент.</strong>
+      </p>
+      <p>
+        Обе реакции нас устраивают. Мы давно перестали делать альбомы для всех.
+      </p>
     </div>
+
+    <div class="stats reveal">
+      <div class="stat">
+        <div class="stat-number" data-target="604">0</div>
+        <div class="stat-label">классов в год<br>с нами работают</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">
+          <span data-target="50">0</span><span class="suffix">+</span>
+        </div>
+        <div class="stat-label">проектов<br>под линейкой THE END</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number" data-target="15">0</div>
+        <div class="stat-label">лет<br>в индустрии</div>
+      </div>
+    </div>
+
+    <div class="quote-block reveal">
+      <div class="q">
+        Каждый проект начинается с нуля.
+        Иногда мы переделываем разворот три раза —
+        не потому что клиент просит, а потому что
+        <span class="q-red">сами не можем остановиться.</span>
+      </div>
+    </div>
+
+    <div class="photo-marquee">
+      <div class="photo-track">
+        <img src="https://i.ibb.co/6cFzHCdZ/1-4.jpg" alt="">
+        <img src="https://i.ibb.co/3mWH90nD/1-5.jpg" alt="">
+        <img src="https://i.ibb.co/fzBgv3Bh/1-12.jpg" alt="">
+        <img src="https://i.ibb.co/XfPBVJ0Z/1-25.jpg" alt="">
+        <img src="https://i.ibb.co/BDNNxGZ/1-29.jpg" alt="">
+        <img src="https://i.ibb.co/bg9FM3BB/1-42.jpg" alt="">
+        <img src="https://i.ibb.co/YTXTW2t1/1-37.jpg" alt="">
+        <img src="https://i.ibb.co/pjCmNv86/1-35.jpg" alt="">
+        <img src="https://i.ibb.co/TBLpBHsf/1-32.jpg" alt="">
+        <img src="https://i.ibb.co/6cFzHCdZ/1-4.jpg" alt="">
+        <img src="https://i.ibb.co/3mWH90nD/1-5.jpg" alt="">
+        <img src="https://i.ibb.co/fzBgv3Bh/1-12.jpg" alt="">
+        <img src="https://i.ibb.co/XfPBVJ0Z/1-25.jpg" alt="">
+        <img src="https://i.ibb.co/BDNNxGZ/1-29.jpg" alt="">
+        <img src="https://i.ibb.co/bg9FM3BB/1-42.jpg" alt="">
+        <img src="https://i.ibb.co/YTXTW2t1/1-37.jpg" alt="">
+        <img src="https://i.ibb.co/pjCmNv86/1-35.jpg" alt="">
+        <img src="https://i.ibb.co/TBLpBHsf/1-32.jpg" alt="">
+      </div>
+    </div>
+
+    <div class="quote-block reveal">
+      <div class="q">
+        Это болезнь.<br>
+        <span class="q-red">Но красивая.</span>
+      </div>
+    </div>
+
+    <div class="about-manifest reveal">
+      <p>
+        В команде нет случайных людей. Каждый прошёл через проекты, после которых
+        понимаешь — либо ты горишь этим, либо нет. <strong>Середины не бывает.</strong>
+      </p>
+    </div>
+
+  </section>
+</div>
+
+<!-- ============ COMING SOON ОВЕРЛЕИ ============ -->
+<div class="overlay" id="overlay-works" data-name="WORKS">
+  <div class="coming-soon">
+    <div class="coming-soon-label">[ WORKS / 01 ]</div>
+    <h2 class="coming-soon-title">РАБОТЫ <span class="red">/</span> COMING SOON</h2>
+    <p class="coming-soon-text">
+      Готовим лучшие проекты, чтобы показать. Скоро здесь будет галерея
+      с разворотами, концептами и подробностями каждого проекта.
+    </p>
   </div>
+</div>
 
-  <div class="projects-grid">
-
-    <a class="project-card reveal" data-project="duo" href="https://theend.school/ember">
-      <div class="project-cover"></div>
-      <div class="project-deco">01</div>
-      <div class="project-badge">DUO / 01</div>
-      <div class="project-info">
-        <div class="project-name">DUO</div>
-      </div>
-      <div class="project-cta">ENTER →</div>
-    </a>
-
-    <a class="project-card reveal" data-project="red" href="https://theend.school/red">
-      <div class="project-cover"></div>
-      <div class="project-deco">02</div>
-      <div class="project-badge">RED / 02</div>
-      <div class="project-info">
-        <div class="project-name">RED</div>
-      </div>
-      <div class="project-cta">ENTER →</div>
-    </a>
-
-    <a class="project-card reveal" data-project="lime" href="https://theend.school/lime">
-      <div class="project-cover"></div>
-      <div class="project-deco">03</div>
-      <div class="project-badge">LIME / 03</div>
-      <div class="project-info">
-        <div class="project-name">LIME</div>
-      </div>
-      <div class="project-cta">ENTER →</div>
-    </a>
-
-    <a class="project-card reveal" data-project="vgrd" href="https://theend.school/indevelopment">
-      <div class="project-cover"></div>
-      <div class="project-deco">04</div>
-      <div class="project-badge">VGRD / 04</div>
-      <div class="project-info">
-        <div class="project-name">VGRD</div>
-      </div>
-      <div class="project-cta">ENTER →</div>
-    </a>
-
-    <a class="project-card reveal" data-project="echo" href="https://theend.school/indevelopment">
-      <div class="project-cover"></div>
-      <div class="project-deco">05</div>
-      <div class="project-badge">ECHO / 05</div>
-      <div class="project-info">
-        <div class="project-name">ECHO</div>
-      </div>
-      <div class="project-cta">ENTER →</div>
-    </a>
-
+<div class="overlay" id="overlay-reels" data-name="REELS">
+  <div class="coming-soon">
+    <div class="coming-soon-label">[ REELS / 02 ]</div>
+    <h2 class="coming-soon-title">REELS <span class="red">/</span> COMING SOON</h2>
+    <p class="coming-soon-text">
+      Видео-нарезки со съёмок, бэкстейдж и тизеры готовых альбомов.
+    </p>
   </div>
+</div>
 
-</section>
+<div class="overlay" id="overlay-photo" data-name="PHOTO">
+  <div class="coming-soon">
+    <div class="coming-soon-label">[ PHOTO / 04 ]</div>
+    <h2 class="coming-soon-title">PHOTO <span class="red">/</span> COMING SOON</h2>
+    <p class="coming-soon-text">
+      Архив фотосессий — портреты, концепты, стилизованные съёмки.
+    </p>
+  </div>
+</div>
 
-<!-- Заглушки для оставшихся секций -->
-<section class="placeholder-section" id="portfolio">— портфолио (скоро) —</section>
-<section class="placeholder-section" id="contact">— контакты (скоро) —</section>
+<div class="overlay" id="overlay-contact" data-name="CONTACT">
+  <div class="coming-soon">
+    <div class="coming-soon-label">[ CONTACT / 05 ]</div>
+    <h2 class="coming-soon-title">CONTACT <span class="red">/</span> SOON</h2>
+    <p class="coming-soon-text">
+      Здесь появятся способы связаться и забронировать проект.
+    </p>
+  </div>
+</div>
+
 
 <script>
 /* ============ 1. ЗАГРУЗКА С ГЛИТЧЕМ ============ */
@@ -1119,7 +927,7 @@
   }
   loop();
 
-  const hoverables = 'a, button, .hero-title, [data-magnet]';
+  const hoverables = 'a, button, .nav-link, [data-magnet]';
   document.addEventListener('mouseover', (e) => {
     if (e.target.closest(hoverables)) ring.classList.add('hover');
   });
@@ -1137,56 +945,83 @@
   });
 })();
 
-/* ============ 3. СКРОЛЛ-ИНДИКАТОР ============ */
+/* ============ 3. УПРАВЛЕНИЕ ОВЕРЛЕЯМИ ============ */
 (function() {
-  const percentEl = document.getElementById('scroll-percent');
-  const barEl = document.getElementById('scroll-bar');
-  if (!percentEl || !barEl) return;
+  const closeBtn = document.getElementById('overlay-close');
+  const sectionLabel = document.getElementById('section-name');
+  let activeOverlay = null;
 
-  function updateScroll() {
-    const scrollTop = window.scrollY;
-    const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
-    const percent = scrollHeight > 0
-      ? Math.round((scrollTop / scrollHeight) * 100)
-      : 0;
-    percentEl.textContent = percent.toString().padStart(2, '0');
-    barEl.style.setProperty('--progress', percent + '%');
+  function openOverlay(name) {
+    const overlay = document.getElementById('overlay-' + name);
+    if (!overlay) return;
+
+    if (activeOverlay) closeOverlay();
+
+    overlay.classList.add('open');
+    overlay.scrollTop = 0;
+    document.body.classList.add('overlay-open');
+    activeOverlay = overlay;
+    closeBtn.classList.add('visible');
+
+    // Меняем подпись слева снизу
+    if (sectionLabel) {
+      sectionLabel.textContent = overlay.dataset.name || name.toUpperCase();
+    }
+
+    // Запускаем reveal-эффекты внутри оверлея
+    setTimeout(() => triggerReveals(overlay), 400);
+
+    // Запускаем счётчики если в оверлее есть data-target
+    setTimeout(() => triggerCounters(overlay), 600);
+
+    // Глитч заголовка About
+    if (name === 'about') {
+      setTimeout(() => glitchAboutTitle(), 500);
+    }
   }
 
-  window.addEventListener('scroll', updateScroll, { passive: true });
-  updateScroll();
-})();
-
-/* ============ 4. ПОЯВЛЕНИЕ ЭЛЕМЕНТОВ ПРИ СКРОЛЛЕ ============ */
-(function() {
-  const reveals = document.querySelectorAll('.reveal');
-  if (!reveals.length || !('IntersectionObserver' in window)) {
-    // Если IntersectionObserver не поддерживается — просто показываем всё
-    reveals.forEach(el => el.classList.add('visible'));
-    return;
+  function closeOverlay() {
+    if (!activeOverlay) return;
+    activeOverlay.classList.remove('open');
+    document.body.classList.remove('overlay-open');
+    closeBtn.classList.remove('visible');
+    activeOverlay = null;
+    if (sectionLabel) sectionLabel.textContent = 'INTRO';
   }
 
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-        observer.unobserve(entry.target);
-      }
+  // Привязываем кнопки навигации
+  document.querySelectorAll('[data-overlay]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      openOverlay(btn.dataset.overlay);
     });
-  }, {
-    threshold: 0.15,
-    rootMargin: '0px 0px -80px 0px'
   });
 
-  reveals.forEach(el => observer.observe(el));
-})();
+  // Кнопка закрытия
+  closeBtn.addEventListener('click', closeOverlay);
 
-/* ============ 5. СЧЁТЧИКИ ЦИФР ============ */
-(function() {
-  const numbers = document.querySelectorAll('[data-target]');
-  if (!numbers.length) return;
+  // ESC для закрытия
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeOverlay();
+  });
+
+  /* === Reveal-эффекты === */
+  function triggerReveals(container) {
+    const reveals = container.querySelectorAll('.reveal');
+    reveals.forEach((el, i) => {
+      setTimeout(() => el.classList.add('visible'), i * 100);
+    });
+  }
+
+  /* === Счётчики цифр === */
+  function triggerCounters(container) {
+    const numbers = container.querySelectorAll('[data-target]');
+    numbers.forEach(el => animateCount(el));
+  }
 
   function animateCount(el) {
+    if (el.dataset.counted) return;
+    el.dataset.counted = '1';
     const target = parseInt(el.dataset.target, 10);
     const duration = 2000;
     const startTime = performance.now();
@@ -1194,52 +1029,31 @@
     function tick(now) {
       const elapsed = now - startTime;
       const p = Math.min(elapsed / duration, 1);
-      // Easing: ease-out cubic
       const eased = 1 - Math.pow(1 - p, 3);
       const current = Math.round(target * eased);
       el.textContent = current;
-
       if (p < 1) {
         requestAnimationFrame(tick);
       } else {
         el.textContent = target;
       }
     }
-
     requestAnimationFrame(tick);
   }
 
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        animateCount(entry.target);
-        observer.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.5 });
+  /* === Глитч заголовка About === */
+  function glitchAboutTitle() {
+    const titleEl = document.getElementById('about-title');
+    if (!titleEl || titleEl.dataset.glitched) return;
+    titleEl.dataset.glitched = '1';
 
-  numbers.forEach(el => observer.observe(el));
-})();
+    const originalHTML = titleEl.innerHTML;
+    const originalText = titleEl.textContent.trim();
 
-/* ============ 6. ГЛИТЧ НА ЗАГОЛОВКЕ ABOUT ============ */
-(function() {
-  const titleEl = document.getElementById('about-title');
-  if (!titleEl) return;
-
-  // Сохраняем оригинальный HTML (с <br> и <span>)
-  const originalHTML = titleEl.innerHTML;
-  const originalText = titleEl.textContent.trim();
-
-  const chars = '的一是不了人我在有他这为之大来以个中上们到说国和地也子时道出而要于就下得可你年生自会那后能对着事其里所去行过家十用发天如然作方成者多';
-  const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  const symbols = '!@#$%&*+=?<>/\\|';
-  const allChars = chars + latin + symbols;
-
-  let played = false;
-
-  function glitchTitle() {
-    if (played) return;
-    played = true;
+    const chars = '的一是不了人我在有他这为之大来以个中上们到说国';
+    const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const symbols = '!@#$%&*+=?<>/\\|';
+    const allChars = chars + latin + symbols;
 
     const duration = 1000;
     const startT = performance.now();
@@ -1251,7 +1065,6 @@
 
       if (now - lastT >= 50) {
         lastT = now;
-        // Заменяем буквы случайными, кроме пробелов и переносов
         let result = '';
         for (let i = 0; i < originalText.length; i++) {
           const ch = originalText[i];
@@ -1269,59 +1082,11 @@
       if (p < 1) {
         requestAnimationFrame(tick);
       } else {
-        // Восстанавливаем оригинальный HTML с разметкой (br, red span)
         titleEl.innerHTML = originalHTML;
       }
     }
-
     requestAnimationFrame(tick);
   }
-
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        glitchTitle();
-        observer.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.5 });
-
-  observer.observe(titleEl);
-})();
-
-/* ============ 7. ОТСЛЕЖИВАНИЕ ТЕКУЩЕЙ СЕКЦИИ ============ */
-(function() {
-  const sectionLabel = document.getElementById('section-name');
-  if (!sectionLabel) return;
-
-  const sections = [
-    { id: 'hero',       label: 'INTRO' },
-    { id: 'about',      label: 'ABOUT' },
-    { id: 'works',      label: 'PROJECTS' },
-    { id: 'portfolio',  label: 'PORTFOLIO' },
-    { id: 'contact',    label: 'CONTACT' }
-  ];
-
-  function updateSection() {
-    const scrollPos = window.scrollY + window.innerHeight * 0.4;
-    let active = sections[0].label;
-
-    for (const sec of sections) {
-      const el = document.getElementById(sec.id);
-      if (!el) continue;
-      const top = el.offsetTop;
-      if (scrollPos >= top) {
-        active = sec.label;
-      }
-    }
-
-    if (sectionLabel.textContent !== active) {
-      sectionLabel.textContent = active;
-    }
-  }
-
-  window.addEventListener('scroll', updateSection, { passive: true });
-  updateSection();
 })();
 </script>
 
