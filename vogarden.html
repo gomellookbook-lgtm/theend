@@ -30,8 +30,8 @@
     html, body, * { cursor: none !important; }
   }
 
-  /* 3D-сцена: 800vh = 8 экранов прокрутки. Видео и финал — отдельно */
-  .scene { position: relative; width: 100%; height: 800vh; }
+  /* 3D-сцена: 600vh — компактно, без пустоты в конце */
+  .scene { position: relative; width: 100%; height: 600vh; }
 
   /* WebGL canvas — фиксирован */
   #webgl {
@@ -135,17 +135,6 @@
   }
   .overlay-text.visible {
     opacity: 1;
-  }
-
-  /* === КРАСНАЯ ВСПЫШКА (переход сад→китайцы) === */
-  .red-flash {
-    position: fixed;
-    inset: 0;
-    z-index: 8;
-    pointer-events: none;
-    background: var(--red);
-    opacity: 0;
-    will-change: opacity;
   }
 
   /* === ВИДЕО-СЕКЦИЯ (отдельная, после 3D) === */
@@ -517,9 +506,6 @@
 <!-- Назад на главную -->
 <a href="/" class="back-btn">↶ THE END</a>
 
-<!-- КРАСНАЯ ВСПЫШКА — переход сад→китайцы -->
-<div class="red-flash" id="red-flash"></div>
-
 <!-- ============ 3D СЦЕНА ============ -->
 <div class="scene" id="scene">
   <canvas id="webgl"></canvas>
@@ -541,11 +527,11 @@
   <p>Альбом-номер. Авторская концепция. Нежность, энергия, свобода.</p>
 </div>
 
-<!-- Подпись для стены/перехода -->
+<!-- Подпись для перехода (плавная смена цвета сад→красная) -->
 <div class="overlay-text phase-label" id="label-wall">
   <div class="num">PHASE / 02</div>
-  <h2>ТРАНСФОРМАЦИЯ</h2>
-  <p>То же издание. Новый язык. Новое дыхание.</p>
+  <h2>ПЕРЕХОД</h2>
+  <p>Из тёплого сада — в красную комнату.<br>То же издание, новый язык.</p>
 </div>
 
 <!-- Подпись для китайской комнаты -->
@@ -947,34 +933,21 @@
 
     // Подзаголовок виден только в самом начале
     intro.classList.toggle('visible', p < 0.08 && document.body.dataset.titleReady === '1');
-    // Сад: 10-45%
-    labelGarden.classList.toggle('visible', p >= 0.10 && p < 0.45);
-    // Переход (вспышка): 47-55%
-    labelWall.classList.toggle('visible',   p >= 0.45 && p < 0.55);
-    // Китайская: 56% и до конца 3D-сцены
-    labelChina.classList.toggle('visible',  p >= 0.56 && p < 0.99);
-
-    // === КРАСНАЯ ВСПЫШКА (переход сад→китайцы) ===
-    // Полный жизненный цикл вспышки в зоне 47-53%
-    const flash = document.getElementById('red-flash');
-    if (flash) {
-      let flashOpacity = 0;
-      if (p >= 0.47 && p < 0.50) {
-        flashOpacity = ((p - 0.47) / 0.03) * 0.85;
-      } else if (p >= 0.50 && p < 0.53) {
-        flashOpacity = (1 - (p - 0.50) / 0.03) * 0.85;
-      }
-      flash.style.opacity = flashOpacity.toFixed(3);
-    }
+    // Сад: 10-50%
+    labelGarden.classList.toggle('visible', p >= 0.10 && p < 0.48);
+    // Переход (плавная смена цвета): 50-60%
+    labelWall.classList.toggle('visible',   p >= 0.50 && p < 0.60);
+    // Китайская: 60% и до конца 3D-сцены
+    labelChina.classList.toggle('visible',  p >= 0.62 && p < 0.99);
 
     // Видео теперь отдельная секция после 3D — не управляется отсюда
 
     let phase;
     if (p < 0.10) phase = 'INTRO';
-    else if (p < 0.45) phase = 'GARDEN';
-    else if (p < 0.55) phase = 'TRANSFORMATION';
+    else if (p < 0.48) phase = 'GARDEN';
+    else if (p < 0.62) phase = 'TRANSFORMATION';
     else if (p < 1.0)  phase = 'RED EDITION';
-    else phase = 'TEASER'; // когда 3D-сцена закончилась
+    else phase = 'TEASER';
 
     // Если скроллим за пределами 3D — определяем фазу по реальной позиции
     const finalSection = document.querySelector('.final');
@@ -1320,30 +1293,35 @@
     const currentFogDensity = fogDensityStart + (fogDensityFlow - fogDensityStart) * fogTransition;
     scene.fog.density = currentFogDensity;
 
-    // Цвет фона/тумана плавно от тёмно-зелёного к тёмно-красному
-    // Сад до 45%, моментальный переход 45-55% (синхронно с вспышкой), красная после 55%
-    let fogR = 0.02, fogG = 0.04, fogB = 0.02;
-    if (scrollProgress < 0.45) {
-      fogR = 0.04; fogG = 0.05; fogB = 0.03;
-    } else if (scrollProgress < 0.55) {
-      const t = (scrollProgress - 0.45) / 0.10;
-      fogR = 0.04 + t * 0.10;
-      fogG = 0.05 - t * 0.04;
-      fogB = 0.03 - t * 0.02;
+    // Цвет фона/тумана — главная метка какая ты в комнате
+    // САД: тёмный тёплый зелёно-болотный (как лес в сумерках)
+    // ПЕРЕХОД: плавно из зелёного в красный (50-60%)
+    // КРАСНАЯ: насыщенный тёмно-красный
+    let fogR, fogG, fogB;
+    if (scrollProgress < 0.50) {
+      // Тёплый болотно-зелёный сад
+      fogR = 0.06; fogG = 0.10; fogB = 0.04;
+    } else if (scrollProgress < 0.60) {
+      // Переход через 10% скролла
+      const t = (scrollProgress - 0.50) / 0.10;
+      fogR = 0.06 + t * 0.20;     // 0.06 → 0.26
+      fogG = 0.10 - t * 0.08;     // 0.10 → 0.02
+      fogB = 0.04 - t * 0.02;     // 0.04 → 0.02
     } else {
-      fogR = 0.14; fogG = 0.01; fogB = 0.01;
+      // Насыщенный тёмно-красный (как красная комната)
+      fogR = 0.26; fogG = 0.02; fogB = 0.02;
     }
     scene.fog.color.setRGB(fogR, fogG, fogB);
     renderer.setClearColor(new THREE.Color(fogR, fogG, fogB), 1);
 
-    // Освещение — синхронно с вспышкой: переход 45-55%
-    if (scrollProgress < 0.45) {
+    // Освещение — переход 50-60%
+    if (scrollProgress < 0.50) {
       gardenLight.intensity = 1.5 + Math.sin(time * 2) * 0.2;
       warmLight.intensity = 1.0;
       chinaLight1.intensity = 0;
       chinaLight2.intensity = 0;
-    } else if (scrollProgress < 0.55) {
-      const t = (scrollProgress - 0.45) / 0.10;
+    } else if (scrollProgress < 0.60) {
+      const t = (scrollProgress - 0.50) / 0.10;
       gardenLight.intensity = 1.5 * (1 - t);
       warmLight.intensity = 1.0 * (1 - t);
       chinaLight1.intensity = 2.0 * t;
