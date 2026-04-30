@@ -148,10 +148,19 @@
     aspect-ratio: 14 / 8;
     z-index: 4;
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
-    transition: opacity 0.4s ease, transform 0.5s ease;
+    transition: opacity 0.4s ease, transform 0.5s ease, visibility 0s linear 0.5s;
     background: #000;
     overflow: hidden;
+  }
+
+  /* Когда видео в любой активной фазе — visibility сразу включается */
+  .wall-video.approaching,
+  .wall-video.visible,
+  .wall-video.shattering {
+    visibility: visible;
+    transition: opacity 0.4s ease, transform 0.5s ease, visibility 0s;
   }
 
   /* Видео виднеется издалека — мелкое, тусклое */
@@ -170,7 +179,7 @@
   .wall-video.shattering {
     opacity: 0;
     transform: translate(-50%, -50%) scale(1.5);
-    transition: opacity 0.4s ease, transform 0.4s ease;
+    transition: opacity 0.3s ease, transform 0.3s ease;
   }
 
   .wall-video video,
@@ -932,10 +941,11 @@
     // ВИДЕО-СТЕНА #1: камера приходит к стене на 55% скролла
     //   45-50%: видео виднеется вдали (мелкое, тусклое)
     //   50-58%: видео крупное (стена прямо перед нами)
-    //   58-65%: пробитие — видео разлетается, осколки летят
+    //   58-62%: пробитие — видео разлетается БЫСТРО
+    //   после 62%: ничего, путь свободен в красную комнату
     const wallVideo1 = document.getElementById('wall-video-1');
     if (wallVideo1) {
-      const isShat1 = p >= 0.58 && p < 0.65;
+      const isShat1 = p >= 0.58 && p < 0.62;
       const isClose1 = p >= 0.50 && p < 0.58;
       const isFar1 = p >= 0.45 && p < 0.50;
       wallVideo1.classList.toggle('approaching', isFar1);
@@ -944,14 +954,15 @@
     }
 
     // ВИДЕО-СТЕНА #2: камера у второй стены на 92% скролла
-    //   83-87%: вдалеке
-    //   87-93%: близко
-    //   93-97%: пробитие
+    //   85-89%: вдалеке
+    //   89-93%: близко
+    //   93-96%: пробитие
+    //   после 96%: финальная секция уже видна
     const wallVideo2 = document.getElementById('wall-video-2');
     if (wallVideo2) {
-      const isShat2 = p >= 0.93 && p < 0.97;
-      const isClose2 = p >= 0.87 && p < 0.93;
-      const isFar2 = p >= 0.83 && p < 0.87;
+      const isShat2 = p >= 0.93 && p < 0.96;
+      const isClose2 = p >= 0.89 && p < 0.93;
+      const isFar2 = p >= 0.85 && p < 0.89;
       wallVideo2.classList.toggle('approaching', isFar2);
       wallVideo2.classList.toggle('visible', isClose2);
       wallVideo2.classList.toggle('shattering', isShat2);
