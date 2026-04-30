@@ -137,22 +137,33 @@
     opacity: 1;
   }
 
+  /* Canvas с частицами VOGARDEN */
+  .title-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    z-index: 9;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  }
+  .title-canvas.visible {
+    opacity: 1;
+  }
+  /* Когда листают вниз — частицы тоже плавно тают */
+  .title-canvas.fading {
+    opacity: 0;
+    transition: opacity 1.2s ease;
+  }
+
   /* Заголовок VOGARDEN — большой по центру в начале */
   .intro-title {
-    top: 50%; left: 50%;
+    top: 58%; left: 50%;
     transform: translate(-50%, -50%);
     text-align: center;
     width: 90%;
-  }
-  .intro-title h1 {
-    font-family: 'Inter', sans-serif;
-    font-weight: 900;
-    font-size: clamp(60px, 14vw, 200px);
-    line-height: 0.85;
-    letter-spacing: -0.05em;
-    color: var(--white);
-    text-transform: uppercase;
-    mix-blend-mode: difference;
   }
   .intro-title .sub {
     margin-top: 24px;
@@ -446,9 +457,9 @@
 
 <!-- ============ ТЕКСТОВЫЕ ОВЕРЛЕИ ============ -->
 
-<!-- Открывающий заголовок -->
+<!-- Открывающий заголовок: VOGARDEN из частиц + сабтайтл -->
+<canvas id="title-canvas" class="title-canvas"></canvas>
 <div class="overlay-text intro-title" id="intro-title">
-  <h1>VOGARDEN</h1>
   <div class="sub">— РАЙСКИЙ САД, СОЗДАННЫЙ СВОИМИ РУКАМИ —</div>
   <div class="scroll-hint">↓ SCROLL</div>
 </div>
@@ -563,6 +574,237 @@
 
 
 <script>
+/* ============ ЧАСТИЦЫ VOGARDEN — СБОРКА ИЗ ВЗРЫВА ============ */
+(function() {
+  if (typeof THREE === 'undefined') return;
+
+  const canvas = document.getElementById('title-canvas');
+  if (!canvas) return;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(
+    50, window.innerWidth / window.innerHeight, 0.1, 1000
+  );
+  camera.position.z = 30;
+
+  const renderer = new THREE.WebGLRenderer({
+    canvas: canvas, alpha: true, antialias: true
+  });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  // Получаем точки контура текста
+  function getTextPoints(text, fontSize) {
+    const off = document.createElement('canvas');
+    const ctx = off.getContext('2d');
+    off.width = 1400; off.height = 300;
+    ctx.fillStyle = '#000'; ctx.fillRect(0, 0, off.width, off.height);
+    ctx.fillStyle = '#fff';
+    ctx.font = `900 ${fontSize}px Inter, sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(text, off.width / 2, off.height / 2);
+    const data = ctx.getImageData(0, 0, off.width, off.height).data;
+    const pts = [];
+    const step = 3;
+    for (let y = 0; y < off.height; y += step) {
+      for (let x = 0; x < off.width; x += step) {
+        const idx = (y * off.width + x) * 4;
+        if (data[idx] > 128) {
+          const px = (x - off.width / 2) * 0.04;
+          const py = -(y - off.height / 2) * 0.04;
+          pts.push({ x: px, y: py });
+        }
+      }
+    }
+    return pts;
+  }
+
+  const isMobile = window.innerWidth < 768;
+  const fontSize = isMobile ? 140 : 220;
+  const points = getTextPoints('VOGARDEN', fontSize);
+
+  const count = points.length;
+  const positions = new Float32Array(count * 3);
+  const targets = new Float32Array(count * 3);
+  const velocities = new Float32Array(count * 3);
+  const colors = new Float32Array(count * 3);
+
+  for (let i = 0; i < count; i++) {
+    targets[i * 3]     = points[i].x;
+    targets[i * 3 + 1] = points[i].y;
+    targets[i * 3 + 2] = (Math.random() - 0.5) * 0.3;
+
+    // Стартовая позиция — РАЗЛЕТЕВШИЕСЯ из центра (взрыв)
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 15 + Math.random() * 25;
+    positions[i * 3]     = Math.cos(angle) * distance;
+    positions[i * 3 + 1] = Math.sin(angle) * distance * 0.7;
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 20;
+
+    // Стартовая скорость — наружу (как от взрыва, замедляется)
+    velocities[i * 3]     = Math.cos(angle) * 0.05;
+    velocities[i * 3 + 1] = Math.sin(angle) * 0.05;
+    velocities[i * 3 + 2] = 0;
+
+    const b = 0.7 + Math.random() * 0.3;
+    colors[i * 3] = b; colors[i * 3 + 1] = b; colors[i * 3 + 2] = b;
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+  function makeCircleTexture() {
+    const c = document.createElement('canvas');
+    c.width = c.height = 64;
+    const cx = c.getContext('2d');
+    const grad = cx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    grad.addColorStop(0,   'rgba(255,255,255,1)');
+    grad.addColorStop(0.4, 'rgba(255,255,255,0.6)');
+    grad.addColorStop(1,   'rgba(255,255,255,0)');
+    cx.fillStyle = grad; cx.fillRect(0, 0, 64, 64);
+    return new THREE.CanvasTexture(c);
+  }
+
+  const material = new THREE.PointsMaterial({
+    size: 0.18,
+    map: makeCircleTexture(),
+    vertexColors: true,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    sizeAttenuation: true,
+    opacity: 0
+  });
+
+  const pointsObj = new THREE.Points(geometry, material);
+  scene.add(pointsObj);
+
+  // Курсор для интерактивности
+  const mouse = new THREE.Vector3(1000, 1000, 0);
+  let mouseVisible = false;
+
+  window.addEventListener('mousemove', (e) => {
+    const x = (e.clientX / window.innerWidth) * 2 - 1;
+    const y = -(e.clientY / window.innerHeight) * 2 + 1;
+    const v = new THREE.Vector3(x, y, 0.5);
+    v.unproject(camera);
+    const dir = v.sub(camera.position).normalize();
+    const distance = -camera.position.z / dir.z;
+    mouse.copy(camera.position).add(dir.multiplyScalar(distance));
+    mouseVisible = true;
+  });
+
+  // Состояния: 'gather' (сборка) → 'idle' (живёт)
+  let mode = 'starting';
+  let modeStart = performance.now();
+
+  // Стартуем "сборку" с маленькой задержкой после загрузки
+  setTimeout(() => {
+    canvas.classList.add('visible');
+    material.opacity = 1.0;
+    mode = 'gather';
+    modeStart = performance.now();
+  }, 400);
+
+  let time = 0;
+  const repulsionRadius = 2.0;
+  const repulsionStrength = 0.10;
+
+  // Затухание заголовка при скролле
+  let scrollFade = 0;
+
+  window.addEventListener('scroll', () => {
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    if (max > 0) {
+      const p = window.scrollY / max;
+      // Заголовок виден до 8% скролла, потом постепенно тает
+      scrollFade = Math.max(0, Math.min(1, (p - 0.02) / 0.06));
+      if (mode === 'idle') {
+        material.opacity = 1 - scrollFade;
+      }
+    }
+  });
+
+  function animate() {
+    requestAnimationFrame(animate);
+    time += 0.01;
+    const now = performance.now();
+    const elapsed = now - modeStart;
+
+    // Переход из gather в idle через 1.8 сек
+    if (mode === 'gather' && elapsed > 1800) {
+      mode = 'idle';
+      modeStart = now;
+    }
+
+    if (mode === 'starting') {
+      renderer.render(scene, camera);
+      return;
+    }
+
+    const pos = geometry.attributes.position.array;
+    for (let i = 0; i < count; i++) {
+      const ix = i * 3;
+
+      if (mode === 'gather') {
+        // Магнетизм к цели + затухающие исходные скорости
+        const dx = targets[ix]     - pos[ix];
+        const dy = targets[ix + 1] - pos[ix + 1];
+        const dz = targets[ix + 2] - pos[ix + 2];
+        const gp = Math.min(elapsed / 1800, 1);
+        const pull = 0.012 + gp * 0.035;
+        velocities[ix]     += dx * pull;
+        velocities[ix + 1] += dy * pull;
+        velocities[ix + 2] += dz * pull;
+        velocities[ix]     *= 0.85;
+        velocities[ix + 1] *= 0.85;
+        velocities[ix + 2] *= 0.85;
+      } else {
+        // idle: магнетизм + расталкивание от курсора
+        const dx = targets[ix]     - pos[ix];
+        const dy = targets[ix + 1] - pos[ix + 1];
+        const dz = targets[ix + 2] - pos[ix + 2];
+
+        if (mouseVisible) {
+          const mdx = pos[ix] - mouse.x;
+          const mdy = pos[ix + 1] - mouse.y;
+          const distSq = mdx * mdx + mdy * mdy;
+          if (distSq < repulsionRadius * repulsionRadius) {
+            const dist = Math.sqrt(distSq) || 0.001;
+            const force = (1 - dist / repulsionRadius) * repulsionStrength;
+            velocities[ix]     += (mdx / dist) * force;
+            velocities[ix + 1] += (mdy / dist) * force;
+          }
+        }
+
+        velocities[ix]     += dx * 0.025;
+        velocities[ix + 1] += dy * 0.025;
+        velocities[ix + 2] += dz * 0.03;
+        velocities[ix]     *= 0.82;
+        velocities[ix + 1] *= 0.82;
+        velocities[ix + 2] *= 0.82;
+      }
+
+      pos[ix]     += velocities[ix];
+      pos[ix + 1] += velocities[ix + 1];
+      pos[ix + 2] += velocities[ix + 2];
+    }
+
+    geometry.attributes.position.needsUpdate = true;
+    if (mode === 'idle') pointsObj.rotation.y = Math.sin(time * 0.2) * 0.04;
+
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+})();
+
 /* ============ КАСТОМНЫЙ КУРСОР ============ */
 (function() {
   const dot = document.querySelector('.cursor-dot');
@@ -615,18 +857,13 @@
     percentEl.textContent = percent.toString().padStart(2, '0');
     barEl.style.setProperty('--progress', percent + '%');
 
-    // Фазы по прогрессу скролла:
-    // 0-10%   intro
-    // 10-40%  garden
-    // 40-50%  wall (transformation)
-    // 50-95%  china
-    // 95+     final (текст уже сам по себе)
-    let phase = 'INTRO';
-    intro.classList.toggle('visible', p < 0.08);
+    // Подзаголовок виден только в самом начале
+    intro.classList.toggle('visible', p < 0.08 && document.body.dataset.titleReady === '1');
     labelGarden.classList.toggle('visible', p >= 0.10 && p < 0.38);
     labelWall.classList.toggle('visible', p >= 0.40 && p < 0.50);
     labelChina.classList.toggle('visible', p >= 0.52 && p < 0.85);
 
+    let phase;
     if (p < 0.10) phase = 'INTRO';
     else if (p < 0.40) phase = 'GARDEN';
     else if (p < 0.52) phase = 'TRANSFORMATION';
@@ -635,6 +872,12 @@
 
     if (phaseEl.textContent !== phase) phaseEl.textContent = phase;
   }
+
+  // Подзаголовок появляется после того как соберутся частицы (~2.5 сек)
+  setTimeout(() => {
+    document.body.dataset.titleReady = '1';
+    update();
+  }, 2400);
 
   window.addEventListener('scroll', update, { passive: true });
   update();
@@ -708,11 +951,13 @@
   const chinaImages = gardenImages.slice().reverse();
 
   const loader = new THREE.TextureLoader();
-  const gardenStart = -5;
-  const gardenLength = 45;   // от -5 до -50
-  const wallZ = -52;
-  const chinaStart = -60;
-  const chinaLength = 45;    // от -60 до -105
+  // Камера стартует в z=0. Сад начинается далеко (-15), чтобы при загрузке
+  // экран был тёмным и пустым — только заголовок VOGARDEN.
+  const gardenStart = -15;
+  const gardenLength = 45;   // от -15 до -60
+  const wallZ = -62;
+  const chinaStart = -70;
+  const chinaLength = 45;    // от -70 до -115
 
   // Размещаем развороты сада попеременно слева/справа
   function makePhotoPlanes(images, startZ, length, side1Color) {
@@ -746,20 +991,12 @@
   const gardenPlanes = makePhotoPlanes(gardenImages, gardenStart, gardenLength);
   const chinaPlanes  = makePhotoPlanes(chinaImages,  chinaStart,  chinaLength);
 
-  /* ===== ЦВЕТЫ И РАСТЕНИЯ ВНИЗУ ===== */
-  // 2 настоящих PNG + силуэты травы кодом
-  const flowerUrls = [
-    'https://i.ibb.co/Y76sbPR9/Pngtree-daisy-flower-20948858.png',
-    'https://i.ibb.co/BVKKPBKB/Pngtree-violet-flowers-17282322.png'
-  ];
-
   // Силуэт травы / листа — рисуем canvas-ом, кладём как текстуру
   function makeGrassTexture() {
     const c = document.createElement('canvas');
     c.width = 256; c.height = 256;
     const cx = c.getContext('2d');
     cx.clearRect(0, 0, 256, 256);
-    // Несколько травинок
     cx.fillStyle = 'rgba(40, 30, 20, 0.95)';
     for (let i = 0; i < 6; i++) {
       cx.beginPath();
@@ -782,7 +1019,6 @@
     c.width = 256; c.height = 256;
     const cx = c.getContext('2d');
     cx.fillStyle = 'rgba(30, 25, 15, 0.92)';
-    // Пара широких листьев
     cx.beginPath();
     cx.moveTo(128, 256);
     cx.bezierCurveTo(40, 200, 30, 90, 100, 40);
@@ -801,7 +1037,7 @@
 
   // Позиции для растений — ряд снизу, по всей длине сада
   const plants = [];
-  function addPlant(texture, x, z, scale, opacityVal, isPng) {
+  function addPlant(texture, x, z, scale, opacityVal) {
     const geo = new THREE.PlaneGeometry(scale, scale);
     const mat = new THREE.MeshBasicMaterial({
       map: texture,
@@ -811,46 +1047,29 @@
       opacity: opacityVal
     });
     const m = new THREE.Mesh(geo, mat);
-    // Y -2.5 — ниже линии глаз, "земля"
     m.position.set(x, -2.5 + scale * 0.3, z);
     m.userData = {
       baseScale: scale,
-      growth: 0   // от 0 до 1, для роста
+      growth: 0
     };
-    // Стартовый размер 0
     m.scale.set(0.01, 0.01, 0.01);
     scene.add(m);
     plants.push(m);
     return m;
   }
 
-  // Заполняем сад растениями
-  // Силуэты травы — каждые 2 единицы, чередуем стороны
-  for (let z = -3; z > -52; z -= 2) {
-    // По 2-3 растения на каждой "полосе"
-    const count = 2 + Math.floor(Math.random() * 2);
+  // Заполняем сад только тенями — без PNG цветов
+  // Растения начинаются с z=-13 (в зоне сада)
+  for (let z = -13; z > -62; z -= 2) {
+    const count = 3 + Math.floor(Math.random() * 2);
     for (let i = 0; i < count; i++) {
       const tex = Math.random() > 0.5 ? grassTex : leafTex;
-      const x = (Math.random() - 0.5) * 14; // широкий разброс
+      const x = (Math.random() - 0.5) * 14;
       const scale = 1.0 + Math.random() * 1.2;
       const opacity = 0.7 + Math.random() * 0.3;
-      addPlant(tex, x, z + (Math.random() - 0.5) * 1.5, scale, opacity, false);
+      addPlant(tex, x, z + (Math.random() - 0.5) * 1.5, scale, opacity);
     }
   }
-
-  // Цветы PNG — реже, рассыпаны
-  flowerUrls.forEach((url) => {
-    loader.load(url, (tex) => {
-      tex.minFilter = THREE.LinearFilter;
-      // Раскладываем 8 копий каждого цветка
-      for (let i = 0; i < 8; i++) {
-        const z = -5 - Math.random() * 45;
-        const x = (Math.random() - 0.5) * 12;
-        const scale = 0.8 + Math.random() * 0.7;
-        addPlant(tex, x, z, scale, 0.9, true);
-      }
-    });
-  });
 
   /* ===== СТЕНА С ВИДЕО (между садом и Китаем) ===== */
   // Видеоэлемент создаём в DOM, прячем, используем как текстуру
@@ -1006,7 +1225,7 @@
 
   /* ===== АНИМАЦИОННЫЙ ЦИКЛ ===== */
   let time = 0;
-  const corridorTotal = 110; // вся длина движения камеры
+  const corridorTotal = 120; // вся длина движения камеры (стало больше)
 
   function animate() {
     requestAnimationFrame(animate);
@@ -1117,18 +1336,15 @@
     chars.forEach((ch) => {
       const distFromCam = Math.abs(ch.position.z - camZ);
       // Видны только в китайской зоне
-      const inZone = ch.position.z < -55;
+      const inZone = ch.position.z < -65;
       const visTarget = inZone ? Math.max(0, Math.min(1, 1 - (distFromCam - 5) / 30)) : 0;
       ch.material.opacity = visTarget * (0.4 + Math.sin(time * 2 + ch.userData.offset) * 0.15);
 
-      // Падают
       ch.position.y -= ch.userData.fallSpeed;
-      // Если упали ниже -3 — подбрасываем обратно вверх
       if (ch.position.y < -3) {
         ch.position.y = 8 + Math.random() * 4;
         ch.position.x = (Math.random() - 0.5) * 14;
       }
-      // Лёгкий поворот
       ch.rotation.z = Math.sin(time + ch.userData.offset) * 0.15;
     });
 
