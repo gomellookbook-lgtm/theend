@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VOGARDEN — THE END / LYKBOOK</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&family=Noto+Serif+SC:wght@900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --black: #0a0a0a;
+    --white: #fff;
+    --red: #e8312a;
+    --garden: #c8b88a;
+  }
+
+  html, body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* Скрываем системный курсор на десктопе */
+  @media (hover: hover) and (pointer: fine) {
+    html, body, * { cursor: none !important; }
+  }
+
+  /* Длинная скролл-сцена: 600vh = 6 экранов прокрутки */
+  .scene { position: relative; width: 100%; height: 600vh; }
+
+  /* WebGL canvas — фиксирован */
+  #webgl {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100vh;
+    z-index: 1;
+  }
+
+  /* === КАСТОМНЫЙ КУРСОР === */
+  .cursor-dot, .cursor-ring {
+    position: fixed; top: 0; left: 0;
+    pointer-events: none; z-index: 10000;
+    transform: translate(-50%, -50%); will-change: transform;
+  }
+  .cursor-dot {
+    width: 6px; height: 6px;
+    background: var(--red); border-radius: 50%;
+    transition: opacity 0.2s ease;
+  }
+  .cursor-ring {
+    width: 36px; height: 36px;
+    border: 1.5px solid var(--red); border-radius: 50%;
+    transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                height 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                background 0.3s ease;
+  }
+  .cursor-ring.hover {
+    width: 70px; height: 70px;
+    background: rgba(232, 49, 42, 0.1);
+  }
+  @media (hover: none) or (pointer: coarse) {
+    .cursor-dot, .cursor-ring { display: none; }
+  }
+
+  /* === FIXED УГЛОВЫЕ НАДПИСИ === */
+  .corner {
+    position: fixed; z-index: 50;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.5;
+    mix-blend-mode: difference;
+    pointer-events: none;
+  }
+  .corner-tl { top: 24px; left: 24px; }
+  .corner-tr { top: 24px; right: 24px; text-align: right; }
+  .corner-bl { bottom: 24px; left: 24px; }
+  .corner-br { bottom: 24px; right: 24px; text-align: right;
+               display: flex; align-items: center; gap: 12px; }
+  .corner .red-dot {
+    display: inline-block; width: 6px; height: 6px;
+    background: var(--red); border-radius: 50%;
+    margin-right: 6px; vertical-align: middle;
+    animation: blink 1.5s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100% {opacity:1} 50% {opacity:0.3} }
+
+  .scroll-progress-bar {
+    width: 80px; height: 1px;
+    background: rgba(255,255,255,0.2);
+    position: relative;
+  }
+  .scroll-progress-bar::after {
+    content: ''; position: absolute; top: 0; left: 0; height: 100%;
+    width: var(--progress, 0%);
+    background: var(--red);
+    transition: width 0.1s ease;
+  }
+
+  /* === КНОПКА ВОЗВРАТА === */
+  .back-btn {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 60;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--white);
+    text-decoration: none;
+    padding: 6px 4px;
+    transition: color 0.3s ease, transform 0.3s ease;
+    mix-blend-mode: difference;
+  }
+  .back-btn::before { content: '['; margin-right: 4px; color: rgba(255,255,255,0.4); }
+  .back-btn::after  { content: ']'; margin-left: 4px;  color: rgba(255,255,255,0.4); }
+  .back-btn:hover { color: var(--red); transform: translateX(-50%) translateY(-2px); }
+
+  /* === ОВЕРЛЕИ ТЕКСТА (ПОВЕРХ 3D) === */
+  .overlay-text {
+    position: fixed;
+    z-index: 10;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  }
+  .overlay-text.visible {
+    opacity: 1;
+  }
+
+  /* Заголовок VOGARDEN — большой по центру в начале */
+  .intro-title {
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    width: 90%;
+  }
+  .intro-title h1 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(60px, 14vw, 200px);
+    line-height: 0.85;
+    letter-spacing: -0.05em;
+    color: var(--white);
+    text-transform: uppercase;
+    mix-blend-mode: difference;
+  }
+  .intro-title .sub {
+    margin-top: 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+  }
+  .intro-title .scroll-hint {
+    margin-top: 48px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.5);
+    animation: bounce 2s ease-in-out infinite;
+  }
+  @keyframes bounce {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(8px); }
+  }
+
+  /* Подписи фаз слева снизу */
+  .phase-label {
+    bottom: 80px; left: 24px;
+    max-width: 320px;
+  }
+  .phase-label .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--red);
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .phase-label .num::before {
+    content: ''; width: 24px; height: 1px; background: var(--red);
+  }
+  .phase-label h2 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(28px, 4vw, 56px);
+    line-height: 1.0;
+    letter-spacing: -0.02em;
+    color: var(--white);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .phase-label p {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.7);
+  }
+
+  /* === ФИНАЛЬНАЯ СЕКЦИЯ (после 3D) === */
+  .final {
+    position: relative;
+    z-index: 5;
+    background: var(--black);
+    padding: 120px 6vw 80px;
+  }
+
+  .final-wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .final-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .final-label::before {
+    content: ''; width: 32px; height: 1px; background: var(--red);
+  }
+
+  .final h2 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(48px, 9vw, 140px);
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    color: var(--white);
+    margin-bottom: 64px;
+  }
+  .final h2 .red { color: var(--red); }
+
+  .final-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 80px;
+    margin-bottom: 100px;
+  }
+
+  .final-text p {
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(16px, 1.6vw, 19px);
+    line-height: 1.6;
+    color: rgba(255,255,255,0.85);
+    margin-bottom: 20px;
+  }
+
+  .final-text strong { font-weight: 900; color: var(--white); }
+
+  .final-specs {
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 32px;
+  }
+
+  .spec-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 16px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .spec-row:last-child { border-bottom: none; }
+
+  .spec-label { color: rgba(255,255,255,0.5); }
+  .spec-value { color: var(--white); font-weight: 700; }
+
+  .price-block {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255,255,255,0.2);
+  }
+  .price-num {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(40px, 5vw, 64px);
+    color: var(--red);
+    line-height: 0.9;
+    letter-spacing: -0.03em;
+  }
+  .price-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    margin-top: 8px;
+  }
+
+  /* Включает */
+  .includes {
+    margin-bottom: 80px;
+  }
+  .includes h3 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 24px;
+  }
+  .includes ul {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .includes li {
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    color: rgba(255,255,255,0.85);
+    padding: 16px 20px;
+    border-left: 2px solid var(--red);
+    background: #111;
+  }
+
+  /* CTA */
+  .cta-block {
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 24px;
+  }
+  .cta-text {
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(20px, 2vw, 28px);
+    font-weight: 900;
+    color: var(--white);
+    text-transform: uppercase;
+    line-height: 1.1;
+  }
+  .cta-buttons {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--white);
+    text-decoration: none;
+    padding: 16px 28px;
+    border: 1px solid var(--white);
+    transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  }
+  .btn-primary {
+    background: var(--red);
+    border-color: var(--red);
+  }
+  .btn-primary:hover {
+    background: var(--white);
+    color: var(--black);
+    border-color: var(--white);
+  }
+  .btn:hover {
+    background: var(--white);
+    color: var(--black);
+  }
+
+  .final-footer {
+    margin-top: 80px;
+    padding-top: 32px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+    line-height: 1.8;
+  }
+
+  @media (max-width: 768px) {
+    .corner { font-size: 9px; letter-spacing: 1px; }
+    .corner-tl, .corner-tr { top: 16px; }
+    .corner-tl, .corner-bl { left: 16px; }
+    .corner-tr, .corner-br { right: 16px; }
+    .corner-bl, .corner-br { bottom: 16px; }
+    .scroll-progress-bar { width: 50px; }
+
+    .phase-label { left: 16px; bottom: 60px; max-width: 70%; }
+    .phase-label h2 { font-size: 28px; }
+    .phase-label p { font-size: 12px; }
+
+    .final { padding: 80px 6vw; }
+    .final-grid { grid-template-columns: 1fr; gap: 40px; }
+    .includes ul { grid-template-columns: 1fr; }
+    .cta-block { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ КАСТОМНЫЙ КУРСОР ============ -->
+<div class="cursor-dot"></div>
+<div class="cursor-ring"></div>
+
+<!-- ============ FIXED УГЛОВЫЕ НАДПИСИ ============ -->
+<div class="corner corner-tl">
+  THE END<br>
+  EST. 2022
+</div>
+<div class="corner corner-tr">
+  <span class="red-dot"></span>RECORDING<br>
+  BY LYKBOOK
+</div>
+<div class="corner corner-bl">
+  <span id="phase-name">INTRO</span><br>
+  VOGARDEN / VGRD
+</div>
+<div class="corner corner-br">
+  <span id="scroll-percent">00</span>%
+  <div class="scroll-progress-bar" id="scroll-bar"></div>
+</div>
+
+<!-- Назад на главную -->
+<a href="/" class="back-btn">↶ THE END</a>
+
+<!-- ============ 3D СЦЕНА ============ -->
+<div class="scene" id="scene">
+  <canvas id="webgl"></canvas>
+</div>
+
+<!-- ============ ТЕКСТОВЫЕ ОВЕРЛЕИ ============ -->
+
+<!-- Открывающий заголовок -->
+<div class="overlay-text intro-title" id="intro-title">
+  <h1>VOGARDEN</h1>
+  <div class="sub">— РАЙСКИЙ САД, СОЗДАННЫЙ СВОИМИ РУКАМИ —</div>
+  <div class="scroll-hint">↓ SCROLL</div>
+</div>
+
+<!-- Подпись для сада -->
+<div class="overlay-text phase-label" id="label-garden">
+  <div class="num">PHASE / 01</div>
+  <h2>САД</h2>
+  <p>Альбом-номер. Авторская концепция. Нежность, энергия, свобода.</p>
+</div>
+
+<!-- Подпись для стены/перехода -->
+<div class="overlay-text phase-label" id="label-wall">
+  <div class="num">PHASE / 02</div>
+  <h2>ТРАНСФОРМАЦИЯ</h2>
+  <p>То же издание. Новый язык. Новое дыхание.</p>
+</div>
+
+<!-- Подпись для китайской комнаты -->
+<div class="overlay-text phase-label" id="label-china">
+  <div class="num">PHASE / 03</div>
+  <h2>红 / RED EDITION</h2>
+  <p>Альбом, переосмысленный в эстетике востока. Иероглифы, лаконизм, контраст.</p>
+</div>
+
+<!-- ============ ФИНАЛЬНАЯ СЕКЦИЯ ============ -->
+<section class="final">
+  <div class="final-wrap">
+
+    <div class="final-label">[ VGRD / СПЕЦИФИКАЦИЯ ]</div>
+
+    <h2>
+      VOGARDEN — КОГДА ВЫПУСКНОЙ<br>
+      СТАНОВИТСЯ <span class="red">КОЛЛЕКЦИОННЫМ ИЗДАНИЕМ.</span>
+    </h2>
+
+    <div class="final-grid">
+      <div class="final-text">
+        <p>
+          <strong>VOGARDEN</strong> — выпускной альбом в формате модного номера.
+          Ребята принесли нам концепцию <strong>«райского сада»</strong> — образ,
+          в котором сочетается нежность, энергия и свобода.
+        </p>
+        <p>
+          Мы оформили её как <strong>полноценный редакционный проект:</strong>
+          мягкий переплёт, съёмка, авторская вёрстка, развороты — как из журнала.
+        </p>
+        <p>
+          Здесь каждый — герой, каждая страница — кадр из мечты.
+        </p>
+      </div>
+
+      <div class="final-specs">
+        <div class="spec-row">
+          <span class="spec-label">Размер</span>
+          <span class="spec-value">21×30 см</span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-label">Кол-во страниц</span>
+          <span class="spec-value">до 100</span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-label">Переплёт</span>
+          <span class="spec-value">мягкий</span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-label">Тираж</span>
+          <span class="spec-value">от 30 шт.</span>
+        </div>
+
+        <div class="price-block">
+          <div class="price-num">10 000 ₽</div>
+          <div class="price-label">от / экземпляр</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="includes">
+      <h3>[ АЛЬБОМ ВКЛЮЧАЕТ ]</h3>
+      <ul>
+        <li>Разворот классного руководителя и его пожелание выпускникам</li>
+        <li>Разворот с учителями</li>
+        <li>Личный разворот выпускника с цитатой и групповым фото</li>
+        <li>Классическая общая фотография</li>
+        <li>Персональная обложка</li>
+        <li>6 разворотов с групповыми снимками</li>
+      </ul>
+    </div>
+
+    <div class="cta-block">
+      <div class="cta-text">
+        Готовы<br>
+        сделать <span style="color:var(--red)">так же?</span>
+      </div>
+      <div class="cta-buttons">
+        <a href="https://wa.me/79581002777" class="btn btn-primary" target="_blank">
+          ЗАБРОНИРОВАТЬ →
+        </a>
+        <a href="/" class="btn">
+          ↶ К ПРОЕКТАМ
+        </a>
+      </div>
+    </div>
+
+    <div class="final-footer">
+      <p>VOGARDEN — линейка проекта THE END / Made by LYKBOOK</p>
+      <p>© LYKBOOK 2022 — 2026 / Не является публичной офертой</p>
+    </div>
+
+  </div>
+</section>
+
+
+<script>
+/* ============ КАСТОМНЫЙ КУРСОР ============ */
+(function() {
+  const dot = document.querySelector('.cursor-dot');
+  const ring = document.querySelector('.cursor-ring');
+  if (!dot || !ring) return;
+
+  let mouseX = window.innerWidth / 2;
+  let mouseY = window.innerHeight / 2;
+  let dotX = mouseX, dotY = mouseY;
+  let ringX = mouseX, ringY = mouseY;
+
+  document.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX; mouseY = e.clientY;
+  });
+
+  function loop() {
+    dotX += (mouseX - dotX) * 0.9;
+    dotY += (mouseY - dotY) * 0.9;
+    ringX += (mouseX - ringX) * 0.15;
+    ringY += (mouseY - ringY) * 0.15;
+    dot.style.transform  = `translate(${dotX}px, ${dotY}px) translate(-50%, -50%)`;
+    ring.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
+    requestAnimationFrame(loop);
+  }
+  loop();
+
+  document.addEventListener('mouseover', (e) => {
+    if (e.target.closest('a, button, .btn')) ring.classList.add('hover');
+  });
+  document.addEventListener('mouseout', (e) => {
+    if (e.target.closest('a, button, .btn')) ring.classList.remove('hover');
+  });
+})();
+
+/* ============ СКРОЛЛ-ИНДИКАТОР + ФАЗЫ ============ */
+(function() {
+  const percentEl = document.getElementById('scroll-percent');
+  const barEl = document.getElementById('scroll-bar');
+  const phaseEl = document.getElementById('phase-name');
+
+  const intro = document.getElementById('intro-title');
+  const labelGarden = document.getElementById('label-garden');
+  const labelWall = document.getElementById('label-wall');
+  const labelChina = document.getElementById('label-china');
+
+  function update() {
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    const p = max > 0 ? window.scrollY / max : 0;
+    const percent = Math.round(p * 100);
+    percentEl.textContent = percent.toString().padStart(2, '0');
+    barEl.style.setProperty('--progress', percent + '%');
+
+    // Фазы по прогрессу скролла:
+    // 0-10%   intro
+    // 10-40%  garden
+    // 40-50%  wall (transformation)
+    // 50-95%  china
+    // 95+     final (текст уже сам по себе)
+    let phase = 'INTRO';
+    intro.classList.toggle('visible', p < 0.08);
+    labelGarden.classList.toggle('visible', p >= 0.10 && p < 0.38);
+    labelWall.classList.toggle('visible', p >= 0.40 && p < 0.50);
+    labelChina.classList.toggle('visible', p >= 0.52 && p < 0.85);
+
+    if (p < 0.10) phase = 'INTRO';
+    else if (p < 0.40) phase = 'GARDEN';
+    else if (p < 0.52) phase = 'TRANSFORMATION';
+    else if (p < 0.88) phase = 'RED EDITION';
+    else phase = 'SPECS';
+
+    if (phaseEl.textContent !== phase) phaseEl.textContent = phase;
+  }
+
+  window.addEventListener('scroll', update, { passive: true });
+  update();
+})();
+
+/* ============ THREE.JS — 3D СЦЕНА ============ */
+(function() {
+  if (typeof THREE === 'undefined') return;
+
+  const canvas = document.getElementById('webgl');
+  if (!canvas) return;
+
+  // === Сцена и камера ===
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x0a0a0a, 0.035);
+
+  const camera = new THREE.PerspectiveCamera(
+    65, window.innerWidth / window.innerHeight, 0.1, 200
+  );
+  camera.position.set(0, 0, 0);
+
+  const renderer = new THREE.WebGLRenderer({
+    canvas: canvas, antialias: true, alpha: false
+  });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x050505, 1);
+
+  // === Освещение ===
+  const ambient = new THREE.AmbientLight(0x222222);
+  scene.add(ambient);
+
+  // Свет сада — тёплый кремовый
+  const gardenLight = new THREE.PointLight(0xffe6b8, 1.5, 30);
+  gardenLight.position.set(0, 3, -10);
+  scene.add(gardenLight);
+
+  // Дополнительные тёплые акценты
+  const warmLight = new THREE.PointLight(0xffd28a, 1.0, 20);
+  warmLight.position.set(3, -1, -5);
+  scene.add(warmLight);
+
+  // Свет стены — нейтральный (между садом и Китаем)
+  const wallLight = new THREE.PointLight(0xffffff, 1.0, 20);
+  wallLight.position.set(0, 0, -55);
+  scene.add(wallLight);
+
+  // Свет китайской комнаты — красный
+  const chinaLight1 = new THREE.PointLight(0xff2a25, 2.0, 30);
+  chinaLight1.position.set(0, 3, -75);
+  scene.add(chinaLight1);
+
+  const chinaLight2 = new THREE.PointLight(0xff5040, 1.2, 25);
+  chinaLight2.position.set(-2, -1, -90);
+  scene.add(chinaLight2);
+
+  // === Картинки разворотов VOGARDEN (из Tilda) ===
+  const gardenImages = [
+    'https://static.tildacdn.com/tild6139-6239-4564-b631-323765396465/000-15.jpg',
+    'https://static.tildacdn.com/tild6661-3830-4735-b139-653364653430/000-25.jpg',
+    'https://static.tildacdn.com/tild3932-6236-4962-a465-313561636433/000-17.jpg',
+    'https://static.tildacdn.com/tild6338-6430-4234-b932-313561373732/000-28.jpg',
+    'https://static.tildacdn.com/tild6534-3634-4737-a530-666364613764/000-24.jpg',
+    'https://static.tildacdn.com/tild3539-3033-4865-a434-323830363737/000-29.jpg',
+    'https://static.tildacdn.com/tild3866-6262-4464-b136-356332393938/000-46.jpg',
+    'https://static.tildacdn.com/tild3436-6335-4534-b038-373333336231/000-45.jpg',
+    'https://static.tildacdn.com/tild3130-3632-4439-b664-336338326461/000-02.jpg',
+    'https://static.tildacdn.com/tild6537-6331-4666-a138-373931633264/000-04.jpg'
+  ];
+  // Картинки китайской версии — пока те же (заменим позже)
+  const chinaImages = gardenImages.slice().reverse();
+
+  const loader = new THREE.TextureLoader();
+  const gardenStart = -5;
+  const gardenLength = 45;   // от -5 до -50
+  const wallZ = -52;
+  const chinaStart = -60;
+  const chinaLength = 45;    // от -60 до -105
+
+  // Размещаем развороты сада попеременно слева/справа
+  function makePhotoPlanes(images, startZ, length, side1Color) {
+    const planes = [];
+    const spacing = length / images.length;
+    images.forEach((url, i) => {
+      loader.load(url, (tex) => {
+        tex.minFilter = THREE.LinearFilter;
+        const h = 3.6;
+        const w = h * 1.5;
+        const geo = new THREE.PlaneGeometry(w, h);
+        const mat = new THREE.MeshStandardMaterial({
+          map: tex,
+          roughness: 0.4,
+          metalness: 0.05,
+          side: THREE.DoubleSide
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        const z = startZ - (i * spacing + 2);
+        const side = i % 2 === 0 ? -1 : 1;
+        mesh.position.set(side * 4.0, (Math.random() - 0.5) * 0.8, z);
+        mesh.rotation.y = side * -0.3;
+        mesh.userData.baseY = mesh.position.y;
+        scene.add(mesh);
+        planes.push(mesh);
+      });
+    });
+    return planes;
+  }
+
+  const gardenPlanes = makePhotoPlanes(gardenImages, gardenStart, gardenLength);
+  const chinaPlanes  = makePhotoPlanes(chinaImages,  chinaStart,  chinaLength);
+
+  /* ===== ЦВЕТЫ И РАСТЕНИЯ ВНИЗУ ===== */
+  // 2 настоящих PNG + силуэты травы кодом
+  const flowerUrls = [
+    'https://i.ibb.co/Y76sbPR9/Pngtree-daisy-flower-20948858.png',
+    'https://i.ibb.co/BVKKPBKB/Pngtree-violet-flowers-17282322.png'
+  ];
+
+  // Силуэт травы / листа — рисуем canvas-ом, кладём как текстуру
+  function makeGrassTexture() {
+    const c = document.createElement('canvas');
+    c.width = 256; c.height = 256;
+    const cx = c.getContext('2d');
+    cx.clearRect(0, 0, 256, 256);
+    // Несколько травинок
+    cx.fillStyle = 'rgba(40, 30, 20, 0.95)';
+    for (let i = 0; i < 6; i++) {
+      cx.beginPath();
+      const x = 30 + i * 40 + (Math.random() * 20 - 10);
+      cx.moveTo(x, 256);
+      const cx1 = x + (Math.random() - 0.5) * 80;
+      const cx2 = x + (Math.random() - 0.5) * 60;
+      const y2 = 60 + Math.random() * 80;
+      cx.quadraticCurveTo(cx1, 180, cx2, y2);
+      cx.lineTo(cx2 + 6, y2);
+      cx.quadraticCurveTo(cx1 + 8, 180, x + 8, 256);
+      cx.closePath();
+      cx.fill();
+    }
+    return new THREE.CanvasTexture(c);
+  }
+
+  function makeLeafTexture() {
+    const c = document.createElement('canvas');
+    c.width = 256; c.height = 256;
+    const cx = c.getContext('2d');
+    cx.fillStyle = 'rgba(30, 25, 15, 0.92)';
+    // Пара широких листьев
+    cx.beginPath();
+    cx.moveTo(128, 256);
+    cx.bezierCurveTo(40, 200, 30, 90, 100, 40);
+    cx.bezierCurveTo(140, 60, 160, 150, 128, 256);
+    cx.fill();
+    cx.beginPath();
+    cx.moveTo(128, 256);
+    cx.bezierCurveTo(216, 200, 226, 90, 156, 40);
+    cx.bezierCurveTo(116, 60, 96, 150, 128, 256);
+    cx.fill();
+    return new THREE.CanvasTexture(c);
+  }
+
+  const grassTex = makeGrassTexture();
+  const leafTex = makeLeafTexture();
+
+  // Позиции для растений — ряд снизу, по всей длине сада
+  const plants = [];
+  function addPlant(texture, x, z, scale, opacityVal, isPng) {
+    const geo = new THREE.PlaneGeometry(scale, scale);
+    const mat = new THREE.MeshBasicMaterial({
+      map: texture,
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      opacity: opacityVal
+    });
+    const m = new THREE.Mesh(geo, mat);
+    // Y -2.5 — ниже линии глаз, "земля"
+    m.position.set(x, -2.5 + scale * 0.3, z);
+    m.userData = {
+      baseScale: scale,
+      growth: 0   // от 0 до 1, для роста
+    };
+    // Стартовый размер 0
+    m.scale.set(0.01, 0.01, 0.01);
+    scene.add(m);
+    plants.push(m);
+    return m;
+  }
+
+  // Заполняем сад растениями
+  // Силуэты травы — каждые 2 единицы, чередуем стороны
+  for (let z = -3; z > -52; z -= 2) {
+    // По 2-3 растения на каждой "полосе"
+    const count = 2 + Math.floor(Math.random() * 2);
+    for (let i = 0; i < count; i++) {
+      const tex = Math.random() > 0.5 ? grassTex : leafTex;
+      const x = (Math.random() - 0.5) * 14; // широкий разброс
+      const scale = 1.0 + Math.random() * 1.2;
+      const opacity = 0.7 + Math.random() * 0.3;
+      addPlant(tex, x, z + (Math.random() - 0.5) * 1.5, scale, opacity, false);
+    }
+  }
+
+  // Цветы PNG — реже, рассыпаны
+  flowerUrls.forEach((url) => {
+    loader.load(url, (tex) => {
+      tex.minFilter = THREE.LinearFilter;
+      // Раскладываем 8 копий каждого цветка
+      for (let i = 0; i < 8; i++) {
+        const z = -5 - Math.random() * 45;
+        const x = (Math.random() - 0.5) * 12;
+        const scale = 0.8 + Math.random() * 0.7;
+        addPlant(tex, x, z, scale, 0.9, true);
+      }
+    });
+  });
+
+  /* ===== СТЕНА С ВИДЕО (между садом и Китаем) ===== */
+  // Видеоэлемент создаём в DOM, прячем, используем как текстуру
+  const videoEl = document.createElement('video');
+  videoEl.src = 'https://static.tildacdn.com/tild3866-3534-4664-a637-393033366132/Vogarden_test_2.mp4';
+  videoEl.crossOrigin = 'anonymous';
+  videoEl.loop = true;
+  videoEl.muted = true;
+  videoEl.playsInline = true;
+  videoEl.autoplay = true;
+  videoEl.style.display = 'none';
+  document.body.appendChild(videoEl);
+  videoEl.play().catch(() => {/* ok */});
+
+  const videoTex = new THREE.VideoTexture(videoEl);
+  videoTex.minFilter = THREE.LinearFilter;
+  videoTex.magFilter = THREE.LinearFilter;
+  videoTex.format = THREE.RGBFormat;
+
+  // Геометрия стены — широкая плоскость
+  const wallGeo = new THREE.PlaneGeometry(14, 8);
+  const wallMat = new THREE.MeshBasicMaterial({
+    map: videoTex,
+    side: THREE.DoubleSide
+  });
+  const wallMesh = new THREE.Mesh(wallGeo, wallMat);
+  wallMesh.position.set(0, 0, wallZ);
+  scene.add(wallMesh);
+
+  /* ===== КИТАЙСКИЕ ИЕРОГЛИФЫ — ПАДАЮТ КАК ДОЖДЬ ===== */
+  const chineseChars = '永和九年岁在癸丑暮春之初会于会稽山阴之兰亭修禊事也群贤毕至少长咸集此地有崇山峻岭茂林修竹';
+
+  function makeCharTexture(ch) {
+    const c = document.createElement('canvas');
+    c.width = 128; c.height = 128;
+    const cx = c.getContext('2d');
+    cx.clearRect(0, 0, 128, 128);
+    cx.fillStyle = '#fff';
+    cx.font = '900 90px "Noto Serif SC", serif';
+    cx.textAlign = 'center';
+    cx.textBaseline = 'middle';
+    cx.fillText(ch, 64, 64);
+    return new THREE.CanvasTexture(c);
+  }
+
+  const chars = [];
+  // 80 иероглифов разбросаны по китайской комнате
+  for (let i = 0; i < 80; i++) {
+    const ch = chineseChars[Math.floor(Math.random() * chineseChars.length)];
+    const tex = makeCharTexture(ch);
+    const mat = new THREE.MeshBasicMaterial({
+      map: tex,
+      transparent: true,
+      depthWrite: false,
+      opacity: 0.4 + Math.random() * 0.5,
+      color: 0xff5040
+    });
+    const sz = 0.5 + Math.random() * 0.9;
+    const geo = new THREE.PlaneGeometry(sz, sz);
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(
+      (Math.random() - 0.5) * 14,
+      4 + Math.random() * 8,           // стартовая высота
+      chinaStart - Math.random() * chinaLength
+    );
+    m.userData = {
+      fallSpeed: 0.005 + Math.random() * 0.02,
+      baseY: m.position.y,
+      offset: Math.random() * Math.PI * 2
+    };
+    scene.add(m);
+    chars.push(m);
+  }
+
+  /* ===== ОСКОЛКИ СТЕНЫ (для пробития) ===== */
+  const shards = [];
+  const shardGeo = new THREE.PlaneGeometry(0.6, 0.6);
+  for (let i = 0; i < 50; i++) {
+    const mat = new THREE.MeshBasicMaterial({
+      map: videoTex,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0
+    });
+    const m = new THREE.Mesh(shardGeo, mat);
+    // Изначальные позиции — на самой стене (раскладка решёткой)
+    const col = i % 10;
+    const row = Math.floor(i / 10);
+    m.position.set(
+      -6 + col * 1.3,
+      -2.5 + row * 1.3,
+      wallZ
+    );
+    m.userData = {
+      origX: m.position.x,
+      origY: m.position.y,
+      vx: (Math.random() - 0.5) * 0.5,
+      vy: (Math.random() - 0.5) * 0.5,
+      vz: -1 - Math.random() * 1.5,
+      vr: (Math.random() - 0.5) * 0.3
+    };
+    scene.add(m);
+    shards.push(m);
+  }
+
+  /* ===== ПЫЛИНКИ ===== */
+  const dustGroup = new THREE.Group();
+  for (let i = 0; i < 250; i++) {
+    const len = 0.04 + Math.random() * 0.12;
+    const dGeo = new THREE.PlaneGeometry(len, 0.002);
+    const dMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff, transparent: true,
+      opacity: 0.08 + Math.random() * 0.1,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false, side: THREE.DoubleSide
+    });
+    const d = new THREE.Mesh(dGeo, dMat);
+    d.position.set(
+      (Math.random() - 0.5) * 12,
+      (Math.random() - 0.5) * 6,
+      -Math.random() * 110
+    );
+    d.rotation.z = Math.random() * Math.PI;
+    d.userData = {
+      speed: 0.0005 + Math.random() * 0.002,
+      offset: Math.random() * Math.PI * 2
+    };
+    dustGroup.add(d);
+  }
+  scene.add(dustGroup);
+
+  /* ===== СКРОЛЛ ===== */
+  let scrollProgress = 0, targetProgress = 0;
+  let mouseX = 0, mouseY = 0;
+
+  window.addEventListener('mousemove', (e) => {
+    mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+    mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+  });
+
+  window.addEventListener('scroll', () => {
+    const sh = document.getElementById('scene').offsetHeight - window.innerHeight;
+    if (sh > 0) {
+      targetProgress = Math.max(0, Math.min(1, window.scrollY / sh));
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  /* ===== АНИМАЦИОННЫЙ ЦИКЛ ===== */
+  let time = 0;
+  const corridorTotal = 110; // вся длина движения камеры
+
+  function animate() {
+    requestAnimationFrame(animate);
+    time += 0.01;
+    scrollProgress += (targetProgress - scrollProgress) * 0.06;
+
+    // Камера движется по Z в зависимости от скролла
+    const camZ = -scrollProgress * corridorTotal;
+    camera.position.z = camZ;
+    camera.position.x = mouseX * 0.4;
+    camera.position.y = mouseY * 0.25 + Math.sin(time * 0.5) * 0.1;
+    camera.rotation.y = mouseX * -0.025;
+    camera.rotation.x = mouseY * -0.015;
+
+    // Цвет фона/тумана плавно от тёмно-зелёного к тёмно-красному
+    // Плавный переход на участке стены (40-55%)
+    let fogR = 0.02, fogG = 0.04, fogB = 0.02;
+    if (scrollProgress < 0.40) {
+      // Сад — тёмно-зеленовато-кремовый
+      fogR = 0.04; fogG = 0.05; fogB = 0.03;
+    } else if (scrollProgress < 0.55) {
+      // Переход
+      const t = (scrollProgress - 0.40) / 0.15;
+      fogR = 0.04 + t * 0.10;
+      fogG = 0.05 - t * 0.04;
+      fogB = 0.03 - t * 0.02;
+    } else {
+      // Китайская — красноватый
+      fogR = 0.14; fogG = 0.01; fogB = 0.01;
+    }
+    scene.fog.color.setRGB(fogR, fogG, fogB);
+    renderer.setClearColor(new THREE.Color(fogR, fogG, fogB), 1);
+
+    // Освещение — варьируется по скроллу
+    if (scrollProgress < 0.40) {
+      gardenLight.intensity = 1.5 + Math.sin(time * 2) * 0.2;
+      warmLight.intensity = 1.0;
+      chinaLight1.intensity = 0;
+      chinaLight2.intensity = 0;
+    } else if (scrollProgress < 0.55) {
+      const t = (scrollProgress - 0.40) / 0.15;
+      gardenLight.intensity = 1.5 * (1 - t);
+      warmLight.intensity = 1.0 * (1 - t);
+      chinaLight1.intensity = 2.0 * t;
+      chinaLight2.intensity = 1.2 * t;
+    } else {
+      gardenLight.intensity = 0;
+      warmLight.intensity = 0;
+      chinaLight1.intensity = 2.0 + Math.sin(time * 2.5) * 0.3;
+      chinaLight2.intensity = 1.2 + Math.cos(time * 1.8) * 0.2;
+    }
+
+    // Свет двигается с камерой
+    gardenLight.position.z = camZ - 8;
+    warmLight.position.z = camZ - 5;
+    chinaLight1.position.z = camZ - 8;
+    chinaLight2.position.z = camZ - 5;
+
+    // Развороты — лёгкое покачивание
+    [...gardenPlanes, ...chinaPlanes].forEach((p, i) => {
+      if (p && p.userData) {
+        p.position.y = (p.userData.baseY || 0) + Math.sin(time * 0.7 + i) * 0.08;
+      }
+    });
+
+    /* === РАСТЕНИЯ "РАСТУТ" по мере приближения камеры === */
+    plants.forEach((p) => {
+      const distFromCam = Math.abs(p.position.z - camZ);
+      // Растение начинает расти за 20 единиц до того как мы подойдём
+      // и достигает полного размера когда мы рядом
+      const growthZ = 25;
+      const targetGrowth = Math.max(0, Math.min(1, 1 - (distFromCam - 5) / growthZ));
+      p.userData.growth += (targetGrowth - p.userData.growth) * 0.05;
+      const s = p.userData.baseScale * Math.max(0.01, p.userData.growth);
+      p.scale.set(s, s, s);
+      // Лёгкое покачивание (как от ветра)
+      p.rotation.z = Math.sin(time * 0.8 + p.position.x) * 0.05;
+    });
+
+    /* === СТЕНА — пробивается на 45-55% скролла === */
+    const wallBreakProgress = Math.max(0, Math.min(1, (scrollProgress - 0.42) / 0.10));
+    if (wallBreakProgress < 0.05) {
+      // Стена цела
+      wallMesh.visible = true;
+      wallMesh.material.opacity = 1;
+      wallMesh.material.transparent = false;
+      shards.forEach((s) => { s.material.opacity = 0; });
+    } else if (wallBreakProgress < 1) {
+      // Стена тает, осколки появляются
+      wallMesh.visible = true;
+      wallMesh.material.transparent = true;
+      wallMesh.material.opacity = 1 - wallBreakProgress;
+      shards.forEach((s) => {
+        s.material.opacity = wallBreakProgress * 0.9;
+        // Двигаем осколки от исходных позиций
+        s.position.x = s.userData.origX + s.userData.vx * wallBreakProgress * 8;
+        s.position.y = s.userData.origY + s.userData.vy * wallBreakProgress * 8;
+        s.position.z = wallZ + s.userData.vz * wallBreakProgress * 10;
+        s.rotation.z = s.userData.vr * wallBreakProgress * 12;
+      });
+    } else {
+      // Стена пробита, осколки далеко
+      wallMesh.visible = false;
+      shards.forEach((s) => { s.material.opacity = Math.max(0, 0.9 - (wallBreakProgress - 1) * 2); });
+    }
+
+    /* === ИЕРОГЛИФЫ ПАДАЮТ === */
+    chars.forEach((ch) => {
+      const distFromCam = Math.abs(ch.position.z - camZ);
+      // Видны только в китайской зоне
+      const inZone = ch.position.z < -55;
+      const visTarget = inZone ? Math.max(0, Math.min(1, 1 - (distFromCam - 5) / 30)) : 0;
+      ch.material.opacity = visTarget * (0.4 + Math.sin(time * 2 + ch.userData.offset) * 0.15);
+
+      // Падают
+      ch.position.y -= ch.userData.fallSpeed;
+      // Если упали ниже -3 — подбрасываем обратно вверх
+      if (ch.position.y < -3) {
+        ch.position.y = 8 + Math.random() * 4;
+        ch.position.x = (Math.random() - 0.5) * 14;
+      }
+      // Лёгкий поворот
+      ch.rotation.z = Math.sin(time + ch.userData.offset) * 0.15;
+    });
+
+    /* === ПЫЛЬ === */
+    dustGroup.children.forEach((d) => {
+      d.position.y += Math.sin(time * 0.8 + d.userData.offset) * d.userData.speed;
+      d.position.x += Math.cos(time * 0.5 + d.userData.offset) * d.userData.speed * 0.5;
+      d.rotation.z += 0.001;
+    });
+
+    renderer.render(scene, camera);
+  }
+  animate();
+})();
+</script>
+
+</body>
+</html>
