@@ -922,9 +922,12 @@
 
     // Подзаголовок виден только в самом начале
     intro.classList.toggle('visible', p < 0.08 && document.body.dataset.titleReady === '1');
-    labelGarden.classList.toggle('visible', p >= 0.10 && p < 0.32);
-    labelWall.classList.toggle('visible',   p >= 0.34 && p < 0.50);
-    labelChina.classList.toggle('visible',  p >= 0.52 && p < 0.70);
+    // Сад: 10-44% (последние 5% — приближаемся к стене)
+    labelGarden.classList.toggle('visible', p >= 0.10 && p < 0.44);
+    // Стена/трансформация: пока подъезжаем + пробиваем (45-67%)
+    labelWall.classList.toggle('visible',   p >= 0.45 && p < 0.67);
+    // Китайская: 67-83%
+    labelChina.classList.toggle('visible',  p >= 0.67 && p < 0.83);
 
     // ВИДЕО-СТЕНА #1: камера приходит к стене на 55% скролла
     //   45-50%: видео виднеется вдали (мелкое, тусклое)
@@ -956,10 +959,10 @@
 
     let phase;
     if (p < 0.10) phase = 'INTRO';
-    else if (p < 0.34) phase = 'GARDEN';
-    else if (p < 0.52) phase = 'TRANSFORMATION';
-    else if (p < 0.72) phase = 'RED EDITION';
-    else if (p < 0.92) phase = 'TRANSFORMATION';
+    else if (p < 0.44) phase = 'GARDEN';
+    else if (p < 0.67) phase = 'TRANSFORMATION';
+    else if (p < 0.83) phase = 'RED EDITION';
+    else if (p < 0.98) phase = 'TRANSFORMATION';
     else phase = 'SPECS';
 
     if (phaseEl.textContent !== phase) phaseEl.textContent = phase;
@@ -1345,11 +1348,12 @@
     scene.fog.density = currentFogDensity;
 
     // Цвет фона/тумана плавно от тёмно-зелёного к тёмно-красному
+    // Сад до 50%, переход 50-67%, красная комната после 67%
     let fogR = 0.02, fogG = 0.04, fogB = 0.02;
-    if (scrollProgress < 0.40) {
+    if (scrollProgress < 0.50) {
       fogR = 0.04; fogG = 0.05; fogB = 0.03;
-    } else if (scrollProgress < 0.55) {
-      const t = (scrollProgress - 0.40) / 0.15;
+    } else if (scrollProgress < 0.67) {
+      const t = (scrollProgress - 0.50) / 0.17;
       fogR = 0.04 + t * 0.10;
       fogG = 0.05 - t * 0.04;
       fogB = 0.03 - t * 0.02;
@@ -1359,14 +1363,14 @@
     scene.fog.color.setRGB(fogR, fogG, fogB);
     renderer.setClearColor(new THREE.Color(fogR, fogG, fogB), 1);
 
-    // Освещение — варьируется по скроллу
-    if (scrollProgress < 0.40) {
+    // Освещение — варьируется по скроллу под новые тайминги
+    if (scrollProgress < 0.50) {
       gardenLight.intensity = 1.5 + Math.sin(time * 2) * 0.2;
       warmLight.intensity = 1.0;
       chinaLight1.intensity = 0;
       chinaLight2.intensity = 0;
-    } else if (scrollProgress < 0.55) {
-      const t = (scrollProgress - 0.40) / 0.15;
+    } else if (scrollProgress < 0.67) {
+      const t = (scrollProgress - 0.50) / 0.17;
       gardenLight.intensity = 1.5 * (1 - t);
       warmLight.intensity = 1.0 * (1 - t);
       chinaLight1.intensity = 2.0 * t;
@@ -1441,8 +1445,8 @@
     /* === ИЕРОГЛИФЫ ПАДАЮТ === */
     chars.forEach((ch) => {
       const distFromCam = Math.abs(ch.position.z - camZ);
-      // Видны только в китайской зоне
-      const inZone = ch.position.z < -75;
+      // Видны только в китайской зоне (между первой и второй стеной)
+      const inZone = ch.position.z < -73 && ch.position.z > -119;
       const visTarget = inZone ? Math.max(0, Math.min(1, 1 - (distFromCam - 5) / 30)) : 0;
       ch.material.opacity = visTarget * (0.4 + Math.sin(time * 2 + ch.userData.offset) * 0.15);
 
