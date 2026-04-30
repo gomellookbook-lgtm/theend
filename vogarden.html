@@ -137,6 +137,17 @@
     opacity: 1;
   }
 
+  /* === КРАСНАЯ ВСПЫШКА (переход сад→китайцы) === */
+  .red-flash {
+    position: fixed;
+    inset: 0;
+    z-index: 8;
+    pointer-events: none;
+    background: var(--red);
+    opacity: 0;
+    will-change: opacity;
+  }
+
   /* === ВИДЕО СТЕНА (Vimeo iframe, выглядит как часть коридора) === */
   .wall-video {
     position: fixed;
@@ -504,17 +515,11 @@
 <!-- Назад на главную -->
 <a href="/" class="back-btn">↶ THE END</a>
 
-<!-- ВИДЕО ТИЗЕР #1 — после сада (Vimeo) -->
-<div class="wall-video" id="wall-video-1">
-  <iframe
-    src="https://player.vimeo.com/video/1187985473?background=1&autoplay=1&loop=1&muted=1&autopause=0&controls=0&badge=0"
-    frameborder="0"
-    allow="autoplay; fullscreen"
-    title="VOGARDEN teaser"></iframe>
-</div>
+<!-- КРАСНАЯ ВСПЫШКА — переход сад→китайцы -->
+<div class="red-flash" id="red-flash"></div>
 
-<!-- ВИДЕО ТИЗЕР #2 — после китайской (то же видео) -->
-<div class="wall-video" id="wall-video-2">
+<!-- ВИДЕО ТИЗЕР — единственное, в финале (после всего пути) -->
+<div class="wall-video" id="wall-video-final">
   <iframe
     src="https://player.vimeo.com/video/1187985473?background=1&autoplay=1&loop=1&muted=1&autopause=0&controls=0&badge=0"
     frameborder="0"
@@ -931,49 +936,46 @@
 
     // Подзаголовок виден только в самом начале
     intro.classList.toggle('visible', p < 0.08 && document.body.dataset.titleReady === '1');
-    // Сад: 10-44% (последние 5% — приближаемся к стене)
+    // Сад: 10-44%
     labelGarden.classList.toggle('visible', p >= 0.10 && p < 0.44);
-    // Стена/трансформация: пока подъезжаем + пробиваем (45-67%)
-    labelWall.classList.toggle('visible',   p >= 0.45 && p < 0.67);
-    // Китайская: 67-83%
-    labelChina.classList.toggle('visible',  p >= 0.67 && p < 0.83);
+    // Переход (вспышка): 45-55%
+    labelWall.classList.toggle('visible',   p >= 0.45 && p < 0.55);
+    // Китайская: 56-80%
+    labelChina.classList.toggle('visible',  p >= 0.56 && p < 0.80);
 
-    // ВИДЕО-СТЕНА #1: камера приходит к стене на 55% скролла
-    //   45-50%: видео виднеется вдали (мелкое, тусклое)
-    //   50-58%: видео крупное (стена прямо перед нами)
-    //   58-62%: пробитие — видео разлетается БЫСТРО
-    //   после 62%: ничего, путь свободен в красную комнату
-    const wallVideo1 = document.getElementById('wall-video-1');
-    if (wallVideo1) {
-      const isShat1 = p >= 0.58 && p < 0.62;
-      const isClose1 = p >= 0.50 && p < 0.58;
-      const isFar1 = p >= 0.45 && p < 0.50;
-      wallVideo1.classList.toggle('approaching', isFar1);
-      wallVideo1.classList.toggle('visible', isClose1);
-      wallVideo1.classList.toggle('shattering', isShat1);
+    // === КРАСНАЯ ВСПЫШКА (переход сад→китайцы, 45-55%) ===
+    // 0% на 45%, пик 1.0 на 50%, обратно 0 на 55%
+    const flash = document.getElementById('red-flash');
+    if (flash) {
+      let flashOpacity = 0;
+      if (p >= 0.45 && p < 0.50) {
+        flashOpacity = (p - 0.45) / 0.05;
+      } else if (p >= 0.50 && p < 0.55) {
+        flashOpacity = 1 - (p - 0.50) / 0.05;
+      }
+      flash.style.opacity = flashOpacity;
     }
 
-    // ВИДЕО-СТЕНА #2: камера у второй стены на 92% скролла
-    //   85-89%: вдалеке
-    //   89-93%: близко
-    //   93-96%: пробитие
-    //   после 96%: финальная секция уже видна
-    const wallVideo2 = document.getElementById('wall-video-2');
-    if (wallVideo2) {
-      const isShat2 = p >= 0.93 && p < 0.96;
-      const isClose2 = p >= 0.89 && p < 0.93;
-      const isFar2 = p >= 0.85 && p < 0.89;
-      wallVideo2.classList.toggle('approaching', isFar2);
-      wallVideo2.classList.toggle('visible', isClose2);
-      wallVideo2.classList.toggle('shattering', isShat2);
+    // === ФИНАЛЬНОЕ ВИДЕО (после китайской комнаты, 82-95%) ===
+    //   82-86%: видео виднеется вдали (мелкое, тусклое)
+    //   86-92%: видео крупное (стена прямо перед нами)
+    //   92-95%: видео уходит (растёт и тает)
+    const wallVideo = document.getElementById('wall-video-final');
+    if (wallVideo) {
+      const isShat = p >= 0.92 && p < 0.95;
+      const isClose = p >= 0.86 && p < 0.92;
+      const isFar = p >= 0.82 && p < 0.86;
+      wallVideo.classList.toggle('approaching', isFar);
+      wallVideo.classList.toggle('visible', isClose);
+      wallVideo.classList.toggle('shattering', isShat);
     }
 
     let phase;
     if (p < 0.10) phase = 'INTRO';
     else if (p < 0.44) phase = 'GARDEN';
-    else if (p < 0.67) phase = 'TRANSFORMATION';
-    else if (p < 0.83) phase = 'RED EDITION';
-    else if (p < 0.98) phase = 'TRANSFORMATION';
+    else if (p < 0.56) phase = 'TRANSFORMATION';
+    else if (p < 0.82) phase = 'RED EDITION';
+    else if (p < 0.96) phase = 'TEASER';
     else phase = 'SPECS';
 
     if (phaseEl.textContent !== phase) phaseEl.textContent = phase;
@@ -1184,23 +1186,8 @@
     }
   }
 
-  /* ===== СТЕНА (видео отображается как HTML, не как 3D-текстура) ===== */
-  // Сама стена в 3D — белая полупрозрачная плоскость, чтобы было что "пробивать"
-  const wallGeo = new THREE.PlaneGeometry(14, 8);
-  const wallMat = new THREE.MeshBasicMaterial({
-    color: 0xffffff,
-    side: THREE.DoubleSide,
-    transparent: true,
-    opacity: 0.0
-  });
-  const wallMesh = new THREE.Mesh(wallGeo, wallMat);
-  wallMesh.position.set(0, 0, wallZ);
-  scene.add(wallMesh);
-
-  // Вторая стена — после китайской (wallZ2 определён выше)
-  const wallMesh2 = new THREE.Mesh(wallGeo.clone(), wallMat.clone());
-  wallMesh2.position.set(0, 0, wallZ2);
-  scene.add(wallMesh2);
+  // 3D-стены убраны — переход между садом и красной комнатой делается
+  // через красную вспышку, а финальное видео — через HTML iframe
 
   /* ===== КИТАЙСКИЕ ИЕРОГЛИФЫ — ПАДАЮТ КАК ДОЖДЬ ===== */
   const chineseChars = '永和九年岁在癸丑暮春之初会于会稽山阴之兰亭修禊事也群贤毕至少长咸集此地有崇山峻岭茂林修竹';
@@ -1247,42 +1234,7 @@
     chars.push(m);
   }
 
-  /* ===== ОСКОЛКИ СТЕН (для пробития) — белые ===== */
-  function makeShards(zPos) {
-    const arr = [];
-    const shardGeo = new THREE.PlaneGeometry(0.7, 0.7);
-    for (let i = 0; i < 50; i++) {
-      const mat = new THREE.MeshBasicMaterial({
-        color: 0xffffff,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0
-      });
-      const m = new THREE.Mesh(shardGeo, mat);
-      const col = i % 10;
-      const row = Math.floor(i / 10);
-      m.position.set(
-        -6 + col * 1.3,
-        -2.5 + row * 1.3,
-        zPos
-      );
-      m.userData = {
-        origX: m.position.x,
-        origY: m.position.y,
-        origZ: zPos,
-        vx: (Math.random() - 0.5) * 0.5,
-        vy: (Math.random() - 0.5) * 0.5,
-        vz: -1 - Math.random() * 1.5,
-        vr: (Math.random() - 0.5) * 0.3
-      };
-      scene.add(m);
-      arr.push(m);
-    }
-    return arr;
-  }
-
-  const shards  = makeShards(wallZ);
-  const shards2 = makeShards(wallZ2);
+  // Осколки добавим только для финального пробития (см. ниже)
 
   /* ===== ПЫЛИНКИ ===== */
   const dustGroup = new THREE.Group();
@@ -1359,12 +1311,12 @@
     scene.fog.density = currentFogDensity;
 
     // Цвет фона/тумана плавно от тёмно-зелёного к тёмно-красному
-    // Сад до 50%, переход 50-67%, красная комната после 67%
+    // Сад до 45%, моментальный переход 45-55% (синхронно с вспышкой), красная после 55%
     let fogR = 0.02, fogG = 0.04, fogB = 0.02;
-    if (scrollProgress < 0.50) {
+    if (scrollProgress < 0.45) {
       fogR = 0.04; fogG = 0.05; fogB = 0.03;
-    } else if (scrollProgress < 0.67) {
-      const t = (scrollProgress - 0.50) / 0.17;
+    } else if (scrollProgress < 0.55) {
+      const t = (scrollProgress - 0.45) / 0.10;
       fogR = 0.04 + t * 0.10;
       fogG = 0.05 - t * 0.04;
       fogB = 0.03 - t * 0.02;
@@ -1374,14 +1326,14 @@
     scene.fog.color.setRGB(fogR, fogG, fogB);
     renderer.setClearColor(new THREE.Color(fogR, fogG, fogB), 1);
 
-    // Освещение — варьируется по скроллу под новые тайминги
-    if (scrollProgress < 0.50) {
+    // Освещение — синхронно с вспышкой: переход 45-55%
+    if (scrollProgress < 0.45) {
       gardenLight.intensity = 1.5 + Math.sin(time * 2) * 0.2;
       warmLight.intensity = 1.0;
       chinaLight1.intensity = 0;
       chinaLight2.intensity = 0;
-    } else if (scrollProgress < 0.67) {
-      const t = (scrollProgress - 0.50) / 0.17;
+    } else if (scrollProgress < 0.55) {
+      const t = (scrollProgress - 0.45) / 0.10;
       gardenLight.intensity = 1.5 * (1 - t);
       warmLight.intensity = 1.0 * (1 - t);
       chinaLight1.intensity = 2.0 * t;
@@ -1420,43 +1372,14 @@
       p.rotation.z = Math.sin(time * 0.8 + p.position.x) * 0.05;
     });
 
-    /* === ПРОБИТИЕ ДВУХ СТЕН === */
-    function updateWall(mesh, shardArr, breakProgress) {
-      if (breakProgress < 0.05) {
-        mesh.visible = true;
-        mesh.material.opacity = 0;  // в 3D невидима, видео в HTML
-        shardArr.forEach((s) => { s.material.opacity = 0; });
-      } else if (breakProgress < 1) {
-        mesh.visible = true;
-        mesh.material.transparent = true;
-        mesh.material.opacity = 0;
-        shardArr.forEach((s) => {
-          s.material.opacity = breakProgress * 0.9;
-          s.position.x = s.userData.origX + s.userData.vx * breakProgress * 8;
-          s.position.y = s.userData.origY + s.userData.vy * breakProgress * 8;
-          s.position.z = s.userData.origZ + s.userData.vz * breakProgress * 10;
-          s.rotation.z = s.userData.vr * breakProgress * 12;
-        });
-      } else {
-        mesh.visible = false;
-        shardArr.forEach((s) => {
-          s.material.opacity = Math.max(0, 0.9 - (breakProgress - 1) * 2);
-        });
-      }
-    }
-
-    // Первая стена (после сада) — пробивается синхронно с видео #1: 58-65%
-    const wall1Break = Math.max(0, Math.min(1, (scrollProgress - 0.58) / 0.07));
-    updateWall(wallMesh, shards, wall1Break);
-
-    // Вторая стена (после китайской) — пробивается синхронно с видео #2: 93-97%
-    const wall2Break = Math.max(0, Math.min(1, (scrollProgress - 0.93) / 0.04));
-    updateWall(wallMesh2, shards2, wall2Break);
+    // 3D-стены убраны полностью — никакого пробития в 3D нет.
+    // Переход сад→китайцы делается через цвет/туман (см. выше).
+    // Финальное видео — через HTML iframe (см. ниже).
 
     /* === ИЕРОГЛИФЫ ПАДАЮТ === */
     chars.forEach((ch) => {
       const distFromCam = Math.abs(ch.position.z - camZ);
-      // Видны только в китайской зоне (между первой и второй стеной)
+      // Видны в красной комнате (от первой "виртуальной стены" до второй)
       const inZone = ch.position.z < -73 && ch.position.z > -119;
       const visTarget = inZone ? Math.max(0, Math.min(1, 1 - (distFromCam - 5) / 30)) : 0;
       ch.material.opacity = visTarget * (0.4 + Math.sin(time * 2 + ch.userData.offset) * 0.15);
