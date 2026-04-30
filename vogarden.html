@@ -137,30 +137,40 @@
     opacity: 1;
   }
 
-  /* === ВИДЕО СТЕНА (Vimeo iframe) === */
+  /* === ВИДЕО СТЕНА (Vimeo iframe, выглядит как часть коридора) === */
   .wall-video {
     position: fixed;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%) scale(0.7);
-    width: min(56vw, 70vh);
-    aspect-ratio: 16 / 9;
+    /* Размер примерно как 3D-стена (14×8 единиц) глазами камеры на расстоянии 0 */
+    transform: translate(-50%, -50%) scale(0.6);
+    width: min(70vw, 100vh);
+    aspect-ratio: 14 / 8;
     z-index: 4;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.5s ease, transform 0.6s ease;
+    transition: opacity 0.4s ease, transform 0.5s ease;
     background: #000;
     overflow: hidden;
   }
 
+  /* Видео виднеется издалека — мелкое, тусклое */
+  .wall-video.approaching {
+    opacity: 0.4;
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+
+  /* Видео близко — на полный экран */
   .wall-video.visible {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
   }
 
+  /* Видео разлетается (после пробития) */
   .wall-video.shattering {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(1.3);
+    transform: translate(-50%, -50%) scale(1.5);
+    transition: opacity 0.4s ease, transform 0.4s ease;
   }
 
   .wall-video video,
@@ -195,7 +205,7 @@
 
   /* Заголовок VOGARDEN — большой по центру в начале */
   .intro-title {
-    top: 58%; left: 50%;
+    top: 70%; left: 50%;
     transform: translate(-50%, -50%);
     text-align: center;
     width: 90%;
@@ -916,21 +926,31 @@
     labelWall.classList.toggle('visible',   p >= 0.34 && p < 0.50);
     labelChina.classList.toggle('visible',  p >= 0.52 && p < 0.70);
 
-    // Видео-стена #1: появляется на 32-44%, разлетается 44-50%
+    // ВИДЕО-СТЕНА #1: камера приходит к стене на 55% скролла
+    //   45-50%: видео виднеется вдали (мелкое, тусклое)
+    //   50-58%: видео крупное (стена прямо перед нами)
+    //   58-65%: пробитие — видео разлетается, осколки летят
     const wallVideo1 = document.getElementById('wall-video-1');
     if (wallVideo1) {
-      const inZone1 = p >= 0.32 && p < 0.50;
-      const isShat1 = p >= 0.44 && p < 0.50;
-      wallVideo1.classList.toggle('visible', inZone1 && !isShat1);
+      const isShat1 = p >= 0.58 && p < 0.65;
+      const isClose1 = p >= 0.50 && p < 0.58;
+      const isFar1 = p >= 0.45 && p < 0.50;
+      wallVideo1.classList.toggle('approaching', isFar1);
+      wallVideo1.classList.toggle('visible', isClose1);
       wallVideo1.classList.toggle('shattering', isShat1);
     }
 
-    // Видео-стена #2: появляется на 70-82%, разлетается 82-90%
+    // ВИДЕО-СТЕНА #2: камера у второй стены на 92% скролла
+    //   83-87%: вдалеке
+    //   87-93%: близко
+    //   93-97%: пробитие
     const wallVideo2 = document.getElementById('wall-video-2');
     if (wallVideo2) {
-      const inZone2 = p >= 0.70 && p < 0.90;
-      const isShat2 = p >= 0.82 && p < 0.90;
-      wallVideo2.classList.toggle('visible', inZone2 && !isShat2);
+      const isShat2 = p >= 0.93 && p < 0.97;
+      const isClose2 = p >= 0.87 && p < 0.93;
+      const isFar2 = p >= 0.83 && p < 0.87;
+      wallVideo2.classList.toggle('approaching', isFar2);
+      wallVideo2.classList.toggle('visible', isClose2);
       wallVideo2.classList.toggle('shattering', isShat2);
     }
 
@@ -1023,13 +1043,20 @@
   const chinaImages = gardenImages.slice().reverse();
 
   const loader = new THREE.TextureLoader();
-  // Камера стартует в z=0. Сад начинается далеко (-25), чтобы при загрузке
-  // экран был тёмным и пустым — только заголовок VOGARDEN.
+  // Камера стартует в z=0. Длина коридора: 130 единиц.
+  //
+  // 0%   камера в z=0 (старт, чёрный экран, VOGARDEN)
+  // ~10% начинается сад (z=-13)
+  // ~55% камера у первой стены (z=-72)
+  // ~70% камера в красной комнате (z=-91)
+  // ~92% камера у второй стены (z=-120)
+  //
   const gardenStart = -25;
-  const gardenLength = 45;
-  const wallZ = -72;
+  const gardenLength = 45;        // от -25 до -70
+  const wallZ = -72;              // первая стена ~55% скролла
   const chinaStart = -80;
-  const chinaLength = 45;
+  const chinaLength = 38;         // от -80 до -118
+  const wallZ2 = -120;            // вторая стена ~92% скролла
 
   // Размещаем развороты сада попеременно слева/справа
   function makePhotoPlanes(images, startZ, length, side1Color) {
@@ -1156,8 +1183,7 @@
   wallMesh.position.set(0, 0, wallZ);
   scene.add(wallMesh);
 
-  // Вторая стена — после китайской
-  const wallZ2 = chinaStart - chinaLength - 5;  // в самом конце китайской зоны
+  // Вторая стена — после китайской (wallZ2 определён выше)
   const wallMesh2 = new THREE.Mesh(wallGeo.clone(), wallMat.clone());
   wallMesh2.position.set(0, 0, wallZ2);
   scene.add(wallMesh2);
@@ -1404,12 +1430,12 @@
       }
     }
 
-    // Первая стена (после сада) — пробивается 42-52%
-    const wall1Break = Math.max(0, Math.min(1, (scrollProgress - 0.42) / 0.10));
+    // Первая стена (после сада) — пробивается синхронно с видео #1: 58-65%
+    const wall1Break = Math.max(0, Math.min(1, (scrollProgress - 0.58) / 0.07));
     updateWall(wallMesh, shards, wall1Break);
 
-    // Вторая стена (после китайской) — пробивается 80-90%
-    const wall2Break = Math.max(0, Math.min(1, (scrollProgress - 0.80) / 0.10));
+    // Вторая стена (после китайской) — пробивается синхронно с видео #2: 93-97%
+    const wall2Break = Math.max(0, Math.min(1, (scrollProgress - 0.93) / 0.04));
     updateWall(wallMesh2, shards2, wall2Break);
 
     /* === ИЕРОГЛИФЫ ПАДАЮТ === */
