@@ -943,17 +943,18 @@
     // Китайская: 56-80%
     labelChina.classList.toggle('visible',  p >= 0.56 && p < 0.80);
 
-    // === КРАСНАЯ ВСПЫШКА (переход сад→китайцы, 45-55%) ===
-    // 0% на 45%, пик 1.0 на 50%, обратно 0 на 55%
+    // === КРАСНАЯ ВСПЫШКА (переход сад→китайцы, 47-53%) ===
+    // 0% на 47%, пик 0.85 на 50%, обратно 0 на 53%
+    // Короче и не такая агрессивная — просто сигнал перехода
     const flash = document.getElementById('red-flash');
     if (flash) {
       let flashOpacity = 0;
-      if (p >= 0.45 && p < 0.50) {
-        flashOpacity = (p - 0.45) / 0.05;
-      } else if (p >= 0.50 && p < 0.55) {
-        flashOpacity = 1 - (p - 0.50) / 0.05;
+      if (p >= 0.47 && p < 0.50) {
+        flashOpacity = ((p - 0.47) / 0.03) * 0.85;
+      } else if (p >= 0.50 && p < 0.53) {
+        flashOpacity = (1 - (p - 0.50) / 0.03) * 0.85;
       }
-      flash.style.opacity = flashOpacity;
+      flash.style.opacity = flashOpacity.toFixed(3);
     }
 
     // === ФИНАЛЬНОЕ ВИДЕО (после китайской комнаты, 82-95%) ===
