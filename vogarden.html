@@ -30,8 +30,8 @@
     html, body, * { cursor: none !important; }
   }
 
-  /* Длинная скролл-сцена: 1000vh = 10 экранов прокрутки */
-  .scene { position: relative; width: 100%; height: 1000vh; }
+  /* 3D-сцена: 800vh = 8 экранов прокрутки. Видео и финал — отдельно */
+  .scene { position: relative; width: 100%; height: 800vh; }
 
   /* WebGL canvas — фиксирован */
   #webgl {
@@ -148,58 +148,60 @@
     will-change: opacity;
   }
 
-  /* === ВИДЕО СТЕНА (Vimeo iframe, выглядит как часть коридора) === */
-  .wall-video {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    /* Размер примерно как 3D-стена (14×8 единиц) глазами камеры на расстоянии 0 */
-    transform: translate(-50%, -50%) scale(0.6);
-    width: min(70vw, 100vh);
-    aspect-ratio: 14 / 8;
-    z-index: 4;
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transition: opacity 0.4s ease, transform 0.5s ease, visibility 0s linear 0.5s;
+  /* === ВИДЕО-СЕКЦИЯ (отдельная, после 3D) === */
+  .video-section {
+    position: relative;
+    z-index: 5;
+    background: #050505;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 6vw;
+  }
+
+  .video-section-inner {
+    width: 100%;
+    max-width: 1400px;
+    text-align: center;
+  }
+
+  .video-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 32px;
+  }
+
+  .video-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
     background: #000;
     overflow: hidden;
+    box-shadow: 0 30px 80px rgba(232, 49, 42, 0.15);
   }
 
-  /* Когда видео в любой активной фазе — visibility сразу включается */
-  .wall-video.approaching,
-  .wall-video.visible,
-  .wall-video.shattering {
-    visibility: visible;
-    transition: opacity 0.4s ease, transform 0.5s ease, visibility 0s;
-  }
-
-  /* Видео виднеется издалека — мелкое, тусклое */
-  .wall-video.approaching {
-    opacity: 0.4;
-    transform: translate(-50%, -50%) scale(0.4);
-  }
-
-  /* Видео близко — на полный экран */
-  .wall-video.visible {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-
-  /* Видео разлетается (после пробития) */
-  .wall-video.shattering {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(1.5);
-    transition: opacity 0.3s ease, transform 0.3s ease;
-  }
-
-  .wall-video video,
-  .wall-video iframe {
+  .video-frame iframe {
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    display: block;
     border: 0;
+    display: block;
+  }
+
+  .video-hint {
+    margin-top: 32px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.4);
+    animation: bounce 2s ease-in-out infinite;
+  }
+
+  @media (max-width: 768px) {
+    .video-section { padding: 40px 4vw; }
+    .video-label { font-size: 9px; letter-spacing: 2px; }
   }
 
   /* Canvas с частицами VOGARDEN */
@@ -518,15 +520,6 @@
 <!-- КРАСНАЯ ВСПЫШКА — переход сад→китайцы -->
 <div class="red-flash" id="red-flash"></div>
 
-<!-- ВИДЕО ТИЗЕР — единственное, в финале (после всего пути) -->
-<div class="wall-video" id="wall-video-final">
-  <iframe
-    src="https://player.vimeo.com/video/1187985473?background=1&autoplay=1&loop=1&muted=1&autopause=0&controls=0&badge=0"
-    frameborder="0"
-    allow="autoplay; fullscreen"
-    title="VOGARDEN teaser"></iframe>
-</div>
-
 <!-- ============ 3D СЦЕНА ============ -->
 <div class="scene" id="scene">
   <canvas id="webgl"></canvas>
@@ -561,6 +554,21 @@
   <h2>红 / RED EDITION</h2>
   <p>Альбом, переосмысленный в эстетике востока. Иероглифы, лаконизм, контраст.</p>
 </div>
+
+<!-- ============ ВИДЕО-СЕКЦИЯ (отдельная, не в 3D) ============ -->
+<section class="video-section">
+  <div class="video-section-inner">
+    <div class="video-label">[ ТИЗЕР АЛЬБОМА / VOGARDEN ]</div>
+    <div class="video-frame">
+      <iframe
+        src="https://player.vimeo.com/video/1187985473?background=1&autoplay=1&loop=1&muted=1&autopause=0&controls=0&badge=0"
+        frameborder="0"
+        allow="autoplay; fullscreen"
+        title="VOGARDEN teaser"></iframe>
+    </div>
+    <div class="video-hint">↓ ПРОДОЛЖИТЬ</div>
+  </div>
+</section>
 
 <!-- ============ ФИНАЛЬНАЯ СЕКЦИЯ ============ -->
 <section class="final">
@@ -938,14 +946,13 @@
     intro.classList.toggle('visible', p < 0.08 && document.body.dataset.titleReady === '1');
     // Сад: 10-44%
     labelGarden.classList.toggle('visible', p >= 0.10 && p < 0.44);
-    // Переход (вспышка): 45-55%
+    // Переход (вспышка): 47-55%
     labelWall.classList.toggle('visible',   p >= 0.45 && p < 0.55);
-    // Китайская: 56-80%
-    labelChina.classList.toggle('visible',  p >= 0.56 && p < 0.80);
+    // Китайская: 56-78% (заканчивается до видео)
+    labelChina.classList.toggle('visible',  p >= 0.56 && p < 0.78);
 
-    // === КРАСНАЯ ВСПЫШКА (переход сад→китайцы, 47-53%) ===
-    // 0% на 47%, пик 0.85 на 50%, обратно 0 на 53%
-    // Короче и не такая агрессивная — просто сигнал перехода
+    // === КРАСНАЯ ВСПЫШКА (переход сад→китайцы) ===
+    // Полный жизненный цикл вспышки в зоне 47-53%
     const flash = document.getElementById('red-flash');
     if (flash) {
       let flashOpacity = 0;
@@ -957,19 +964,7 @@
       flash.style.opacity = flashOpacity.toFixed(3);
     }
 
-    // === ФИНАЛЬНОЕ ВИДЕО (после китайской комнаты) ===
-    //   78-82%: видео виднеется вдали (мелкое, тусклое)
-    //   82-93%: видео крупное по центру (целых 11% скролла, ~1.5 экрана!)
-    //   93-95%: видео уходит (растёт и тает)
-    const wallVideo = document.getElementById('wall-video-final');
-    if (wallVideo) {
-      const isShat = p >= 0.93 && p < 0.95;
-      const isClose = p >= 0.82 && p < 0.93;
-      const isFar = p >= 0.78 && p < 0.82;
-      wallVideo.classList.toggle('approaching', isFar);
-      wallVideo.classList.toggle('visible', isClose);
-      wallVideo.classList.toggle('shattering', isShat);
-    }
+    // Видео теперь отдельная секция после 3D — не управляется отсюда
 
     let phase;
     if (p < 0.10) phase = 'INTRO';
