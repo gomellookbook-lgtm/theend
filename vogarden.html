@@ -30,8 +30,8 @@
     html, body, * { cursor: none !important; }
   }
 
-  /* Длинная скролл-сцена: 600vh = 6 экранов прокрутки */
-  .scene { position: relative; width: 100%; height: 600vh; }
+  /* Длинная скролл-сцена: 1000vh = 10 экранов прокрутки */
+  .scene { position: relative; width: 100%; height: 1000vh; }
 
   /* WebGL canvas — фиксирован */
   #webgl {
@@ -957,15 +957,15 @@
       flash.style.opacity = flashOpacity.toFixed(3);
     }
 
-    // === ФИНАЛЬНОЕ ВИДЕО (после китайской комнаты, 82-95%) ===
-    //   82-86%: видео виднеется вдали (мелкое, тусклое)
-    //   86-92%: видео крупное (стена прямо перед нами)
-    //   92-95%: видео уходит (растёт и тает)
+    // === ФИНАЛЬНОЕ ВИДЕО (после китайской комнаты) ===
+    //   78-82%: видео виднеется вдали (мелкое, тусклое)
+    //   82-93%: видео крупное по центру (целых 11% скролла, ~1.5 экрана!)
+    //   93-95%: видео уходит (растёт и тает)
     const wallVideo = document.getElementById('wall-video-final');
     if (wallVideo) {
-      const isShat = p >= 0.92 && p < 0.95;
-      const isClose = p >= 0.86 && p < 0.92;
-      const isFar = p >= 0.82 && p < 0.86;
+      const isShat = p >= 0.93 && p < 0.95;
+      const isClose = p >= 0.82 && p < 0.93;
+      const isFar = p >= 0.78 && p < 0.82;
       wallVideo.classList.toggle('approaching', isFar);
       wallVideo.classList.toggle('visible', isClose);
       wallVideo.classList.toggle('shattering', isShat);
@@ -975,8 +975,8 @@
     if (p < 0.10) phase = 'INTRO';
     else if (p < 0.44) phase = 'GARDEN';
     else if (p < 0.56) phase = 'TRANSFORMATION';
-    else if (p < 0.82) phase = 'RED EDITION';
-    else if (p < 0.96) phase = 'TEASER';
+    else if (p < 0.78) phase = 'RED EDITION';
+    else if (p < 0.95) phase = 'TEASER';
     else phase = 'SPECS';
 
     if (phaseEl.textContent !== phase) phaseEl.textContent = phase;
@@ -1303,10 +1303,10 @@
     camera.rotation.x = mouseY * -0.015;
 
     // Цвет фона/тумана + плотность
-    // На старте туман плотный (видно только метров на 10 — пусто и черно)
-    // По мере скролла рассеивается
-    const fogDensityStart = 0.20;  // плотный — ничего не видно дальше 10
-    const fogDensityFlow = 0.035;  // обычный — видно на 30 единиц
+    // Туман плотный везде (видно только в радиусе ~25 единиц)
+    // На старте ещё плотнее (чтобы не просвечивал сад при загрузке)
+    const fogDensityStart = 0.20;
+    const fogDensityFlow = 0.07;  // было 0.035 — теперь плотнее
     const fogTransition = Math.max(0, Math.min(1, (scrollProgress - 0.04) / 0.10));
     const currentFogDensity = fogDensityStart + (fogDensityFlow - fogDensityStart) * fogTransition;
     scene.fog.density = currentFogDensity;
