@@ -137,7 +137,7 @@
     opacity: 1;
   }
 
-  /* === ВИДЕО СТЕНА (HTML, не Three.js) === */
+  /* === ВИДЕО СТЕНА (Vimeo iframe) === */
   .wall-video {
     position: fixed;
     top: 50%;
@@ -163,11 +163,13 @@
     transform: translate(-50%, -50%) scale(1.3);
   }
 
-  .wall-video video {
+  .wall-video video,
+  .wall-video iframe {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
+    border: 0;
   }
 
   /* Canvas с частицами VOGARDEN */
@@ -483,11 +485,22 @@
 <!-- Назад на главную -->
 <a href="/" class="back-btn">↶ THE END</a>
 
-<!-- ВИДЕО ТИЗЕР — показывается в зоне стены (40-50% скролла) -->
-<div class="wall-video" id="wall-video">
-  <video autoplay loop muted playsinline>
-    <source src="https://static.tildacdn.com/tild3866-3534-4664-a637-393033366132/Vogarden_test_2.mp4" type="video/mp4">
-  </video>
+<!-- ВИДЕО ТИЗЕР #1 — после сада (Vimeo) -->
+<div class="wall-video" id="wall-video-1">
+  <iframe
+    src="https://player.vimeo.com/video/1187985473?background=1&autoplay=1&loop=1&muted=1&autopause=0&controls=0&badge=0"
+    frameborder="0"
+    allow="autoplay; fullscreen"
+    title="VOGARDEN teaser"></iframe>
+</div>
+
+<!-- ВИДЕО ТИЗЕР #2 — после китайской (то же видео) -->
+<div class="wall-video" id="wall-video-2">
+  <iframe
+    src="https://player.vimeo.com/video/1187985473?background=1&autoplay=1&loop=1&muted=1&autopause=0&controls=0&badge=0"
+    frameborder="0"
+    allow="autoplay; fullscreen"
+    title="VOGARDEN teaser"></iframe>
 </div>
 
 <!-- ============ 3D СЦЕНА ============ -->
@@ -899,24 +912,34 @@
 
     // Подзаголовок виден только в самом начале
     intro.classList.toggle('visible', p < 0.08 && document.body.dataset.titleReady === '1');
-    labelGarden.classList.toggle('visible', p >= 0.10 && p < 0.38);
-    labelWall.classList.toggle('visible',   p >= 0.40 && p < 0.50);
-    labelChina.classList.toggle('visible',  p >= 0.52 && p < 0.78);
+    labelGarden.classList.toggle('visible', p >= 0.10 && p < 0.32);
+    labelWall.classList.toggle('visible',   p >= 0.34 && p < 0.50);
+    labelChina.classList.toggle('visible',  p >= 0.52 && p < 0.70);
 
-    // Видео-стена: появляется на 35-44%, разлетается 44-50%
-    const wallVideo = document.getElementById('wall-video');
-    if (wallVideo) {
-      const inWallZone = p >= 0.35 && p < 0.50;
-      const isShattering = p >= 0.44 && p < 0.50;
-      wallVideo.classList.toggle('visible', inWallZone && !isShattering);
-      wallVideo.classList.toggle('shattering', isShattering);
+    // Видео-стена #1: появляется на 32-44%, разлетается 44-50%
+    const wallVideo1 = document.getElementById('wall-video-1');
+    if (wallVideo1) {
+      const inZone1 = p >= 0.32 && p < 0.50;
+      const isShat1 = p >= 0.44 && p < 0.50;
+      wallVideo1.classList.toggle('visible', inZone1 && !isShat1);
+      wallVideo1.classList.toggle('shattering', isShat1);
+    }
+
+    // Видео-стена #2: появляется на 70-82%, разлетается 82-90%
+    const wallVideo2 = document.getElementById('wall-video-2');
+    if (wallVideo2) {
+      const inZone2 = p >= 0.70 && p < 0.90;
+      const isShat2 = p >= 0.82 && p < 0.90;
+      wallVideo2.classList.toggle('visible', inZone2 && !isShat2);
+      wallVideo2.classList.toggle('shattering', isShat2);
     }
 
     let phase;
     if (p < 0.10) phase = 'INTRO';
-    else if (p < 0.40) phase = 'GARDEN';
+    else if (p < 0.34) phase = 'GARDEN';
     else if (p < 0.52) phase = 'TRANSFORMATION';
-    else if (p < 0.80) phase = 'RED EDITION';
+    else if (p < 0.72) phase = 'RED EDITION';
+    else if (p < 0.92) phase = 'TRANSFORMATION';
     else phase = 'SPECS';
 
     if (phaseEl.textContent !== phase) phaseEl.textContent = phase;
@@ -1127,11 +1150,17 @@
     color: 0xffffff,
     side: THREE.DoubleSide,
     transparent: true,
-    opacity: 0.0  // в 3D стена невидима, видео покажет HTML-плеер сверху
+    opacity: 0.0
   });
   const wallMesh = new THREE.Mesh(wallGeo, wallMat);
   wallMesh.position.set(0, 0, wallZ);
   scene.add(wallMesh);
+
+  // Вторая стена — после китайской
+  const wallZ2 = chinaStart - chinaLength - 5;  // в самом конце китайской зоны
+  const wallMesh2 = new THREE.Mesh(wallGeo.clone(), wallMat.clone());
+  wallMesh2.position.set(0, 0, wallZ2);
+  scene.add(wallMesh2);
 
   /* ===== КИТАЙСКИЕ ИЕРОГЛИФЫ — ПАДАЮТ КАК ДОЖДЬ ===== */
   const chineseChars = '永和九年岁在癸丑暮春之初会于会稽山阴之兰亭修禊事也群贤毕至少长咸集此地有崇山峻岭茂林修竹';
@@ -1178,35 +1207,42 @@
     chars.push(m);
   }
 
-  /* ===== ОСКОЛКИ СТЕНЫ (для пробития) — белые ===== */
-  const shards = [];
-  const shardGeo = new THREE.PlaneGeometry(0.7, 0.7);
-  for (let i = 0; i < 50; i++) {
-    const mat = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0
-    });
-    const m = new THREE.Mesh(shardGeo, mat);
-    const col = i % 10;
-    const row = Math.floor(i / 10);
-    m.position.set(
-      -6 + col * 1.3,
-      -2.5 + row * 1.3,
-      wallZ
-    );
-    m.userData = {
-      origX: m.position.x,
-      origY: m.position.y,
-      vx: (Math.random() - 0.5) * 0.5,
-      vy: (Math.random() - 0.5) * 0.5,
-      vz: -1 - Math.random() * 1.5,
-      vr: (Math.random() - 0.5) * 0.3
-    };
-    scene.add(m);
-    shards.push(m);
+  /* ===== ОСКОЛКИ СТЕН (для пробития) — белые ===== */
+  function makeShards(zPos) {
+    const arr = [];
+    const shardGeo = new THREE.PlaneGeometry(0.7, 0.7);
+    for (let i = 0; i < 50; i++) {
+      const mat = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0
+      });
+      const m = new THREE.Mesh(shardGeo, mat);
+      const col = i % 10;
+      const row = Math.floor(i / 10);
+      m.position.set(
+        -6 + col * 1.3,
+        -2.5 + row * 1.3,
+        zPos
+      );
+      m.userData = {
+        origX: m.position.x,
+        origY: m.position.y,
+        origZ: zPos,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5,
+        vz: -1 - Math.random() * 1.5,
+        vr: (Math.random() - 0.5) * 0.3
+      };
+      scene.add(m);
+      arr.push(m);
+    }
+    return arr;
   }
+
+  const shards  = makeShards(wallZ);
+  const shards2 = makeShards(wallZ2);
 
   /* ===== ПЫЛИНКИ ===== */
   const dustGroup = new THREE.Group();
@@ -1343,32 +1379,38 @@
       p.rotation.z = Math.sin(time * 0.8 + p.position.x) * 0.05;
     });
 
-    /* === СТЕНА — пробивается на 45-55% скролла === */
-    const wallBreakProgress = Math.max(0, Math.min(1, (scrollProgress - 0.42) / 0.10));
-    if (wallBreakProgress < 0.05) {
-      // Стена цела
-      wallMesh.visible = true;
-      wallMesh.material.opacity = 1;
-      wallMesh.material.transparent = false;
-      shards.forEach((s) => { s.material.opacity = 0; });
-    } else if (wallBreakProgress < 1) {
-      // Стена тает, осколки появляются
-      wallMesh.visible = true;
-      wallMesh.material.transparent = true;
-      wallMesh.material.opacity = 1 - wallBreakProgress;
-      shards.forEach((s) => {
-        s.material.opacity = wallBreakProgress * 0.9;
-        // Двигаем осколки от исходных позиций
-        s.position.x = s.userData.origX + s.userData.vx * wallBreakProgress * 8;
-        s.position.y = s.userData.origY + s.userData.vy * wallBreakProgress * 8;
-        s.position.z = wallZ + s.userData.vz * wallBreakProgress * 10;
-        s.rotation.z = s.userData.vr * wallBreakProgress * 12;
-      });
-    } else {
-      // Стена пробита, осколки далеко
-      wallMesh.visible = false;
-      shards.forEach((s) => { s.material.opacity = Math.max(0, 0.9 - (wallBreakProgress - 1) * 2); });
+    /* === ПРОБИТИЕ ДВУХ СТЕН === */
+    function updateWall(mesh, shardArr, breakProgress) {
+      if (breakProgress < 0.05) {
+        mesh.visible = true;
+        mesh.material.opacity = 0;  // в 3D невидима, видео в HTML
+        shardArr.forEach((s) => { s.material.opacity = 0; });
+      } else if (breakProgress < 1) {
+        mesh.visible = true;
+        mesh.material.transparent = true;
+        mesh.material.opacity = 0;
+        shardArr.forEach((s) => {
+          s.material.opacity = breakProgress * 0.9;
+          s.position.x = s.userData.origX + s.userData.vx * breakProgress * 8;
+          s.position.y = s.userData.origY + s.userData.vy * breakProgress * 8;
+          s.position.z = s.userData.origZ + s.userData.vz * breakProgress * 10;
+          s.rotation.z = s.userData.vr * breakProgress * 12;
+        });
+      } else {
+        mesh.visible = false;
+        shardArr.forEach((s) => {
+          s.material.opacity = Math.max(0, 0.9 - (breakProgress - 1) * 2);
+        });
+      }
     }
+
+    // Первая стена (после сада) — пробивается 42-52%
+    const wall1Break = Math.max(0, Math.min(1, (scrollProgress - 0.42) / 0.10));
+    updateWall(wallMesh, shards, wall1Break);
+
+    // Вторая стена (после китайской) — пробивается 80-90%
+    const wall2Break = Math.max(0, Math.min(1, (scrollProgress - 0.80) / 0.10));
+    updateWall(wallMesh2, shards2, wall2Break);
 
     /* === ИЕРОГЛИФЫ ПАДАЮТ === */
     chars.forEach((ch) => {
