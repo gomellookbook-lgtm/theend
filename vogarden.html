@@ -936,20 +936,23 @@
   const labelChina = document.getElementById('label-china');
 
   function update() {
-    const max = document.documentElement.scrollHeight - window.innerHeight;
-    const p = max > 0 ? window.scrollY / max : 0;
+    // Прогресс считаем относительно 3D-сцены (а не всей страницы)
+    const sceneEl = document.getElementById('scene');
+    const sh = sceneEl ? sceneEl.offsetHeight - window.innerHeight : 1;
+    const p = sh > 0 ? Math.max(0, Math.min(1, window.scrollY / sh)) : 0;
+
     const percent = Math.round(p * 100);
     percentEl.textContent = percent.toString().padStart(2, '0');
     barEl.style.setProperty('--progress', percent + '%');
 
     // Подзаголовок виден только в самом начале
     intro.classList.toggle('visible', p < 0.08 && document.body.dataset.titleReady === '1');
-    // Сад: 10-44%
-    labelGarden.classList.toggle('visible', p >= 0.10 && p < 0.44);
+    // Сад: 10-45%
+    labelGarden.classList.toggle('visible', p >= 0.10 && p < 0.45);
     // Переход (вспышка): 47-55%
     labelWall.classList.toggle('visible',   p >= 0.45 && p < 0.55);
-    // Китайская: 56-78% (заканчивается до видео)
-    labelChina.classList.toggle('visible',  p >= 0.56 && p < 0.78);
+    // Китайская: 56% и до конца 3D-сцены
+    labelChina.classList.toggle('visible',  p >= 0.56 && p < 0.99);
 
     // === КРАСНАЯ ВСПЫШКА (переход сад→китайцы) ===
     // Полный жизненный цикл вспышки в зоне 47-53%
@@ -968,11 +971,22 @@
 
     let phase;
     if (p < 0.10) phase = 'INTRO';
-    else if (p < 0.44) phase = 'GARDEN';
-    else if (p < 0.56) phase = 'TRANSFORMATION';
-    else if (p < 0.78) phase = 'RED EDITION';
-    else if (p < 0.95) phase = 'TEASER';
-    else phase = 'SPECS';
+    else if (p < 0.45) phase = 'GARDEN';
+    else if (p < 0.55) phase = 'TRANSFORMATION';
+    else if (p < 1.0)  phase = 'RED EDITION';
+    else phase = 'TEASER'; // когда 3D-сцена закончилась
+
+    // Если скроллим за пределами 3D — определяем фазу по реальной позиции
+    const finalSection = document.querySelector('.final');
+    const videoSection = document.querySelector('.video-section');
+    if (finalSection) {
+      const finalRect = finalSection.getBoundingClientRect();
+      if (finalRect.top < window.innerHeight * 0.5) phase = 'SPECS';
+    }
+    if (videoSection && phase !== 'SPECS') {
+      const vRect = videoSection.getBoundingClientRect();
+      if (vRect.top < window.innerHeight * 0.5 && vRect.bottom > 0) phase = 'TEASER';
+    }
 
     if (phaseEl.textContent !== phase) phaseEl.textContent = phase;
   }
