@@ -1016,12 +1016,13 @@
   wallLight.position.set(0, 0, -55);
   scene.add(wallLight);
 
-  // Свет китайской комнаты — красный
-  const chinaLight1 = new THREE.PointLight(0xff2a25, 2.0, 30);
+  // Свет китайской комнаты — НЕЙТРАЛЬНЫЙ белый
+  // (фотки сами уже содержат красный цвет, не нужно их красить ещё больше)
+  const chinaLight1 = new THREE.PointLight(0xffeeee, 1.5, 30);
   chinaLight1.position.set(0, 3, -75);
   scene.add(chinaLight1);
 
-  const chinaLight2 = new THREE.PointLight(0xff5040, 1.2, 25);
+  const chinaLight2 = new THREE.PointLight(0xffffff, 1.0, 25);
   chinaLight2.position.set(-2, -1, -90);
   scene.add(chinaLight2);
 
@@ -1292,19 +1293,19 @@
     scene.fog.density = currentFogDensity;
 
     // Цвет фона/тумана — главная метка какая ты в комнате
-    // САД: тёмный тёплый зелёно-болотный (как лес в сумерках)
-    // ПЕРЕХОД: плавно из зелёного в красноватый (50-60%)
+    // САД: глубокий тёмный с лёгким зеленоватым подтоном
+    // ПЕРЕХОД: плавно (50-60%)
     // КРАСНАЯ: глубокий чёрный с лёгким красноватым оттенком
     let fogR, fogG, fogB;
     if (scrollProgress < 0.50) {
-      // Тёплый болотно-зелёный сад
-      fogR = 0.06; fogG = 0.10; fogB = 0.04;
+      // Глубокий тёмный с лёгким зеленоватым (как в полумраке)
+      fogR = 0.02; fogG = 0.04; fogB = 0.02;
     } else if (scrollProgress < 0.60) {
       // Переход через 10% скролла
       const t = (scrollProgress - 0.50) / 0.10;
-      fogR = 0.06 + t * 0.04;     // 0.06 → 0.10
-      fogG = 0.10 - t * 0.08;     // 0.10 → 0.02
-      fogB = 0.04 - t * 0.02;     // 0.04 → 0.02
+      fogR = 0.02 + t * 0.08;     // 0.02 → 0.10
+      fogG = 0.04 - t * 0.02;     // 0.04 → 0.02
+      fogB = 0.02;                // остаётся 0.02
     } else {
       // Глубокий чёрный с красноватым оттенком
       fogR = 0.10; fogG = 0.02; fogB = 0.02;
@@ -1322,13 +1323,13 @@
       const t = (scrollProgress - 0.50) / 0.10;
       gardenLight.intensity = 1.5 * (1 - t);
       warmLight.intensity = 1.0 * (1 - t);
-      chinaLight1.intensity = 2.0 * t;
-      chinaLight2.intensity = 1.2 * t;
+      chinaLight1.intensity = 1.5 * t;
+      chinaLight2.intensity = 1.0 * t;
     } else {
       gardenLight.intensity = 0;
       warmLight.intensity = 0;
-      chinaLight1.intensity = 2.0 + Math.sin(time * 2.5) * 0.3;
-      chinaLight2.intensity = 1.2 + Math.cos(time * 1.8) * 0.2;
+      chinaLight1.intensity = 1.5 + Math.sin(time * 2.5) * 0.2;
+      chinaLight2.intensity = 1.0 + Math.cos(time * 1.8) * 0.15;
     }
 
     // Свет двигается с камерой
