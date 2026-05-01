@@ -1045,7 +1045,19 @@
     'https://i.ibb.co/s9nBW9H9/17.jpg'
   ];
   // Картинки китайской версии — пока те же (заменим позже)
-  const chinaImages = gardenImages.slice().reverse();
+  // === Картинки китайской версии (старые с Tilda) ===
+  const chinaImages = [
+    'https://static.tildacdn.com/tild6139-6239-4564-b631-323765396465/000-15.jpg',
+    'https://static.tildacdn.com/tild6661-3830-4735-b139-653364653430/000-25.jpg',
+    'https://static.tildacdn.com/tild3932-6236-4962-a465-313561636433/000-17.jpg',
+    'https://static.tildacdn.com/tild6338-6430-4234-b932-313561373732/000-28.jpg',
+    'https://static.tildacdn.com/tild6534-3634-4737-a530-666364613764/000-24.jpg',
+    'https://static.tildacdn.com/tild3539-3033-4865-a434-323830363737/000-29.jpg',
+    'https://static.tildacdn.com/tild3866-6262-4464-b136-356332393938/000-46.jpg',
+    'https://static.tildacdn.com/tild3436-6335-4534-b038-373333336231/000-45.jpg',
+    'https://static.tildacdn.com/tild3130-3632-4439-b664-336338326461/000-02.jpg',
+    'https://static.tildacdn.com/tild6537-6331-4666-a138-373931633264/000-04.jpg'
+  ];
 
   const loader = new THREE.TextureLoader();
   // Камера стартует в z=0. Длина коридора: 130 единиц.
