@@ -1,0 +1,1490 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RED — THE END / LYKBOOK</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --black: #0a0a0a;
+    --white: #fff;
+    --red: #e8312a;
+    --red-deep: #b91c1c;
+  }
+
+  html, body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* Кастомный курсор на десктопе */
+  @media (hover: hover) and (pointer: fine) {
+    html, body, * { cursor: none !important; }
+  }
+
+  /* === КАСТОМНЫЙ КУРСОР === */
+  .cursor-dot, .cursor-ring {
+    position: fixed; top: 0; left: 0;
+    pointer-events: none; z-index: 10000;
+    transform: translate(-50%, -50%); will-change: transform;
+  }
+  .cursor-dot {
+    width: 6px; height: 6px;
+    background: var(--red); border-radius: 50%;
+  }
+  .cursor-ring {
+    width: 36px; height: 36px;
+    border: 1.5px solid var(--red); border-radius: 50%;
+    transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                height 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                background 0.3s ease;
+  }
+  .cursor-ring.hover {
+    width: 70px; height: 70px;
+    background: rgba(232, 49, 42, 0.1);
+  }
+  @media (hover: none) or (pointer: coarse) {
+    .cursor-dot, .cursor-ring { display: none; }
+  }
+
+  /* === FIXED УГЛОВЫЕ НАДПИСИ === */
+  .corner {
+    position: fixed; z-index: 50;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.5;
+    mix-blend-mode: difference;
+    pointer-events: none;
+  }
+  .corner-tl { top: 24px; left: 24px; }
+  .corner-tr { top: 24px; right: 24px; text-align: right; }
+  .corner-bl { bottom: 24px; left: 24px; }
+  .corner-br { bottom: 24px; right: 24px; text-align: right;
+               display: flex; align-items: center; gap: 12px; }
+  .corner .red-dot {
+    display: inline-block; width: 6px; height: 6px;
+    background: var(--red); border-radius: 50%;
+    margin-right: 6px; vertical-align: middle;
+    animation: blink 1.5s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100% {opacity:1} 50% {opacity:0.3} }
+
+  .scroll-progress-bar {
+    width: 80px; height: 1px;
+    background: rgba(255,255,255,0.2);
+    position: relative;
+  }
+  .scroll-progress-bar::after {
+    content: ''; position: absolute; top: 0; left: 0; height: 100%;
+    width: var(--progress, 0%);
+    background: var(--red);
+    transition: width 0.1s ease;
+  }
+
+  /* === КНОПКА ВОЗВРАТА === */
+  .back-btn {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 60;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--white);
+    text-decoration: none;
+    padding: 6px 4px;
+    transition: color 0.3s ease, transform 0.3s ease;
+    mix-blend-mode: difference;
+  }
+  .back-btn::before { content: '['; margin-right: 4px; color: rgba(255,255,255,0.4); }
+  .back-btn::after  { content: ']'; margin-left: 4px;  color: rgba(255,255,255,0.4); }
+  .back-btn:hover { color: var(--red); transform: translateX(-50%) translateY(-2px); }
+
+
+  /* ============ ИНТРО ============ */
+  .intro {
+    height: 100vh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background: var(--black);
+    overflow: hidden;
+  }
+
+  /* Большое RED — пульсирующее */
+  .intro-red {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(180px, 35vw, 600px);
+    letter-spacing: -0.06em;
+    line-height: 0.85;
+    color: var(--red);
+    text-transform: uppercase;
+    user-select: none;
+    position: relative;
+    z-index: 2;
+    animation: redPulse 4s ease-in-out infinite;
+  }
+
+  @keyframes redPulse {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 60px rgba(232, 49, 42, 0.4)); }
+    50% { transform: scale(1.02); filter: drop-shadow(0 0 100px rgba(232, 49, 42, 0.6)); }
+  }
+
+  /* Манифест под RED */
+  .intro-manifesto {
+    position: absolute;
+    bottom: 12%;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    z-index: 3;
+    width: 90%;
+  }
+  .intro-manifesto-line {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(11px, 1.1vw, 14px);
+    letter-spacing: 4px;
+    color: rgba(255,255,255,0.7);
+    text-transform: uppercase;
+    line-height: 2;
+  }
+  .intro-manifesto-line.bold {
+    color: var(--white);
+    font-weight: 700;
+    margin-top: 8px;
+    letter-spacing: 5px;
+  }
+
+  /* Бегущие строки слов сверху и снизу — фоновый эффект */
+  .intro-strip {
+    position: absolute;
+    width: 100%;
+    overflow: hidden;
+    z-index: 1;
+    opacity: 0.08;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .intro-strip-top { top: 8%; }
+  .intro-strip-bottom { bottom: 8%; }
+
+  .intro-strip-inner {
+    display: inline-block;
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(80px, 10vw, 140px);
+    color: var(--white);
+    text-transform: uppercase;
+    letter-spacing: -0.04em;
+    animation: marquee 25s linear infinite;
+    white-space: nowrap;
+  }
+  .intro-strip-bottom .intro-strip-inner {
+    animation-direction: reverse;
+    animation-duration: 30s;
+  }
+
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* Подсказка скролла */
+  .intro-scroll-hint {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 4;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.4);
+    animation: bounce 2s ease-in-out infinite;
+  }
+  @keyframes bounce {
+    0%,100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(8px); }
+  }
+
+
+  /* ============ ГОРИЗОНТАЛЬНЫЙ СКРОЛЛ ЦИТАТ ============ */
+  /* Контейнер: высота 1100vh — на каждую цитату ~110vh скролла */
+  .quotes-container {
+    position: relative;
+    height: 1100vh;
+  }
+
+  .quotes-sticky {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .quotes-track {
+    height: 100vh;
+    display: flex;
+    flex-wrap: nowrap;
+    will-change: transform;
+  }
+
+  .quote-slide {
+    flex-shrink: 0;
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    overflow: hidden;
+    padding: 80px 6vw;
+    display: flex;
+    align-items: center;
+  }
+
+  /* === Разные макеты для каждой цитаты === */
+
+  /* SLIDE 01 — белый фон, чёрный огромный текст, красное слово */
+  .quote-slide.layout-1 {
+    background: #f4f4f4;
+    color: #0a0a0a;
+  }
+  .layout-1 .q-text {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(48px, 9vw, 160px);
+    line-height: 0.92;
+    letter-spacing: -0.04em;
+    text-transform: uppercase;
+    max-width: 90%;
+  }
+  .layout-1 .q-text .accent {
+    color: var(--red);
+  }
+  .layout-1 .q-author {
+    position: absolute;
+    bottom: 80px;
+    left: 6vw;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(0,0,0,0.6);
+  }
+  .layout-1 .q-num {
+    position: absolute;
+    top: 80px;
+    right: 6vw;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--red);
+    letter-spacing: 2px;
+  }
+
+  /* SLIDE 02 — красный фон, белый текст, наклонный */
+  .quote-slide.layout-2 {
+    background: var(--red);
+    color: var(--white);
+  }
+  .layout-2 .q-inner {
+    transform: rotate(-3deg);
+    transform-origin: center;
+    max-width: 90%;
+  }
+  .layout-2 .q-text {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(40px, 7vw, 130px);
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+  }
+  .layout-2 .q-text .quote-marks { color: rgba(0,0,0,0.5); }
+  .layout-2 .q-author {
+    margin-top: 32px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+  .layout-2 .q-num {
+    position: absolute;
+    bottom: 60px;
+    right: 6vw;
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(80px, 12vw, 180px);
+    color: rgba(0,0,0,0.15);
+    letter-spacing: -0.05em;
+  }
+
+  /* SLIDE 03 — чёрный фон, текст в столбик слева, фото-плейсхолдер справа */
+  .quote-slide.layout-3 {
+    background: #0a0a0a;
+    color: var(--white);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: center;
+  }
+  .layout-3 .q-text {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(36px, 5.5vw, 90px);
+    line-height: 1.0;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+  }
+  .layout-3 .q-text .accent { color: var(--red); }
+  .layout-3 .q-author {
+    margin-top: 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+  }
+  .layout-3 .q-photo {
+    width: 100%;
+    aspect-ratio: 3/4;
+    background:
+      linear-gradient(135deg, rgba(232,49,42,0.4), rgba(0,0,0,0.6)),
+      repeating-linear-gradient(45deg,
+        rgba(255,255,255,0.05) 0px,
+        rgba(255,255,255,0.05) 10px,
+        transparent 10px, transparent 20px);
+    position: relative;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .layout-3 .q-photo::after {
+    content: 'PHOTO PLACEHOLDER';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: rgba(255,255,255,0.4);
+  }
+  .layout-3 .q-num {
+    position: absolute;
+    top: 80px;
+    left: 6vw;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--red);
+    letter-spacing: 2px;
+  }
+
+  /* SLIDE 04 — белый фон, ТРИ строки разного размера */
+  .quote-slide.layout-4 {
+    background: #f4f4f4;
+    color: #0a0a0a;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+  }
+  .layout-4 .q-line {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+  }
+  .layout-4 .q-line-1 { font-size: clamp(36px, 6vw, 100px); }
+  .layout-4 .q-line-2 { font-size: clamp(60px, 11vw, 180px); color: var(--red); margin: -8px 0; }
+  .layout-4 .q-line-3 { font-size: clamp(28px, 4.5vw, 80px); margin-left: 8vw; }
+  .layout-4 .q-author {
+    margin-top: 48px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(0,0,0,0.5);
+  }
+  .layout-4 .q-num {
+    position: absolute;
+    top: 80px;
+    right: 6vw;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--red);
+    letter-spacing: 2px;
+  }
+
+  /* SLIDE 05 — чёрный фон, гигантская одна буква + цитата маленькая */
+  .quote-slide.layout-5 {
+    background: #0a0a0a;
+    color: var(--white);
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 60px;
+    align-items: center;
+  }
+  .layout-5 .q-mega {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(280px, 50vw, 700px);
+    line-height: 0.8;
+    color: var(--red);
+    letter-spacing: -0.08em;
+  }
+  .layout-5 .q-text {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: clamp(20px, 2.4vw, 40px);
+    line-height: 1.3;
+    max-width: 600px;
+  }
+  .layout-5 .q-author {
+    margin-top: 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+  }
+  .layout-5 .q-num {
+    position: absolute;
+    bottom: 80px;
+    right: 6vw;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--red);
+    letter-spacing: 2px;
+  }
+
+  /* SLIDE 06 — красный фон, текст обрезан / "за кадром" */
+  .quote-slide.layout-6 {
+    background: var(--red);
+    color: var(--black);
+    overflow: hidden;
+  }
+  .layout-6 .q-text {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(80px, 16vw, 280px);
+    line-height: 0.85;
+    letter-spacing: -0.05em;
+    text-transform: uppercase;
+    margin-left: -3vw;
+  }
+  .layout-6 .q-author {
+    position: absolute;
+    bottom: 80px;
+    right: 6vw;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(0,0,0,0.5);
+  }
+  .layout-6 .q-num {
+    position: absolute;
+    top: 80px;
+    left: 6vw;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--black);
+    letter-spacing: 2px;
+  }
+
+  /* SLIDE 07 — белый фон, текст вертикально (поворот -90°) */
+  .quote-slide.layout-7 {
+    background: #f4f4f4;
+    color: #0a0a0a;
+    justify-content: center;
+  }
+  .layout-7 .q-vertical {
+    transform: rotate(-90deg);
+    transform-origin: center;
+    white-space: nowrap;
+  }
+  .layout-7 .q-text {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(40px, 8vw, 120px);
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    line-height: 0.9;
+  }
+  .layout-7 .q-text .accent { color: var(--red); }
+  .layout-7 .q-author {
+    position: absolute;
+    bottom: 80px;
+    left: 6vw;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(0,0,0,0.5);
+  }
+  .layout-7 .q-num {
+    position: absolute;
+    top: 80px;
+    right: 6vw;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--red);
+    letter-spacing: 2px;
+  }
+
+  /* SLIDE 08 — split: чёрная и красная половины */
+  .quote-slide.layout-8 {
+    padding: 0;
+    background: var(--black);
+  }
+  .layout-8 .q-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    height: 100%;
+  }
+  .layout-8 .q-half {
+    padding: 80px 6vw;
+    display: flex;
+    align-items: center;
+  }
+  .layout-8 .q-half-1 { background: var(--black); color: var(--white); }
+  .layout-8 .q-half-2 { background: var(--red); color: var(--black); }
+  .layout-8 .q-text {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(36px, 5.5vw, 90px);
+    line-height: 1.0;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+  }
+  .layout-8 .q-author {
+    position: absolute;
+    bottom: 60px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+  }
+  .layout-8 .q-half-2 .q-author { color: rgba(0,0,0,0.6); }
+  .layout-8 .q-num {
+    position: absolute;
+    top: 80px;
+    left: 6vw;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--red);
+    letter-spacing: 2px;
+    z-index: 5;
+  }
+
+  /* SLIDE 09 — чёрный, цитата как граффити (большая, наклонная, кривая) */
+  .quote-slide.layout-9 {
+    background: #0a0a0a;
+    color: var(--white);
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+  .layout-9 .q-text {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(60px, 11vw, 200px);
+    line-height: 0.85;
+    letter-spacing: -0.04em;
+    text-transform: uppercase;
+    max-width: 90%;
+  }
+  .layout-9 .q-text .word-1 { display: inline-block; transform: rotate(-2deg); }
+  .layout-9 .q-text .word-2 { display: inline-block; transform: rotate(1deg); color: var(--red); }
+  .layout-9 .q-text .word-3 { display: inline-block; transform: rotate(-3deg); }
+  .layout-9 .q-text .word-4 { display: inline-block; transform: rotate(2deg); color: var(--red); }
+  .layout-9 .q-author {
+    margin-top: 48px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+  }
+  .layout-9 .q-num {
+    position: absolute;
+    top: 80px;
+    right: 6vw;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--red);
+    letter-spacing: 2px;
+  }
+
+  /* SLIDE 10 — финальная: переходная цитата к видео-секции */
+  .quote-slide.layout-10 {
+    background: linear-gradient(135deg, var(--red) 0%, #b91c1c 100%);
+    color: var(--white);
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+  .layout-10 .q-text {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(48px, 9vw, 160px);
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+    text-transform: uppercase;
+    max-width: 90%;
+  }
+  .layout-10 .q-author {
+    margin-top: 48px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.85);
+  }
+  .layout-10 .q-num {
+    position: absolute;
+    top: 80px;
+    right: 6vw;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 14px;
+    color: rgba(255,255,255,0.7);
+    letter-spacing: 2px;
+  }
+  .layout-10 .q-arrow {
+    position: absolute;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.7);
+    animation: bounce 2s ease-in-out infinite;
+  }
+
+
+  /* ============ ВИДЕО-БЛОК ============ */
+  .video-section {
+    position: relative;
+    background: #050505;
+    padding: 120px 6vw 80px;
+  }
+
+  .video-section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .video-section-label::before {
+    content: ''; width: 32px; height: 1px; background: var(--red);
+  }
+
+  .video-section-title {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(48px, 8vw, 120px);
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    color: var(--white);
+    margin-bottom: 80px;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .video-section-title .red { color: var(--red); }
+
+  /* Большое горизонтальное видео */
+  .video-main {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto 60px;
+    aspect-ratio: 16/9;
+    background: #000;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 30px 80px rgba(232, 49, 42, 0.15);
+  }
+  .video-main iframe {
+    width: 100%; height: 100%; border: 0; display: block;
+  }
+
+  /* Два рилса рядом */
+  .video-reels {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .reel-card {
+    aspect-ratio: 9/16;
+    background: #000;
+    overflow: hidden;
+    position: relative;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reel-card:hover {
+    transform: translateY(-8px);
+  }
+  .reel-card iframe {
+    width: 100%; height: 100%; border: 0; display: block;
+  }
+
+
+  /* ============ ФИНАЛЬНАЯ СЕКЦИЯ ============ */
+  .final {
+    position: relative;
+    background: var(--black);
+    padding: 120px 6vw 80px;
+  }
+  .final-wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .final-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .final-label::before {
+    content: ''; width: 32px; height: 1px; background: var(--red);
+  }
+  .final h2 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(40px, 7vw, 110px);
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    color: var(--white);
+    margin-bottom: 64px;
+  }
+  .final h2 .red { color: var(--red); }
+
+  .final-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 80px;
+    margin-bottom: 80px;
+  }
+  .final-text p {
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(16px, 1.6vw, 19px);
+    line-height: 1.6;
+    color: rgba(255,255,255,0.85);
+    margin-bottom: 20px;
+  }
+  .final-text strong { font-weight: 900; color: var(--white); }
+  .final-specs {
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 32px;
+  }
+  .spec-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 16px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .spec-row:last-child { border-bottom: none; }
+  .spec-label { color: rgba(255,255,255,0.5); }
+  .spec-value { color: var(--white); font-weight: 700; }
+  .price-block {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255,255,255,0.2);
+  }
+  .price-num {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(40px, 5vw, 64px);
+    color: var(--red);
+    line-height: 0.9;
+    letter-spacing: -0.03em;
+  }
+  .price-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    margin-top: 8px;
+  }
+
+  /* Награды */
+  .awards {
+    margin-bottom: 80px;
+  }
+  .awards h3 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 24px;
+  }
+  .awards ul {
+    list-style: none;
+    display: grid;
+    gap: 12px;
+  }
+  .awards li {
+    font-family: 'Inter', sans-serif;
+    font-size: 17px;
+    color: rgba(255,255,255,0.85);
+    padding: 18px 24px;
+    border-left: 3px solid var(--red);
+    background: #111;
+  }
+  .awards li strong { color: var(--white); font-weight: 700; }
+
+  /* CTA */
+  .cta-block {
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 24px;
+  }
+  .cta-text {
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(20px, 2vw, 28px);
+    font-weight: 900;
+    color: var(--white);
+    text-transform: uppercase;
+    line-height: 1.1;
+  }
+  .cta-buttons {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--white);
+    text-decoration: none;
+    padding: 16px 28px;
+    border: 1px solid var(--white);
+    transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  }
+  .btn-primary {
+    background: var(--red);
+    border-color: var(--red);
+  }
+  .btn-primary:hover {
+    background: var(--white);
+    color: var(--black);
+    border-color: var(--white);
+  }
+  .btn:hover {
+    background: var(--white);
+    color: var(--black);
+  }
+  .final-footer {
+    margin-top: 80px;
+    padding-top: 32px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+    line-height: 1.8;
+  }
+
+
+  /* ============ FULLSCREEN ПЛЕЕР для рилсов ============ */
+  .reel-player {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.95);
+    z-index: 300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  .reel-player.active { opacity: 1; pointer-events: auto; }
+  .reel-player-close {
+    position: fixed; top: 24px; right: 24px;
+    z-index: 310; width: 48px; height: 48px;
+    background: transparent; border: 1px solid rgba(255,255,255,0.3);
+    color: var(--white); font-size: 24px; cursor: none;
+    transition: background 0.3s ease;
+  }
+  .reel-player-close:hover { background: var(--red); border-color: var(--red); }
+  .reel-player-frame {
+    width: min(420px, 90vw);
+    aspect-ratio: 9/16;
+    max-height: 90vh;
+  }
+  .reel-player-frame iframe {
+    width: 100%; height: 100%; border: 0;
+  }
+
+
+  /* ============ АДАПТИВ — мобильные ============ */
+  @media (max-width: 768px) {
+    .corner { font-size: 9px; letter-spacing: 1px; }
+    .corner-tl, .corner-tr { top: 16px; }
+    .corner-tl, .corner-bl { left: 16px; }
+    .corner-tr, .corner-br { right: 16px; }
+    .corner-bl, .corner-br { bottom: 16px; }
+    .scroll-progress-bar { width: 50px; }
+
+    .intro-red { font-size: clamp(140px, 50vw, 280px); }
+
+    /* На мобильных — вертикальный скролл цитат вместо горизонтального */
+    .quotes-container {
+      height: auto;
+    }
+    .quotes-sticky {
+      position: relative;
+      height: auto;
+    }
+    .quotes-track {
+      flex-direction: column;
+      height: auto;
+      width: 100%;
+      transform: none !important;
+    }
+    .quote-slide {
+      width: 100%;
+      height: 100vh;
+      padding: 60px 6vw;
+    }
+
+    /* Уменьшаем некоторые гигантские шрифты */
+    .layout-5 { grid-template-columns: 1fr; gap: 16px; }
+    .layout-5 .q-mega { font-size: 200px; line-height: 1; }
+    .layout-3 { grid-template-columns: 1fr; gap: 24px; }
+    .layout-3 .q-photo { aspect-ratio: 4/3; max-height: 35vh; }
+
+    .video-section { padding: 60px 4vw; }
+    .video-reels { grid-template-columns: 1fr; gap: 16px; }
+
+    .final { padding: 80px 6vw; }
+    .final-grid { grid-template-columns: 1fr; gap: 40px; }
+    .cta-block { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Кастомный курсор -->
+<div class="cursor-dot"></div>
+<div class="cursor-ring"></div>
+
+<!-- Угловые надписи -->
+<div class="corner corner-tl">
+  THE END<br>
+  EST. 2022
+</div>
+<div class="corner corner-tr">
+  <span class="red-dot"></span>RECORDING<br>
+  BY LYKBOOK
+</div>
+<div class="corner corner-bl">
+  <span id="phase-name">RED</span><br>
+  RED EDITION / ALBUM
+</div>
+<div class="corner corner-br">
+  <span id="scroll-percent">00</span>%
+  <div class="scroll-progress-bar" id="scroll-bar"></div>
+</div>
+
+<!-- Назад -->
+<a href="/" class="back-btn">↶ THE END</a>
+
+
+<!-- ============ 1. ИНТРО ============ -->
+<section class="intro">
+  <div class="intro-strip intro-strip-top">
+    <div class="intro-strip-inner">
+      RED · NO REPETITIONS · ONLY REFLECTION · RED · NO REPETITIONS · ONLY REFLECTION · 
+      RED · NO REPETITIONS · ONLY REFLECTION · RED · NO REPETITIONS · ONLY REFLECTION · 
+    </div>
+  </div>
+
+  <h1 class="intro-red">RED</h1>
+
+  <div class="intro-strip intro-strip-bottom">
+    <div class="intro-strip-inner">
+      ОТРАЖЕНИЕ КАЖДОГО · ОТРАЖЕНИЕ КАЖДОГО · ОТРАЖЕНИЕ КАЖДОГО · ОТРАЖЕНИЕ КАЖДОГО · 
+      ОТРАЖЕНИЕ КАЖДОГО · ОТРАЖЕНИЕ КАЖДОГО · ОТРАЖЕНИЕ КАЖДОГО · ОТРАЖЕНИЕ КАЖДОГО · 
+    </div>
+  </div>
+
+  <div class="intro-manifesto">
+    <div class="intro-manifesto-line">— АЛЬБОМ, В КОТОРОМ ДИЗАЙН РОЖДАЕТСЯ ИЗ СЛОВ ВЫПУСКНИКОВ —</div>
+    <div class="intro-manifesto-line bold">НИКАКИХ ПОВТОРЕНИЙ. ТОЛЬКО ОТРАЖЕНИЕ КАЖДОГО.</div>
+  </div>
+
+  <div class="intro-scroll-hint">↓ SCROLL</div>
+</section>
+
+
+<!-- ============ 2. ГОРИЗОНТАЛЬНЫЙ СКРОЛЛ ЦИТАТ ============ -->
+<div class="quotes-container">
+  <div class="quotes-sticky">
+    <div class="quotes-track" id="quotes-track">
+
+      <!-- ЦИТАТА 01 — белый, огромный текст с красным акцентом -->
+      <div class="quote-slide layout-1">
+        <div class="q-num">01 / 10</div>
+        <div class="q-text">
+          ШКОЛА — ЭТО НЕ МЕСТО.<br>
+          ЭТО <span class="accent">ЛЮДИ.</span>
+        </div>
+        <div class="q-author">— АРСЕНИЙ К.</div>
+      </div>
+
+      <!-- ЦИТАТА 02 — красный, наклонный, кавычки -->
+      <div class="quote-slide layout-2">
+        <div class="q-inner">
+          <div class="q-text">
+            <span class="quote-marks">«</span>ЕСЛИ<br>
+            БОИШЬСЯ —<br>
+            ДЕЛАЙ.<br>
+            И НЕ СТРАШНО<span class="quote-marks">»</span>
+          </div>
+          <div class="q-author">— ЕЛИЗАВЕТА М.</div>
+        </div>
+        <div class="q-num">02</div>
+      </div>
+
+      <!-- ЦИТАТА 03 — чёрный, текст слева + фото-плейсхолдер справа -->
+      <div class="quote-slide layout-3">
+        <div class="q-num">03 / 10</div>
+        <div>
+          <div class="q-text">
+            Я ВЫРОС<br>
+            <span class="accent">МЕЖДУ ЗВОНКАМИ.</span>
+          </div>
+          <div class="q-author">— МАКСИМ Т.</div>
+        </div>
+        <div class="q-photo"></div>
+      </div>
+
+      <!-- ЦИТАТА 04 — белый, три строки разного размера -->
+      <div class="quote-slide layout-4">
+        <div class="q-num">04 / 10</div>
+        <div>
+          <div class="q-line q-line-1">МЫ БЫЛИ</div>
+          <div class="q-line q-line-2">НЕ ПРАВИЛЬНЫМИ.</div>
+          <div class="q-line q-line-3">— И ЭТО СПАСЛО НАС.</div>
+          <div class="q-author">— ВЕРОНИКА Д.</div>
+        </div>
+      </div>
+
+      <!-- ЦИТАТА 05 — гигантская буква + цитата -->
+      <div class="quote-slide layout-5">
+        <div class="q-num">05 / 10</div>
+        <div class="q-mega">К</div>
+        <div>
+          <div class="q-text">
+            «КАЖДЫЙ ДЕНЬ Я ДУМАЛА — ЕЩЁ НЕМНОГО, ЕЩЁ НЕМНОГО.<br>
+            А ПОТОМ ЭТО ЗАКОНЧИЛОСЬ. И ВДРУГ — ЖАЛКО.»
+          </div>
+          <div class="q-author">— КСЕНИЯ Р.</div>
+        </div>
+      </div>
+
+      <!-- ЦИТАТА 06 — красный, текст обрезан / "за кадром" -->
+      <div class="quote-slide layout-6">
+        <div class="q-num">06 / 10</div>
+        <div>
+          <div class="q-text">
+            ПОСЛЕДНИЙ<br>
+            ЗВОНОК<br>
+            ЗВУЧИТ ВСЕГДА
+          </div>
+          <div class="q-author">— ИЛЬЯ Б.</div>
+        </div>
+      </div>
+
+      <!-- ЦИТАТА 07 — белый, вертикальный текст -->
+      <div class="quote-slide layout-7">
+        <div class="q-num">07 / 10</div>
+        <div class="q-vertical">
+          <div class="q-text">НЕ ПРОЩАЙ. <span class="accent">ПОМНИ.</span></div>
+        </div>
+        <div class="q-author">— АНАСТАСИЯ В.</div>
+      </div>
+
+      <!-- ЦИТАТА 08 — split чёрный/красный -->
+      <div class="quote-slide layout-8">
+        <div class="q-num">08 / 10</div>
+        <div class="q-split">
+          <div class="q-half q-half-1">
+            <div>
+              <div class="q-text">ОНИ СМОТРЕЛИ<br>НА НАС</div>
+              <div class="q-author">— ДАНИИЛ С.</div>
+            </div>
+          </div>
+          <div class="q-half q-half-2">
+            <div>
+              <div class="q-text">КАК НА ЧУЖИХ.<br>А МЫ БЫЛИ —<br>СЕМЬЁЙ.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ЦИТАТА 09 — граффити с разноцветными словами -->
+      <div class="quote-slide layout-9">
+        <div class="q-num">09 / 10</div>
+        <div>
+          <div class="q-text">
+            <span class="word-1">ВСЕ</span>
+            <span class="word-2">СВОИ.</span><br>
+            <span class="word-3">НИКТО</span>
+            <span class="word-4">ЛИШНИЙ.</span>
+          </div>
+          <div class="q-author">— ПОЛИНА Н.</div>
+        </div>
+      </div>
+
+      <!-- ЦИТАТА 10 — финальная, переходная -->
+      <div class="quote-slide layout-10">
+        <div class="q-num">10 / 10</div>
+        <div>
+          <div class="q-text">
+            И ЭТО ВСЁ —<br>
+            В ОДНОМ АЛЬБОМЕ.
+          </div>
+          <div class="q-author">— RED EDITION</div>
+        </div>
+        <div class="q-arrow">↓ ПОСМОТРИТЕ САМИ</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- ============ 3. ВИДЕО-БЛОК ============ -->
+<section class="video-section">
+  <div class="video-section-label">[ ВИДЕО-ОБЗОР АЛЬБОМА RED ]</div>
+  <h2 class="video-section-title">
+    ПОЛИСТАЙТЕ <span class="red">КАЖДЫЙ РАЗВОРОТ.</span>
+  </h2>
+
+  <!-- Большое горизонтальное видео — обзор альбома -->
+  <div class="video-main">
+    <iframe
+      src="https://player.vimeo.com/video/1188356478?background=1&autoplay=1&loop=1&muted=1&autopause=0&controls=0&badge=0"
+      frameborder="0"
+      allow="autoplay; fullscreen"
+      title="RED album overview"></iframe>
+  </div>
+
+  <!-- 2 рилса рядом — кликабельные -->
+  <div class="video-reels">
+    <div class="reel-card" data-vimeo="1187389446">
+      <iframe
+        src="https://player.vimeo.com/video/1187389446?background=1&autoplay=1&loop=1&muted=1&autopause=0&controls=0&badge=0"
+        frameborder="0"
+        allow="autoplay; fullscreen"
+        title="RED reel 1"></iframe>
+    </div>
+    <div class="reel-card" data-vimeo="1187387046">
+      <iframe
+        src="https://player.vimeo.com/video/1187387046?background=1&autoplay=1&loop=1&muted=1&autopause=0&controls=0&badge=0"
+        frameborder="0"
+        allow="autoplay; fullscreen"
+        title="RED reel 2"></iframe>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============ 4. ФИНАЛЬНАЯ СЕКЦИЯ ============ -->
+<section class="final">
+  <div class="final-wrap">
+
+    <div class="final-label">[ RED / СПЕЦИФИКАЦИЯ ]</div>
+
+    <h2>
+      RED — АЛЬБОМ, В КОТОРОМ<br>
+      ДИЗАЙН <span class="red">РОЖДАЕТСЯ ИЗ СЛОВ.</span>
+    </h2>
+
+    <div class="final-grid">
+      <div class="final-text">
+        <p>
+          Каждый разворот создаётся на основе <strong>личной цитаты</strong> — в зависимости
+          от смысла, интонации и характера. Макеты не повторяются, нет ни одной
+          универсальной схемы.
+        </p>
+        <p>
+          Это <strong>индивидуальная работа с каждым</strong>, поэтому у каждого класса
+          получается абсолютно уникальный альбом.
+        </p>
+        <p>
+          Проект отличается <strong>сильными визуальными решениями</strong> — от общей
+          фотографии под красным фильтром до чёрно-белых разворотов, контрастных
+          цветовых акцентов и нестандартных приёмов композиции.
+        </p>
+      </div>
+
+      <div class="final-specs">
+        <div class="spec-row">
+          <span class="spec-label">Размер</span>
+          <span class="spec-value">23×30 см</span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-label">Кол-во страниц</span>
+          <span class="spec-value">до 100</span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-label">Переплёт</span>
+          <span class="spec-value">нитка-шов</span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-label">Раскрытие</span>
+          <span class="spec-value">полное</span>
+        </div>
+
+        <div class="price-block">
+          <div class="price-num">10 000 ₽</div>
+          <div class="price-label">от / экземпляр</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="awards">
+      <h3>[ ПОБЕДИТЕЛЬ В НОМИНАЦИИ «ЛУЧШИЙ ВЫПУСКНОЙ АЛЬБОМ ГОДА» ]</h3>
+      <ul>
+        <li><strong>SEENDAYFEST 2024</strong> — Санкт-Петербург</li>
+        <li><strong>Форум школьных фотографов 2024</strong> — Минск</li>
+        <li><strong>Форум школьных фотографов 2025</strong> — Минск</li>
+      </ul>
+    </div>
+
+    <div class="cta-block">
+      <div class="cta-text">
+        Готовы рассказать<br>
+        <span style="color:var(--red)">свою историю?</span>
+      </div>
+      <div class="cta-buttons">
+        <a href="https://wa.me/79581002777" class="btn btn-primary" target="_blank">
+          ЗАБРОНИРОВАТЬ →
+        </a>
+        <a href="/" class="btn">
+          ↶ К ПРОЕКТАМ
+        </a>
+      </div>
+    </div>
+
+    <div class="final-footer">
+      <p>RED — линейка проекта THE END / Made by LYKBOOK</p>
+      <p>© LYKBOOK 2022 — 2026 / Не является публичной офертой</p>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- Fullscreen плеер для рилсов -->
+<div class="reel-player" id="reel-player">
+  <button class="reel-player-close" id="reel-player-close" aria-label="Закрыть">×</button>
+  <div class="reel-player-frame" id="reel-player-frame"></div>
+</div>
+
+
+<script>
+/* ============ КАСТОМНЫЙ КУРСОР ============ */
+(function() {
+  const dot = document.querySelector('.cursor-dot');
+  const ring = document.querySelector('.cursor-ring');
+  if (!dot || !ring) return;
+
+  let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
+  let dotX = mouseX, dotY = mouseY;
+  let ringX = mouseX, ringY = mouseY;
+
+  document.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX; mouseY = e.clientY;
+  });
+
+  function loop() {
+    dotX += (mouseX - dotX) * 0.9;
+    dotY += (mouseY - dotY) * 0.9;
+    ringX += (mouseX - ringX) * 0.15;
+    ringY += (mouseY - ringY) * 0.15;
+    dot.style.transform  = `translate(${dotX}px, ${dotY}px) translate(-50%, -50%)`;
+    ring.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
+    requestAnimationFrame(loop);
+  }
+  loop();
+
+  document.addEventListener('mouseover', (e) => {
+    if (e.target.closest('a, button, .btn, .reel-card')) ring.classList.add('hover');
+  });
+  document.addEventListener('mouseout', (e) => {
+    if (e.target.closest('a, button, .btn, .reel-card')) ring.classList.remove('hover');
+  });
+})();
+
+
+/* ============ ГОРИЗОНТАЛЬНЫЙ СКРОЛЛ ЦИТАТ ============ */
+(function() {
+  const isMobile = window.innerWidth < 768;
+  if (isMobile) return; // на мобильных — вертикально через CSS
+
+  const container = document.querySelector('.quotes-container');
+  const track = document.getElementById('quotes-track');
+  if (!container || !track) return;
+
+  const slides = track.querySelectorAll('.quote-slide');
+  const slideCount = slides.length;
+  // Сколько единиц горизонтальной прокрутки нужно (slideCount - 1, потому что первая не двигается)
+  // Например 10 слайдов — нужно проехать 9 ширин экрана
+
+  function update() {
+    const rect = container.getBoundingClientRect();
+    const containerHeight = container.offsetHeight;
+    const viewportHeight = window.innerHeight;
+    // Прогресс относительно зоны прокрутки контейнера
+    const scrollableArea = containerHeight - viewportHeight;
+    const scrolled = -rect.top;
+    let progress = scrolled / scrollableArea;
+    progress = Math.max(0, Math.min(1, progress));
+
+    // Перемещаем track горизонтально
+    const translateX = progress * (slideCount - 1) * 100;
+    track.style.transform = `translateX(-${translateX}vw)`;
+  }
+
+  window.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', update);
+  update();
+})();
+
+
+/* ============ СКРОЛЛ-ИНДИКАТОР И ФАЗА ============ */
+(function() {
+  const percentEl = document.getElementById('scroll-percent');
+  const barEl = document.getElementById('scroll-bar');
+  const phaseEl = document.getElementById('phase-name');
+
+  function update() {
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    const p = max > 0 ? window.scrollY / max : 0;
+    const percent = Math.round(p * 100);
+    percentEl.textContent = percent.toString().padStart(2, '0');
+    barEl.style.setProperty('--progress', percent + '%');
+
+    // Определяем фазу по тому в какой секции находимся
+    const intro = document.querySelector('.intro');
+    const quotes = document.querySelector('.quotes-container');
+    const video = document.querySelector('.video-section');
+    const finalSec = document.querySelector('.final');
+
+    let phase = 'RED';
+    if (intro && intro.getBoundingClientRect().bottom > window.innerHeight * 0.5) {
+      phase = 'INTRO';
+    } else if (quotes && quotes.getBoundingClientRect().bottom > 0) {
+      phase = 'QUOTES';
+    } else if (video && video.getBoundingClientRect().top < window.innerHeight * 0.5
+               && video.getBoundingClientRect().bottom > 0) {
+      phase = 'TEASER';
+    } else if (finalSec && finalSec.getBoundingClientRect().top < window.innerHeight * 0.5) {
+      phase = 'SPECS';
+    }
+
+    if (phaseEl.textContent !== phase) phaseEl.textContent = phase;
+  }
+
+  window.addEventListener('scroll', update, { passive: true });
+  update();
+})();
+
+
+/* ============ FULLSCREEN ПЛЕЕР для рилсов ============ */
+(function() {
+  const player = document.getElementById('reel-player');
+  const playerFrame = document.getElementById('reel-player-frame');
+  const playerClose = document.getElementById('reel-player-close');
+  if (!player) return;
+
+  document.querySelectorAll('.reel-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const id = card.dataset.vimeo;
+      if (!id) return;
+      playerFrame.innerHTML = `
+        <iframe
+          src="https://player.vimeo.com/video/${id}?autoplay=1&loop=1&muted=0&autopause=0&controls=1&badge=0"
+          frameborder="0"
+          allow="autoplay; fullscreen; picture-in-picture"
+          allowfullscreen></iframe>
+      `;
+      player.classList.add('active');
+    });
+  });
+
+  function closeReel() {
+    player.classList.remove('active');
+    setTimeout(() => { playerFrame.innerHTML = ''; }, 300);
+  }
+
+  playerClose.addEventListener('click', closeReel);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && player.classList.contains('active')) closeReel();
+  });
+  player.addEventListener('click', (e) => {
+    if (e.target === player) closeReel();
+  });
+})();
+</script>
+
+</body>
+</html>
