@@ -21,6 +21,7 @@
     background: var(--black);
     color: var(--white);
     font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
   }
 
   /* Кастомный курсор на десктопе */
@@ -227,15 +228,25 @@
   .quotes-container {
     position: relative;
     height: 1100vh;
-    overflow: hidden;
+    width: 100%;
   }
 
+  /* Внутренняя обёртка — JS делает её fixed когда контейнер в viewport */
   .quotes-sticky {
-    position: sticky;
+    position: absolute;
     top: 0;
+    left: 0;
     height: 100vh;
     width: 100%;
     overflow: hidden;
+  }
+  .quotes-sticky.is-fixed {
+    position: fixed;
+  }
+  .quotes-sticky.is-end {
+    position: absolute;
+    top: auto;
+    bottom: 0;
   }
 
   .quotes-track {
@@ -1381,27 +1392,39 @@
   if (isMobile) return; // на мобильных — вертикально через CSS
 
   const container = document.querySelector('.quotes-container');
+  const sticky = document.querySelector('.quotes-sticky');
   const track = document.getElementById('quotes-track');
-  if (!container || !track) return;
+  if (!container || !sticky || !track) return;
 
   const slides = track.querySelectorAll('.quote-slide');
   const slideCount = slides.length;
-  // Сколько единиц горизонтальной прокрутки нужно (slideCount - 1, потому что первая не двигается)
-  // Например 10 слайдов — нужно проехать 9 ширин экрана
 
   function update() {
     const rect = container.getBoundingClientRect();
+    const containerTop = rect.top;
     const containerHeight = container.offsetHeight;
     const viewportHeight = window.innerHeight;
-    // Прогресс относительно зоны прокрутки контейнера
     const scrollableArea = containerHeight - viewportHeight;
-    const scrolled = -rect.top;
-    let progress = scrolled / scrollableArea;
-    progress = Math.max(0, Math.min(1, progress));
 
-    // Перемещаем track горизонтально
-    const translateX = progress * (slideCount - 1) * 100;
-    track.style.transform = `translateX(-${translateX}vw)`;
+    // Где мы: до контейнера / в контейнере / после контейнера
+    if (containerTop > 0) {
+      // ДО контейнера — sticky наверху absolute
+      sticky.classList.remove('is-fixed', 'is-end');
+      track.style.transform = 'translateX(0)';
+    } else if (containerTop > -scrollableArea) {
+      // ВНУТРИ — закрепляем sticky к экрану и двигаем слайды
+      sticky.classList.add('is-fixed');
+      sticky.classList.remove('is-end');
+      const progress = -containerTop / scrollableArea;
+      const translateX = progress * (slideCount - 1) * 100;
+      track.style.transform = `translateX(-${translateX}vw)`;
+    } else {
+      // ПОСЛЕ — открепляем, ставим в конец
+      sticky.classList.remove('is-fixed');
+      sticky.classList.add('is-end');
+      const translateX = (slideCount - 1) * 100;
+      track.style.transform = `translateX(-${translateX}vw)`;
+    }
   }
 
   window.addEventListener('scroll', update, { passive: true });
