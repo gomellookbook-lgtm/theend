@@ -691,8 +691,13 @@
   }
 
   const isMobile = window.innerWidth < 768;
-  const fontSize = isMobile ? 110 : 170;
+  const fontSize = isMobile ? 70 : 170;
   const points = getTextPoints('VOGARDEN', fontSize);
+
+  // Если мобилка — отодвигаем камеру чтобы было видно больше
+  if (isMobile) {
+    camera.position.z = 38;
+  }
 
   const count = points.length;
   const positions = new Float32Array(count * 3);
@@ -1060,10 +1065,14 @@
   function makePhotoPlanes(images, startZ, length, side1Color) {
     const planes = [];
     const spacing = length / images.length;
+    // На мобильном делаем развороты меньше и ближе к центру
+    const isMob = window.innerWidth < 768;
+    const sizeH = isMob ? 2.4 : 3.6;
+    const sideOffset = isMob ? 2.6 : 4.0;
     images.forEach((url, i) => {
       loader.load(url, (tex) => {
         tex.minFilter = THREE.LinearFilter;
-        const h = 3.6;
+        const h = sizeH;
         const w = h * 1.5;
         const geo = new THREE.PlaneGeometry(w, h);
         const mat = new THREE.MeshStandardMaterial({
@@ -1075,7 +1084,7 @@
         const mesh = new THREE.Mesh(geo, mat);
         const z = startZ - (i * spacing + 2);
         const side = i % 2 === 0 ? -1 : 1;
-        mesh.position.set(side * 4.0, (Math.random() - 0.5) * 0.8, z);
+        mesh.position.set(side * sideOffset, (Math.random() - 0.5) * 0.8, z);
         mesh.rotation.y = side * -0.3;
         mesh.userData.baseY = mesh.position.y;
         scene.add(mesh);
