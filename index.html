@@ -2281,10 +2281,10 @@
 })();
 
 
-/* ============ 5. METABALL РТУТЬ — ШЕЙДЕРНАЯ ЖИДКОСТЬ ============ */
-/* Жидкий металл: поверхность объединяющая 120 "точек влияния".
-   Каждые 3.5 сек точки перестраиваются в новую форму.
-   Формы: сфера → VGRD → ∞ → LIME → ДНК → RED → сердце → DUO → тор → ECHO */
+
+/* ============ 5. METABALL РТУТЬ (LITE) ============ */
+/* Быстрая версия: 40 точек, без расчёта нормали в шейдере.
+   Формы: сфера → ∞ → ДНК → сердце → тор (только геометрия, без букв). */
 (function() {
   if (typeof THREE === 'undefined') return;
 
@@ -2292,21 +2292,22 @@
   if (!canvas) return;
 
   const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false });
+  // Сниженное разрешение рендера — экономит огромное число пикселей
+  const RENDER_SCALE = 0.7;
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio * RENDER_SCALE, 1.2));
   renderer.setClearColor(0x000000, 0);
 
   const scene = new THREE.Scene();
-  // Ortho-камера на полный экран
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-  // Сколько точек влияния — больше точек = тоньше формы (буквы читаются)
-  const COUNT = 180;
+  // Очень мало точек — главное чтобы не тормозило
+  const COUNT = 40;
 
   // === ГЕНЕРАТОРЫ ФОРМ ===
   function shapeSphere() {
     const arr = new Float32Array(COUNT * 2);
-    const radius = 0.55;
+    const radius = 0.42;
     for (let i = 0; i < COUNT; i++) {
       const phi = Math.acos(1 - 2 * (i + 0.5) / COUNT);
       const theta = Math.PI * (1 + Math.sqrt(5)) * i;
@@ -2322,21 +2323,20 @@
       const t = (i / COUNT) * Math.PI * 2;
       const denom = 1 + Math.sin(t) * Math.sin(t);
       arr[i*2]     = (0.85 * Math.cos(t)) / denom;
-      arr[i*2 + 1] = (0.85 * Math.sin(t) * Math.cos(t)) / denom * 1.3;
+      arr[i*2 + 1] = (0.85 * Math.sin(t) * Math.cos(t)) / denom * 1.4;
     }
     return arr;
   }
 
   function shapeSpiral() {
     const arr = new Float32Array(COUNT * 2);
-    const turns = 3.5;
+    const turns = 2.5;
     for (let i = 0; i < COUNT; i++) {
       const t = i / COUNT;
       const isSecond = i % 2 === 0;
       const a = t * turns * Math.PI * 2 + (isSecond ? Math.PI : 0);
-      const r = 0.45;
-      arr[i*2]     = Math.cos(a) * r;
-      arr[i*2 + 1] = (t - 0.5) * 1.3;
+      arr[i*2]     = Math.cos(a) * 0.45;
+      arr[i*2 + 1] = (t - 0.5) * 1.4;
     }
     return arr;
   }
@@ -2354,81 +2354,41 @@
 
   function shapeTorus() {
     const arr = new Float32Array(COUNT * 2);
-    const R = 0.58;
+    const R = 0.55;
     for (let i = 0; i < COUNT; i++) {
       const a = (i / COUNT) * Math.PI * 2;
-      const r = R + (Math.random() - 0.5) * 0.05;
-      arr[i*2]     = Math.cos(a) * r;
-      arr[i*2 + 1] = Math.sin(a) * r * 0.7;
+      arr[i*2]     = Math.cos(a) * R;
+      arr[i*2 + 1] = Math.sin(a) * R * 0.7;
     }
     return arr;
   }
 
-  // Текст-шейп — рисуем слово на canvas, потом сэмплим N точек
-  function shapeFromText(text, fontSize) {
-    const cnv = document.createElement('canvas');
-    cnv.width = 600;
-    cnv.height = 200;
-    const ctx = cnv.getContext('2d');
-    ctx.fillStyle = '#fff';
-    ctx.font = `900 ${fontSize}px Inter, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(text, cnv.width/2, cnv.height/2);
-    const img = ctx.getImageData(0, 0, cnv.width, cnv.height);
-    const pts = [];
-    for (let y = 0; y < cnv.height; y += 3) {
-      for (let x = 0; x < cnv.width; x += 3) {
-        const idx = (y * cnv.width + x) * 4;
-        if (img.data[idx + 3] > 128) pts.push([x, y]);
-      }
-    }
-    const arr = new Float32Array(COUNT * 2);
-    if (pts.length === 0) return arr;
-    // Преобразуем в нормализованные координаты — увеличенный масштаб
-    for (let i = 0; i < COUNT; i++) {
-      const p = pts[Math.floor(Math.random() * pts.length)];
-      arr[i*2]     = (p[0] - cnv.width/2)  * 0.0028;
-      arr[i*2 + 1] = -(p[1] - cnv.height/2) * 0.0028;
-    }
-    return arr;
-  }
-
-  // === СПИСОК 10 ФОРМ ===
+  // === СПИСОК ФОРМ — только геометрия ===
   const shapes = [
     () => shapeSphere(),
-    () => shapeFromText('VGRD', 150),
     () => shapeInfinity(),
-    () => shapeFromText('LIME', 150),
     () => shapeSpiral(),
-    () => shapeFromText('RED', 180),
     () => shapeHeart(),
-    () => shapeFromText('DUO', 180),
     () => shapeTorus(),
-    () => shapeFromText('ECHO', 150),
   ];
 
   // === ДАННЫЕ ЧАСТИЦ ===
-  let current = shapes[0]();           // текущая форма (целевая)
   const positions = new Float32Array(COUNT * 2);
   const targets   = new Float32Array(COUNT * 2);
   const velocities = new Float32Array(COUNT * 2);
-  positions.set(current);
-  targets.set(current);
+  const start = shapes[0]();
+  positions.set(start);
+  targets.set(start);
 
   let currentShapeIdx = 0;
   let lastShapeChange = performance.now();
-
   function nextShape() {
     currentShapeIdx = (currentShapeIdx + 1) % shapes.length;
     targets.set(shapes[currentShapeIdx]());
     lastShapeChange = performance.now();
   }
 
-  // === ШЕЙДЕР METABALL ===
-  // Каждый пиксель экрана считает суммарное "поле" от всех частиц.
-  // Где поле > порога — рисуется металл с бликами.
-
+  // === ШЕЙДЕР (упрощённый — без нормали) ===
   const vertexShader = `
     varying vec2 vUv;
     void main() {
@@ -2438,85 +2398,52 @@
   `;
 
   const fragmentShader = `
-    precision highp float;
+    precision mediump float;
     varying vec2 vUv;
     uniform vec2 uResolution;
     uniform float uTime;
     uniform vec2 uMouse;
     uniform vec2 uPoints[${COUNT}];
 
-    // Цвета металла
-    const vec3 RED_DEEP = vec3(0.55, 0.05, 0.04);   // глубокий красный (тень)
-    const vec3 RED_BASE = vec3(0.91, 0.19, 0.17);   // основной красный
-    const vec3 RED_HIGH = vec3(1.0, 0.55, 0.45);    // блик
-    const vec3 WHITE_HOT = vec3(1.0, 0.95, 0.92);   // белая искра
+    const vec3 RED_DEEP = vec3(0.45, 0.04, 0.04);
+    const vec3 RED_BASE = vec3(0.91, 0.19, 0.17);
+    const vec3 RED_HIGH = vec3(1.0, 0.6, 0.5);
 
     void main() {
-      // Координата в пространстве сцены (центрируем + учитываем aspect)
       float aspect = uResolution.x / uResolution.y;
       vec2 p = vUv * 2.0 - 1.0;
       p.x *= aspect;
 
-      // Считаем "поле" — сумму обратных расстояний до всех точек
-      // Сила поля каждой точки меньше — формы не разливаются
+      // Поле metaball
       float field = 0.0;
       for (int i = 0; i < ${COUNT}; i++) {
         vec2 d = p - uPoints[i];
-        float r2 = dot(d, d);
-        field += 0.0035 / (r2 + 0.0008);
+        field += 0.014 / (dot(d, d) + 0.002);
       }
 
-      // Порог выше — формы плотнее, не растекаются
-      float threshold = 2.2;
+      // Альфа поверхности
+      float threshold = 1.5;
+      float alpha = smoothstep(threshold - 0.12, threshold + 0.12, field);
+      if (alpha < 0.01) discard;
 
-      // Smooth edge — мягкая, но не размытая граница
-      float edgeSmooth = 0.10;
-      float alpha = smoothstep(threshold - edgeSmooth, threshold + edgeSmooth, field);
+      // Псевдо-освещение: где поле сильнее (центр капли) — светлее
+      float intensity = clamp((field - threshold) / 1.5, 0.0, 1.0);
 
-      if (alpha < 0.01) {
-        gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
-        return;
-      }
+      // Анимированный блик "проезжает" по поверхности
+      float lightSweep = 0.5 + 0.5 * sin(p.x * 2.5 + p.y * 1.2 + uTime * 0.6);
+      lightSweep = pow(lightSweep, 4.0);
 
-      // === ОСВЕЩЕНИЕ И БЛИКИ ===
-      // Псевдо-нормаль на основе градиента поля
-      float fieldX = 0.0, fieldY = 0.0;
-      vec2 dx = vec2(0.005, 0.0);
-      vec2 dy = vec2(0.0, 0.005);
-      for (int i = 0; i < ${COUNT}; i++) {
-        vec2 dpx = p + dx - uPoints[i];
-        vec2 dpy = p + dy - uPoints[i];
-        fieldX += 0.0035 / (dot(dpx,dpx) + 0.0008);
-        fieldY += 0.0035 / (dot(dpy,dpy) + 0.0008);
-      }
-      vec2 normal = normalize(vec2(fieldX - field, fieldY - field));
+      vec3 col = mix(RED_DEEP, RED_BASE, intensity);
+      col = mix(col, RED_HIGH, lightSweep * intensity);
 
-      // Источник света сверху-слева, движется со временем (медленно)
-      vec2 lightDir = normalize(vec2(sin(uTime * 0.3) * 0.4 - 0.5, 0.7));
-      float diffuse = clamp(dot(normal, lightDir), 0.0, 1.0);
-
-      // Спекуляр (зеркальный блик) — острый
-      float spec = pow(diffuse, 18.0);
-
-      // Псевдо-фернель: яркость на краях
-      float fresnel = 1.0 - smoothstep(threshold, threshold + 0.5, field);
-
-      // Композим цвет: глубокий → основной → блик
-      vec3 col = mix(RED_DEEP, RED_BASE, diffuse);
-      col = mix(col, RED_HIGH, spec * 0.7);
-      col = mix(col, WHITE_HOT, spec * spec * 0.5);
-      // На краях больше яркости (fresnel)
-      col += RED_HIGH * fresnel * 0.25;
-
-      // Реакция на курсор — лёгкое свечение
-      float mouseDist = length(p - uMouse);
-      col += vec3(0.4, 0.1, 0.1) * exp(-mouseDist * 4.0) * 0.3;
+      // Свечение от курсора
+      float md = length(p - uMouse);
+      col += vec3(0.5, 0.15, 0.12) * exp(-md * 4.0) * 0.25;
 
       gl_FragColor = vec4(col, alpha);
     }
   `;
 
-  // Uniforms — массив точек
   const pointsUniform = [];
   for (let i = 0; i < COUNT; i++) {
     pointsUniform.push(new THREE.Vector2(positions[i*2], positions[i*2 + 1]));
@@ -2525,23 +2452,18 @@
   const uniforms = {
     uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
     uTime: { value: 0 },
-    uMouse: { value: new THREE.Vector2(0, 0) },
+    uMouse: { value: new THREE.Vector2(10, 10) },
     uPoints: { value: pointsUniform }
   };
 
   const material = new THREE.ShaderMaterial({
-    vertexShader,
-    fragmentShader,
-    uniforms,
-    transparent: true
+    vertexShader, fragmentShader, uniforms, transparent: true
   });
-
-  // Полноэкранный quad
   const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
   scene.add(quad);
 
   // === КУРСОР ===
-  let mouseTarget = { x: 10, y: 10 }; // далеко за пределами по умолчанию
+  let mouseTarget = { x: 10, y: 10 };
   window.addEventListener('mousemove', (e) => {
     const aspect = window.innerWidth / window.innerHeight;
     mouseTarget.x = ((e.clientX / window.innerWidth) * 2 - 1) * aspect;
@@ -2550,7 +2472,7 @@
   window.addEventListener('mouseleave', () => { mouseTarget.x = 10; mouseTarget.y = 10; });
 
   // === АНИМАЦИЯ ===
-  const SHAPE_DURATION = 3500;
+  const SHAPE_DURATION = 4000;
   let time = 0;
 
   function animate() {
@@ -2558,42 +2480,32 @@
     time += 0.016;
     uniforms.uTime.value = time;
 
-    // Смена формы по таймеру
     const now = performance.now();
     if (now - lastShapeChange > SHAPE_DURATION) nextShape();
 
-    // Плавный мышь
     uniforms.uMouse.value.x += (mouseTarget.x - uniforms.uMouse.value.x) * 0.1;
     uniforms.uMouse.value.y += (mouseTarget.y - uniforms.uMouse.value.y) * 0.1;
 
-    // Обновляем позиции частиц (магнетизм к target + расталкивание мышью)
     for (let i = 0; i < COUNT; i++) {
       const ix = i * 2;
-      // Притяжение к цели
-      const dx = targets[ix]     - positions[ix];
-      const dy = targets[ix + 1] - positions[ix + 1];
-      velocities[ix]     += dx * 0.02;
-      velocities[ix + 1] += dy * 0.02;
+      velocities[ix]     += (targets[ix]     - positions[ix])     * 0.025;
+      velocities[ix + 1] += (targets[ix + 1] - positions[ix + 1]) * 0.025;
 
       // Расталкивание от мыши
-      const mdx = positions[ix] - uniforms.uMouse.value.x;
+      const mdx = positions[ix]     - uniforms.uMouse.value.x;
       const mdy = positions[ix + 1] - uniforms.uMouse.value.y;
       const md2 = mdx*mdx + mdy*mdy;
       if (md2 < 0.05) {
-        const f = (1 - md2 / 0.05) * 0.005;
+        const f = (1 - md2 / 0.05) * 0.006;
         const md = Math.sqrt(md2) || 0.001;
         velocities[ix]     += (mdx / md) * f;
         velocities[ix + 1] += (mdy / md) * f;
       }
 
-      // Трение
-      velocities[ix]     *= 0.86;
-      velocities[ix + 1] *= 0.86;
-
+      velocities[ix]     *= 0.85;
+      velocities[ix + 1] *= 0.85;
       positions[ix]     += velocities[ix];
       positions[ix + 1] += velocities[ix + 1];
-
-      // Обновляем uniform
       pointsUniform[i].set(positions[ix], positions[ix + 1]);
     }
     uniforms.uPoints.value = pointsUniform;
@@ -2602,7 +2514,6 @@
   }
   animate();
 
-  // === РЕСАЙЗ ===
   window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
     uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
