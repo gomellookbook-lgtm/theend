@@ -2414,37 +2414,37 @@
 
   function spawnNote() {
     const text = noteTexts[Math.floor(Math.random() * noteTexts.length)];
-    // Случайный угол наклона рукописи (-8..+8 градусов)
-    const angle = (Math.random() - 0.5) * 0.28;
-    // Размер шрифта
-    const fontSize = 18 + Math.random() * 10;
-    // Стороны: справа (60% случаев), слева (30%), сверху/снизу (10%)
-    const r = Math.random();
+    // Лёгкий наклон рукописи (-6..+6 градусов)
+    const angle = (Math.random() - 0.5) * 0.22;
+    // Размер шрифта поменьше
+    const fontSize = 15 + Math.random() * 6;
+
+    // === ЗОНЫ ===
+    // Слева: 2% — 20% по X
+    // Справа: 80% — 98% по X
+    // По высоте: только средняя часть (от 20% до 75%) — между навигациями
+    const isRight = Math.random() < 0.55;
     let x, y;
-    if (r < 0.55) {
-      // Справа
-      x = W * 0.72 + Math.random() * (W * 0.22);
-      y = H * 0.15 + Math.random() * (H * 0.65);
-    } else if (r < 0.85) {
-      // Слева
-      x = W * 0.05 + Math.random() * (W * 0.18);
-      y = H * 0.15 + Math.random() * (H * 0.65);
+    if (isRight) {
+      x = W * 0.80 + Math.random() * (W * 0.16);
     } else {
-      // Снизу или вверху сбоку
-      x = W * 0.05 + Math.random() * (W * 0.85);
-      y = Math.random() < 0.5 ? (H * 0.05 + Math.random() * (H * 0.08))
-                              : (H * 0.82 + Math.random() * (H * 0.10));
+      x = W * 0.02 + Math.random() * (W * 0.16);
     }
+    y = H * 0.22 + Math.random() * (H * 0.52);
+
     notes.push({
       text, x, y, angle, fontSize,
       age: 0,
-      writeDur: 35 + text.length * 2,  // длительность написания (кадры)
-      lifeDur: 240,                     // как долго висит до зачёркивания
-      strikeDur: 30,                    // длительность зачёркивания
-      fadeDur: 50,                      // длительность исчезновения
-      hasArrow: Math.random() < 0.4,   // 40% заметок со стрелкой
-      arrowAngle: Math.random() * Math.PI * 2,
-      arrowLength: 40 + Math.random() * 30
+      writeDur: 35 + text.length * 2,
+      lifeDur: 240,
+      strikeDur: 30,
+      fadeDur: 50,
+      hasArrow: Math.random() < 0.35,
+      // Стрелка указывает в сторону центра экрана
+      arrowAngle: isRight
+        ? Math.PI + (Math.random() - 0.5) * 0.6  // влево от заметки (к центру)
+        : (Math.random() - 0.5) * 0.6,            // вправо от заметки (к центру)
+      arrowLength: 35 + Math.random() * 25
     });
   }
 
@@ -2605,7 +2605,7 @@
       ? `rgba(232, 49, 42, ${0.85 * alpha})`
       : `rgba(255, 255, 255, ${0.65 * alpha})`;
     ctx.fillStyle = color;
-    ctx.font = `500 ${note.fontSize}px "Caveat", cursive`;
+    ctx.font = `400 ${note.fontSize}px "Caveat", cursive`;
 
     // Рисуем текст ПО БУКВАМ — постепенно (эффект написания)
     const visibleLen = Math.floor(note.text.length * writeP);
@@ -2617,7 +2617,7 @@
       const strikeP = Math.min(1, (note.age - lifeEnd) / note.strikeDur);
       const textWidth = ctx.measureText(note.text).width;
       ctx.strokeStyle = color;
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 1.2;
       ctx.beginPath();
       ctx.moveTo(-3, -note.fontSize * 0.3);
       ctx.lineTo(-3 + textWidth * strikeP, -note.fontSize * 0.3);
@@ -2637,7 +2637,7 @@
       const ey = ay + Math.sin(note.arrowAngle) * note.arrowLength;
 
       ctx.strokeStyle = `rgba(255, 255, 255, ${0.45 * arrowAlpha * alpha})`;
-      ctx.lineWidth = 1.2;
+      ctx.lineWidth = 0.9;
       ctx.beginPath();
       ctx.moveTo(ax, ay);
       // Кривая Безье — стрелка не прямая, а слегка изогнутая
