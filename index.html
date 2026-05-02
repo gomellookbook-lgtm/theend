@@ -2283,16 +2283,32 @@
 
 
 
-/* ============ 5. СЕТКА ВЁРСТКИ — направляющие, рамки, плейсхолдеры ============ */
-/* Premium-фон: тонкие линии направляющих, появляющиеся рамки разворотов
-   с диагональным крестом (полиграфический знак "тут будет фото"),
-   технические подписи (страницы, размеры). Каждые 6 секунд новая раскладка. */
+
+/* ============ 5. ЗАМЕТКИ ДИЗАЙНЕРА — сетка вёрстки в правой части ============ */
+/* Полупрозрачные рамки разворотов, размеры в пикселях, технические подписи.
+   Живут только в правой 35% экрана (только на десктопе, на мобильных скрыто). */
 (function() {
   const canvas = document.getElementById('morph-canvas');
   if (!canvas) return;
 
+  // На мобильных — не показываем
+  if (window.innerWidth < 900) {
+    canvas.style.display = 'none';
+    return;
+  }
+
   const ctx = canvas.getContext('2d');
   let W = 0, H = 0, dpr = 1;
+
+  // Зона рисования — правая часть экрана (35% ширины)
+  // Все координаты внутри функций будут в системе W/H (нормальные пиксели).
+  function getZone() {
+    const zoneStart = W * 0.62;   // начинаем с 62% по X
+    const zoneEnd = W - 40;       // до правого края с отступом
+    const zoneTop = 80;
+    const zoneBottom = H - 80;
+    return { x: zoneStart, y: zoneTop, w: zoneEnd - zoneStart, h: zoneBottom - zoneTop };
+  }
 
   function resize() {
     dpr = Math.min(window.devicePixelRatio || 1, 1.5);
@@ -2316,56 +2332,37 @@
   });
   window.addEventListener('mouseleave', () => { mouse.active = false; });
 
-  // === РАСКЛАДКИ РАЗВОРОТОВ ===
-  // Каждая раскладка: [{x, y, w, h, type, label}]
-  // type: 'photo' | 'text' | 'full'
-  // координаты в долях от экрана (0..1) и от центра
+  // === РАСКЛАДКИ внутри зоны (координаты 0..1 относительно зоны) ===
   function makeLayout(idx) {
-    // Все раскладки центрируются. w/h — пропорция альбома 23×30 = ~0.77
     const layouts = [
-      // 0: один большой разворот по центру
-      () => {
-        const w = 0.55, h = 0.42;
-        return [
-          { x: 0.5 - w/2, y: 0.5 - h/2, w, h, type: 'full', label: 'SPREAD 23×30 / pp.42-43' }
-        ];
-      },
-      // 1: 2 разворота рядом
-      () => {
-        const w = 0.30, h = 0.36;
-        return [
-          { x: 0.20, y: 0.5 - h/2, w, h, type: 'photo', label: 'IMG 6048×4032 / 300 DPI' },
-          { x: 0.50, y: 0.5 - h/2, w, h, type: 'text',  label: 'TEXT BLOCK / 12 col' }
-        ];
-      },
-      // 2: 4 в сетке 2×2
-      () => {
-        const w = 0.22, h = 0.26;
-        const gx = 0.5 - w - 0.01, gy = 0.5 - h - 0.01;
-        return [
-          { x: gx,         y: gy,         w, h, type: 'photo', label: 'IMG 01' },
-          { x: gx + w + 0.02, y: gy,      w, h, type: 'photo', label: 'IMG 02' },
-          { x: gx,         y: gy + h + 0.02, w, h, type: 'text',  label: 'CAPTION' },
-          { x: gx + w + 0.02, y: gy + h + 0.02, w, h, type: 'photo', label: 'IMG 03' }
-        ];
-      },
-      // 3: один большой слева + 3 мелких справа
-      () => {
-        const bw = 0.30, bh = 0.42;
-        const sw = 0.18, sh = 0.13;
-        return [
-          { x: 0.20, y: 0.5 - bh/2, w: bw, h: bh, type: 'full', label: 'COVER' },
-          { x: 0.52, y: 0.5 - bh/2, w: sw, h: sh, type: 'photo', label: 'p.04' },
-          { x: 0.52, y: 0.5 - bh/2 + sh + 0.01, w: sw, h: sh, type: 'text',  label: 'p.05' },
-          { x: 0.52, y: 0.5 - bh/2 + (sh + 0.01) * 2, w: sw, h: sh, type: 'photo', label: 'p.06' }
-        ];
-      },
-      // 4: горизонтальная панель — длинный разворот (формат панорамы)
-      () => {
-        return [
-          { x: 0.15, y: 0.42, w: 0.70, h: 0.16, type: 'full', label: 'PANORAMA / class 11Б' }
-        ];
-      }
+      // 0: один большой разворот
+      () => [
+        { x: 0.05, y: 0.20, w: 0.90, h: 0.55, type: 'full', label: 'SPREAD / pp.42-43' }
+      ],
+      // 1: один большой + 2 мелких справа
+      () => [
+        { x: 0.05, y: 0.20, w: 0.55, h: 0.55, type: 'photo', label: 'COVER' },
+        { x: 0.65, y: 0.20, w: 0.32, h: 0.26, type: 'photo', label: 'p.04' },
+        { x: 0.65, y: 0.49, w: 0.32, h: 0.26, type: 'text',  label: 'p.05' }
+      ],
+      // 2: сетка 2×2
+      () => [
+        { x: 0.05, y: 0.18, w: 0.42, h: 0.27, type: 'photo', label: 'IMG 01' },
+        { x: 0.52, y: 0.18, w: 0.42, h: 0.27, type: 'photo', label: 'IMG 02' },
+        { x: 0.05, y: 0.48, w: 0.42, h: 0.27, type: 'text',  label: 'CAPTION' },
+        { x: 0.52, y: 0.48, w: 0.42, h: 0.27, type: 'photo', label: 'IMG 03' }
+      ],
+      // 3: вертикальная стопка из 3
+      () => [
+        { x: 0.10, y: 0.10, w: 0.80, h: 0.20, type: 'photo', label: 'p.01' },
+        { x: 0.10, y: 0.34, w: 0.80, h: 0.20, type: 'text',  label: 'p.02-03' },
+        { x: 0.10, y: 0.58, w: 0.80, h: 0.20, type: 'photo', label: 'p.04' }
+      ],
+      // 4: горизонтальная панорама + подпись
+      () => [
+        { x: 0.05, y: 0.30, w: 0.90, h: 0.18, type: 'full',  label: 'PANORAMA / 11Б' },
+        { x: 0.05, y: 0.55, w: 0.90, h: 0.10, type: 'text',  label: 'CAPTION' }
+      ]
     ];
     return layouts[idx % layouts.length]();
   }
@@ -2373,19 +2370,16 @@
   // === СОСТОЯНИЕ ===
   let layoutIdx = 0;
   let currentLayout = makeLayout(0);
-  let layoutAge = 0;          // сколько живёт текущая раскладка (в кадрах)
+  let layoutAge = 0;
   const LAYOUT_LIFE = 360;    // ~6 сек при 60fps
-  const FADE_IN = 60;         // 1 сек на появление
-  const FADE_OUT = 50;        // 0.8 сек на исчезновение
+  const FADE_IN = 60;
+  const FADE_OUT = 50;
 
-  // Глобальный таймер для дрейфа линий и подписей
   let time = 0;
 
-  // === РИСОВАНИЕ ===
   function drawCorner(x, y, size, color) {
     ctx.strokeStyle = color;
     ctx.lineWidth = 1;
-    // Уголок: маленький "+" типа полиграфической метки
     ctx.beginPath();
     ctx.moveTo(x - size, y);
     ctx.lineTo(x + size, y);
@@ -2394,18 +2388,17 @@
     ctx.stroke();
   }
 
-  function drawSpread(spread, progress) {
-    // progress: 0..1 — насколько "нарисована" эта рамка
-    const x = spread.x * W;
-    const y = spread.y * H;
-    const w = spread.w * W;
-    const h = spread.h * H;
+  function drawSpread(spread, progress, zone) {
+    const x = zone.x + spread.x * zone.w;
+    const y = zone.y + spread.y * zone.h;
+    const w = spread.w * zone.w;
+    const h = spread.h * zone.h;
 
-    ctx.strokeStyle = `rgba(255, 255, 255, ${0.35 * progress})`;
+    // Тише чем раньше — это фон/заметки, не главное
+    ctx.strokeStyle = `rgba(255, 255, 255, ${0.22 * progress})`;
     ctx.lineWidth = 1;
 
     // Рамка прорисовывается стороной за стороной
-    // 0..0.25 — верхняя, 0.25..0.5 — правая, 0.5..0.75 — нижняя, 0.75..1 — левая
     ctx.beginPath();
     if (progress > 0) {
       const topP = Math.min(1, progress / 0.25);
@@ -2429,13 +2422,13 @@
     }
     ctx.stroke();
 
-    // После полной рамки — рисуем содержимое
+    // После полной рамки — содержимое
     if (progress >= 1) {
       const innerProg = Math.min(1, (progress - 1) * 4);
 
       if (spread.type === 'photo' || spread.type === 'full') {
-        // Диагональный крест — типографский знак "тут будет фото"
-        ctx.strokeStyle = `rgba(232, 49, 42, ${0.22 * innerProg})`;
+        // Диагональный крест "тут будет фото"
+        ctx.strokeStyle = `rgba(232, 49, 42, ${0.18 * innerProg})`;
         ctx.lineWidth = 0.8;
         ctx.beginPath();
         ctx.moveTo(x, y);
@@ -2446,11 +2439,11 @@
       }
 
       if (spread.type === 'text') {
-        // Линии текста-плейсхолдер
-        ctx.strokeStyle = `rgba(255, 255, 255, ${0.20 * innerProg})`;
+        // Линии текста
+        ctx.strokeStyle = `rgba(255, 255, 255, ${0.15 * innerProg})`;
         ctx.lineWidth = 1;
-        const lineCount = 8;
-        const padding = 14;
+        const lineCount = 6;
+        const padding = 10;
         for (let i = 0; i < lineCount; i++) {
           const ly = y + padding + i * (h - padding * 2) / lineCount;
           const lineW = (i % 3 === 2 ? 0.55 : 0.85) * (w - padding * 2);
@@ -2461,108 +2454,100 @@
         }
       }
 
-      // Уголки-метки полиграфа
-      const cs = 6;
-      drawCorner(x - cs, y - cs, cs, `rgba(232, 49, 42, ${0.5 * innerProg})`);
-      drawCorner(x + w + cs, y - cs, cs, `rgba(232, 49, 42, ${0.5 * innerProg})`);
-      drawCorner(x - cs, y + h + cs, cs, `rgba(232, 49, 42, ${0.5 * innerProg})`);
-      drawCorner(x + w + cs, y + h + cs, cs, `rgba(232, 49, 42, ${0.5 * innerProg})`);
+      // Уголки полиграфа
+      const cs = 5;
+      drawCorner(x - cs, y - cs, cs, `rgba(232, 49, 42, ${0.4 * innerProg})`);
+      drawCorner(x + w + cs, y - cs, cs, `rgba(232, 49, 42, ${0.4 * innerProg})`);
+      drawCorner(x - cs, y + h + cs, cs, `rgba(232, 49, 42, ${0.4 * innerProg})`);
+      drawCorner(x + w + cs, y + h + cs, cs, `rgba(232, 49, 42, ${0.4 * innerProg})`);
 
-      // Технический лейбл слева снизу под рамкой
-      ctx.fillStyle = `rgba(255, 255, 255, ${0.45 * innerProg})`;
-      ctx.font = '10px "JetBrains Mono", monospace';
-      ctx.fillText(spread.label, x, y + h + 18);
+      // Технический лейбл — мелкий
+      ctx.fillStyle = `rgba(255, 255, 255, ${0.35 * innerProg})`;
+      ctx.font = '9px "JetBrains Mono", monospace';
+      ctx.fillText(spread.label, x, y + h + 14);
 
-      // Метка размера сверху
-      const sizeLabel = `${Math.round(w)}×${Math.round(h)}px`;
-      ctx.fillStyle = `rgba(232, 49, 42, ${0.5 * innerProg})`;
-      ctx.fillText(sizeLabel, x, y - 8);
+      // Размер сверху
+      ctx.fillStyle = `rgba(232, 49, 42, ${0.4 * innerProg})`;
+      ctx.fillText(`${Math.round(w)}×${Math.round(h)}px`, x, y - 6);
     }
   }
 
-  function drawCursorGuides() {
+  function drawCursorGuides(zone) {
     if (!mouse.active) return;
-    ctx.strokeStyle = 'rgba(232, 49, 42, 0.18)';
+    // Курсор должен быть внутри зоны чтобы видеть направляющие
+    if (mouse.x < zone.x || mouse.x > zone.x + zone.w) return;
+    if (mouse.y < zone.y || mouse.y > zone.y + zone.h) return;
+
+    ctx.strokeStyle = 'rgba(232, 49, 42, 0.25)';
     ctx.lineWidth = 1;
     ctx.setLineDash([4, 4]);
     ctx.beginPath();
-    // Вертикальная и горизонтальная направляющие из курсора
-    ctx.moveTo(mouse.x, 0);
-    ctx.lineTo(mouse.x, H);
-    ctx.moveTo(0, mouse.y);
-    ctx.lineTo(W, mouse.y);
+    // Направляющие только внутри зоны
+    ctx.moveTo(mouse.x, zone.y);
+    ctx.lineTo(mouse.x, zone.y + zone.h);
+    ctx.moveTo(zone.x, mouse.y);
+    ctx.lineTo(zone.x + zone.w, mouse.y);
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Координаты курсора в стиле Photoshop
-    ctx.fillStyle = 'rgba(232, 49, 42, 0.6)';
-    ctx.font = '10px "JetBrains Mono", monospace';
-    const xLabel = `X: ${Math.round(mouse.x)}`;
-    const yLabel = `Y: ${Math.round(mouse.y)}`;
-    ctx.fillText(xLabel, mouse.x + 8, mouse.y - 8);
-    ctx.fillText(yLabel, mouse.x + 8, mouse.y + 14);
+    // Координаты
+    ctx.fillStyle = 'rgba(232, 49, 42, 0.65)';
+    ctx.font = '9px "JetBrains Mono", monospace';
+    ctx.fillText(`X: ${Math.round(mouse.x)}`, mouse.x + 8, mouse.y - 8);
+    ctx.fillText(`Y: ${Math.round(mouse.y)}`, mouse.x + 8, mouse.y + 14);
   }
 
-  function drawBackgroundDots() {
-    // Мелкие точки разметки по периметру (типографские метки)
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
-    const margin = 30;
-    const step = 60;
-    for (let x = margin; x < W; x += step) {
-      ctx.fillRect(x, margin, 1, 1);
-      ctx.fillRect(x, H - margin, 1, 1);
-    }
-    for (let y = margin; y < H; y += step) {
-      ctx.fillRect(margin, y, 1, 1);
-      ctx.fillRect(W - margin, y, 1, 1);
-    }
+  function drawZoneFrame(zone) {
+    // Тонкая рамка вокруг рабочей зоны — будто это область макета
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([2, 6]);
+    ctx.strokeRect(zone.x, zone.y, zone.w, zone.h);
+    ctx.setLineDash([]);
+
+    // Подпись зоны "ARTBOARD" сверху-слева
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
+    ctx.font = '9px "JetBrains Mono", monospace';
+    ctx.fillText('ARTBOARD / SPREAD PREVIEW', zone.x, zone.y - 8);
   }
 
-  // === АНИМАЦИЯ ===
   function animate() {
     requestAnimationFrame(animate);
     time += 1;
     layoutAge += 1;
 
-    // Очищаем
     ctx.clearRect(0, 0, W, H);
 
-    // Точки разметки
-    drawBackgroundDots();
+    const zone = getZone();
+    drawZoneFrame(zone);
 
-    // Прогресс текущей раскладки: появление (0..1) → жизнь → исчезание
+    // Прогресс жизни раскладки
     let layoutAlpha = 1;
-    let progressMul = 1;
     if (layoutAge < FADE_IN) {
-      progressMul = layoutAge / FADE_IN;
+      // в процессе появления
     } else if (layoutAge > LAYOUT_LIFE - FADE_OUT) {
       const fadeT = (layoutAge - (LAYOUT_LIFE - FADE_OUT)) / FADE_OUT;
       layoutAlpha = 1 - fadeT;
     }
 
-    // Рисуем все рамки текущей раскладки
     ctx.save();
     ctx.globalAlpha = layoutAlpha;
 
     currentLayout.forEach((spread, i) => {
-      // Каждая рамка появляется с небольшим offset (одна за другой)
       const localOffset = i * 0.15;
       let p;
       if (layoutAge < FADE_IN) {
-        // Прогресс прорисовки 0..2 — первый этап рамка, второй содержимое
         p = Math.max(0, (layoutAge / FADE_IN) - localOffset) * 2;
       } else {
-        p = 2; // полностью нарисована
+        p = 2;
       }
-      drawSpread(spread, p);
+      drawSpread(spread, p, zone);
     });
 
     ctx.restore();
 
-    // Курсорные направляющие — поверх всего
-    drawCursorGuides();
+    drawCursorGuides(zone);
 
-    // Смена раскладки
     if (layoutAge >= LAYOUT_LIFE) {
       layoutIdx++;
       currentLayout = makeLayout(layoutIdx);
