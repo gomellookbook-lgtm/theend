@@ -2541,7 +2541,7 @@
 
   function drawCursorGuides() {
     if (!mouse.active) return;
-    ctx.strokeStyle = 'rgba(232, 49, 42, 0.40)';
+    ctx.strokeStyle = 'rgba(232, 49, 42, 0.29)';
     ctx.lineWidth = 1;
     ctx.setLineDash([4, 4]);
     ctx.beginPath();
@@ -2552,7 +2552,7 @@
     ctx.stroke();
     ctx.setLineDash([]);
 
-    ctx.fillStyle = 'rgba(232, 49, 42, 0.95)';
+    ctx.fillStyle = 'rgba(232, 49, 42, 0.78)';
     ctx.font = '10px "JetBrains Mono", monospace';
     ctx.fillText(`X: ${Math.round(mouse.x)}`, mouse.x + 8, mouse.y - 8);
     ctx.fillText(`Y: ${Math.round(mouse.y)}`, mouse.x + 8, mouse.y + 14);
