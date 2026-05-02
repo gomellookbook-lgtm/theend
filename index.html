@@ -6,7 +6,7 @@
 <title>THE END — Премиальные выпускные альбомы</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&family=Caveat:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&family=Caveat:wght@400;500;600&family=Kalam:wght@300;400&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -2373,9 +2373,8 @@
   }
 
   // ===== РУКОПИСНЫЕ ЗАМЕТКИ =====
-  // Пул фраз — пишу как настоящий дизайнер
+  // Пул фраз — только русские, как в реальном процессе работы
   const noteTexts = [
-    // RU
     'попробовать смещение',
     'тут чб лучше?',
     'портрет крупнее',
@@ -2390,21 +2389,16 @@
     'центр сместить →',
     'красный акцент',
     'разрядка букв',
-    // EN
-    'try b&w?',
-    'more contrast',
-    'swap pages',
-    'bigger photo',
-    'remove frame',
-    'add caption',
-    'breathe!',
-    'wrong proportion',
-    'red accent here',
-    'feels heavy',
-    'maybe vertical?',
-    'too tight',
-    'shift left',
-    'kerning issue'
+    'переснять',
+    'портрет чб',
+    'подвинуть',
+    'тяжело справа',
+    'мало воздуха',
+    'крупнее заголовок',
+    'сюда фото класса',
+    'убрать обводку',
+    'контраст',
+    'не читается'
   ];
 
   // Состояние всех заметок
@@ -2417,7 +2411,7 @@
     // Лёгкий наклон рукописи (-6..+6 градусов)
     const angle = (Math.random() - 0.5) * 0.22;
     // Размер шрифта поменьше
-    const fontSize = 15 + Math.random() * 6;
+    const fontSize = 13 + Math.random() * 5;
 
     // === ЗОНЫ ===
     // Слева: 2% — 20% по X
@@ -2605,7 +2599,7 @@
       ? `rgba(232, 49, 42, ${0.85 * alpha})`
       : `rgba(255, 255, 255, ${0.65 * alpha})`;
     ctx.fillStyle = color;
-    ctx.font = `400 ${note.fontSize}px "Caveat", cursive`;
+    ctx.font = `300 ${note.fontSize}px "Kalam", "Caveat", cursive`;
 
     // Рисуем текст ПО БУКВАМ — постепенно (эффект написания)
     const visibleLen = Math.floor(note.text.length * writeP);
@@ -2617,7 +2611,7 @@
       const strikeP = Math.min(1, (note.age - lifeEnd) / note.strikeDur);
       const textWidth = ctx.measureText(note.text).width;
       ctx.strokeStyle = color;
-      ctx.lineWidth = 1.2;
+      ctx.lineWidth = 0.8;
       ctx.beginPath();
       ctx.moveTo(-3, -note.fontSize * 0.3);
       ctx.lineTo(-3 + textWidth * strikeP, -note.fontSize * 0.3);
