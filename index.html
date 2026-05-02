@@ -6,7 +6,7 @@
 <title>THE END — Премиальные выпускные альбомы</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&family=Caveat:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -2284,31 +2284,16 @@
 
 
 
-/* ============ 5. ЗАМЕТКИ ДИЗАЙНЕРА — сетка вёрстки в правой части ============ */
-/* Полупрозрачные рамки разворотов, размеры в пикселях, технические подписи.
-   Живут только в правой 35% экрана (только на десктопе, на мобильных скрыто). */
+
+/* ============ 5. СЕТКА ВЁРСТКИ + РУКОПИСНЫЕ ЗАМЕТКИ ============ */
+/* Симметричная относительно центра экрана сетка разворотов
+   + по бокам появляются рукописные заметки дизайнера со стрелками */
 (function() {
   const canvas = document.getElementById('morph-canvas');
   if (!canvas) return;
 
-  // На мобильных — не показываем
-  if (window.innerWidth < 900) {
-    canvas.style.display = 'none';
-    return;
-  }
-
   const ctx = canvas.getContext('2d');
   let W = 0, H = 0, dpr = 1;
-
-  // Зона рисования — правая часть экрана (35% ширины)
-  // Все координаты внутри функций будут в системе W/H (нормальные пиксели).
-  function getZone() {
-    const zoneStart = W * 0.62;   // начинаем с 62% по X
-    const zoneEnd = W - 40;       // до правого края с отступом
-    const zoneTop = 80;
-    const zoneBottom = H - 80;
-    return { x: zoneStart, y: zoneTop, w: zoneEnd - zoneStart, h: zoneBottom - zoneTop };
-  }
 
   function resize() {
     dpr = Math.min(window.devicePixelRatio || 1, 1.5);
@@ -2323,6 +2308,8 @@
   resize();
   window.addEventListener('resize', resize);
 
+  const isMobile = window.innerWidth < 768;
+
   // === КУРСОР ===
   let mouse = { x: -1000, y: -1000, active: false };
   window.addEventListener('mousemove', (e) => {
@@ -2332,46 +2319,140 @@
   });
   window.addEventListener('mouseleave', () => { mouse.active = false; });
 
-  // === РАСКЛАДКИ внутри зоны (координаты 0..1 относительно зоны) ===
+  // ===== РАСКЛАДКИ — ВСЕ СИММЕТРИЧНЫ ОТНОСИТЕЛЬНО ЦЕНТРА =====
+  // Координаты x задаются от центра (отрицательные = слева, положительные = справа).
+  // Все рамки симметрично распределены вокруг точки 0.5 по X.
   function makeLayout(idx) {
     const layouts = [
-      // 0: один большой разворот
-      () => [
-        { x: 0.05, y: 0.20, w: 0.90, h: 0.55, type: 'full', label: 'SPREAD / pp.42-43' }
-      ],
-      // 1: один большой + 2 мелких справа
-      () => [
-        { x: 0.05, y: 0.20, w: 0.55, h: 0.55, type: 'photo', label: 'COVER' },
-        { x: 0.65, y: 0.20, w: 0.32, h: 0.26, type: 'photo', label: 'p.04' },
-        { x: 0.65, y: 0.49, w: 0.32, h: 0.26, type: 'text',  label: 'p.05' }
-      ],
-      // 2: сетка 2×2
-      () => [
-        { x: 0.05, y: 0.18, w: 0.42, h: 0.27, type: 'photo', label: 'IMG 01' },
-        { x: 0.52, y: 0.18, w: 0.42, h: 0.27, type: 'photo', label: 'IMG 02' },
-        { x: 0.05, y: 0.48, w: 0.42, h: 0.27, type: 'text',  label: 'CAPTION' },
-        { x: 0.52, y: 0.48, w: 0.42, h: 0.27, type: 'photo', label: 'IMG 03' }
-      ],
-      // 3: вертикальная стопка из 3
-      () => [
-        { x: 0.10, y: 0.10, w: 0.80, h: 0.20, type: 'photo', label: 'p.01' },
-        { x: 0.10, y: 0.34, w: 0.80, h: 0.20, type: 'text',  label: 'p.02-03' },
-        { x: 0.10, y: 0.58, w: 0.80, h: 0.20, type: 'photo', label: 'p.04' }
-      ],
-      // 4: горизонтальная панорама + подпись
-      () => [
-        { x: 0.05, y: 0.30, w: 0.90, h: 0.18, type: 'full',  label: 'PANORAMA / 11Б' },
-        { x: 0.05, y: 0.55, w: 0.90, h: 0.10, type: 'text',  label: 'CAPTION' }
-      ]
+      // 0: один большой разворот по центру
+      () => {
+        const w = 0.55, h = 0.42;
+        return [
+          { x: 0.5 - w/2, y: 0.5 - h/2, w, h, type: 'full', label: 'SPREAD 23×30 / pp.42-43' }
+        ];
+      },
+      // 1: 2 разворота симметрично слева и справа
+      () => {
+        const w = 0.28, h = 0.36;
+        const gap = 0.02;
+        return [
+          { x: 0.5 - w - gap/2, y: 0.5 - h/2, w, h, type: 'photo', label: 'IMG / 6048×4032' },
+          { x: 0.5 + gap/2,     y: 0.5 - h/2, w, h, type: 'text',  label: 'TEXT / 12 col' }
+        ];
+      },
+      // 2: 4 в сетке 2×2 — симметрично
+      () => {
+        const w = 0.20, h = 0.24;
+        const gap = 0.012;
+        return [
+          { x: 0.5 - w - gap/2, y: 0.5 - h - gap/2, w, h, type: 'photo', label: 'IMG 01' },
+          { x: 0.5 + gap/2,     y: 0.5 - h - gap/2, w, h, type: 'photo', label: 'IMG 02' },
+          { x: 0.5 - w - gap/2, y: 0.5 + gap/2,     w, h, type: 'text',  label: 'CAPTION' },
+          { x: 0.5 + gap/2,     y: 0.5 + gap/2,     w, h, type: 'photo', label: 'IMG 03' }
+        ];
+      },
+      // 3: один большой по центру + 2 мелких симметрично над ним
+      () => {
+        const bw = 0.36, bh = 0.30;
+        const sw = 0.16, sh = 0.10;
+        const gap = 0.012;
+        return [
+          { x: 0.5 - sw - gap/2, y: 0.5 - bh/2 - sh - gap, w: sw, h: sh, type: 'photo', label: 'p.04' },
+          { x: 0.5 + gap/2,      y: 0.5 - bh/2 - sh - gap, w: sw, h: sh, type: 'text',  label: 'p.05' },
+          { x: 0.5 - bw/2,       y: 0.5 - bh/2,            w: bw, h: bh, type: 'full',  label: 'COVER' }
+        ];
+      },
+      // 4: горизонтальная панорама — широкая узкая по центру
+      () => {
+        return [
+          { x: 0.5 - 0.35, y: 0.5 - 0.08, w: 0.70, h: 0.16, type: 'full', label: 'PANORAMA / class 11Б' }
+        ];
+      }
     ];
     return layouts[idx % layouts.length]();
   }
 
-  // === СОСТОЯНИЕ ===
+  // ===== РУКОПИСНЫЕ ЗАМЕТКИ =====
+  // Пул фраз — пишу как настоящий дизайнер
+  const noteTexts = [
+    // RU
+    'попробовать смещение',
+    'тут чб лучше?',
+    'портрет крупнее',
+    'убрать рамку',
+    'добавить воздуха',
+    'другой шрифт?',
+    'сюда подпись',
+    'вертикально?',
+    'нужен контраст',
+    'уменьшить',
+    'дать дышать',
+    'центр сместить →',
+    'красный акцент',
+    'разрядка букв',
+    // EN
+    'try b&w?',
+    'more contrast',
+    'swap pages',
+    'bigger photo',
+    'remove frame',
+    'add caption',
+    'breathe!',
+    'wrong proportion',
+    'red accent here',
+    'feels heavy',
+    'maybe vertical?',
+    'too tight',
+    'shift left',
+    'kerning issue'
+  ];
+
+  // Состояние всех заметок
+  // Каждая: {text, x, y, age, life, type: 'note'|'arrow', strikeAge}
+  let notes = [];
+  let lastNoteSpawn = 0;
+
+  function spawnNote() {
+    const text = noteTexts[Math.floor(Math.random() * noteTexts.length)];
+    // Случайный угол наклона рукописи (-8..+8 градусов)
+    const angle = (Math.random() - 0.5) * 0.28;
+    // Размер шрифта
+    const fontSize = 18 + Math.random() * 10;
+    // Стороны: справа (60% случаев), слева (30%), сверху/снизу (10%)
+    const r = Math.random();
+    let x, y;
+    if (r < 0.55) {
+      // Справа
+      x = W * 0.72 + Math.random() * (W * 0.22);
+      y = H * 0.15 + Math.random() * (H * 0.65);
+    } else if (r < 0.85) {
+      // Слева
+      x = W * 0.05 + Math.random() * (W * 0.18);
+      y = H * 0.15 + Math.random() * (H * 0.65);
+    } else {
+      // Снизу или вверху сбоку
+      x = W * 0.05 + Math.random() * (W * 0.85);
+      y = Math.random() < 0.5 ? (H * 0.05 + Math.random() * (H * 0.08))
+                              : (H * 0.82 + Math.random() * (H * 0.10));
+    }
+    notes.push({
+      text, x, y, angle, fontSize,
+      age: 0,
+      writeDur: 35 + text.length * 2,  // длительность написания (кадры)
+      lifeDur: 240,                     // как долго висит до зачёркивания
+      strikeDur: 30,                    // длительность зачёркивания
+      fadeDur: 50,                      // длительность исчезновения
+      hasArrow: Math.random() < 0.4,   // 40% заметок со стрелкой
+      arrowAngle: Math.random() * Math.PI * 2,
+      arrowLength: 40 + Math.random() * 30
+    });
+  }
+
+  // === СОСТОЯНИЕ СЕТКИ ===
   let layoutIdx = 0;
   let currentLayout = makeLayout(0);
   let layoutAge = 0;
-  const LAYOUT_LIFE = 360;    // ~6 сек при 60fps
+  const LAYOUT_LIFE = 360;
   const FADE_IN = 60;
   const FADE_OUT = 50;
 
@@ -2388,17 +2469,15 @@
     ctx.stroke();
   }
 
-  function drawSpread(spread, progress, zone) {
-    const x = zone.x + spread.x * zone.w;
-    const y = zone.y + spread.y * zone.h;
-    const w = spread.w * zone.w;
-    const h = spread.h * zone.h;
+  function drawSpread(spread, progress) {
+    const x = spread.x * W;
+    const y = spread.y * H;
+    const w = spread.w * W;
+    const h = spread.h * H;
 
-    // Тише чем раньше — это фон/заметки, не главное
-    ctx.strokeStyle = `rgba(255, 255, 255, ${0.22 * progress})`;
+    ctx.strokeStyle = `rgba(255, 255, 255, ${0.30 * Math.min(1, progress)})`;
     ctx.lineWidth = 1;
 
-    // Рамка прорисовывается стороной за стороной
     ctx.beginPath();
     if (progress > 0) {
       const topP = Math.min(1, progress / 0.25);
@@ -2422,13 +2501,11 @@
     }
     ctx.stroke();
 
-    // После полной рамки — содержимое
     if (progress >= 1) {
       const innerProg = Math.min(1, (progress - 1) * 4);
 
       if (spread.type === 'photo' || spread.type === 'full') {
-        // Диагональный крест "тут будет фото"
-        ctx.strokeStyle = `rgba(232, 49, 42, ${0.18 * innerProg})`;
+        ctx.strokeStyle = `rgba(232, 49, 42, ${0.20 * innerProg})`;
         ctx.lineWidth = 0.8;
         ctx.beginPath();
         ctx.moveTo(x, y);
@@ -2439,11 +2516,10 @@
       }
 
       if (spread.type === 'text') {
-        // Линии текста
-        ctx.strokeStyle = `rgba(255, 255, 255, ${0.15 * innerProg})`;
+        ctx.strokeStyle = `rgba(255, 255, 255, ${0.18 * innerProg})`;
         ctx.lineWidth = 1;
-        const lineCount = 6;
-        const padding = 10;
+        const lineCount = 8;
+        const padding = 14;
         for (let i = 0; i < lineCount; i++) {
           const ly = y + padding + i * (h - padding * 2) / lineCount;
           const lineW = (i % 3 === 2 ? 0.55 : 0.85) * (w - padding * 2);
@@ -2454,63 +2530,139 @@
         }
       }
 
-      // Уголки полиграфа
-      const cs = 5;
-      drawCorner(x - cs, y - cs, cs, `rgba(232, 49, 42, ${0.4 * innerProg})`);
-      drawCorner(x + w + cs, y - cs, cs, `rgba(232, 49, 42, ${0.4 * innerProg})`);
-      drawCorner(x - cs, y + h + cs, cs, `rgba(232, 49, 42, ${0.4 * innerProg})`);
-      drawCorner(x + w + cs, y + h + cs, cs, `rgba(232, 49, 42, ${0.4 * innerProg})`);
+      const cs = 6;
+      drawCorner(x - cs, y - cs, cs, `rgba(232, 49, 42, ${0.45 * innerProg})`);
+      drawCorner(x + w + cs, y - cs, cs, `rgba(232, 49, 42, ${0.45 * innerProg})`);
+      drawCorner(x - cs, y + h + cs, cs, `rgba(232, 49, 42, ${0.45 * innerProg})`);
+      drawCorner(x + w + cs, y + h + cs, cs, `rgba(232, 49, 42, ${0.45 * innerProg})`);
 
-      // Технический лейбл — мелкий
-      ctx.fillStyle = `rgba(255, 255, 255, ${0.35 * innerProg})`;
-      ctx.font = '9px "JetBrains Mono", monospace';
-      ctx.fillText(spread.label, x, y + h + 14);
+      ctx.fillStyle = `rgba(255, 255, 255, ${0.40 * innerProg})`;
+      ctx.font = '10px "JetBrains Mono", monospace';
+      ctx.fillText(spread.label, x, y + h + 18);
 
-      // Размер сверху
-      ctx.fillStyle = `rgba(232, 49, 42, ${0.4 * innerProg})`;
-      ctx.fillText(`${Math.round(w)}×${Math.round(h)}px`, x, y - 6);
+      ctx.fillStyle = `rgba(232, 49, 42, ${0.45 * innerProg})`;
+      ctx.fillText(`${Math.round(w)}×${Math.round(h)}px`, x, y - 8);
     }
   }
 
-  function drawCursorGuides(zone) {
+  function drawCursorGuides() {
     if (!mouse.active) return;
-    // Курсор должен быть внутри зоны чтобы видеть направляющие
-    if (mouse.x < zone.x || mouse.x > zone.x + zone.w) return;
-    if (mouse.y < zone.y || mouse.y > zone.y + zone.h) return;
-
-    ctx.strokeStyle = 'rgba(232, 49, 42, 0.25)';
+    ctx.strokeStyle = 'rgba(232, 49, 42, 0.18)';
     ctx.lineWidth = 1;
     ctx.setLineDash([4, 4]);
     ctx.beginPath();
-    // Направляющие только внутри зоны
-    ctx.moveTo(mouse.x, zone.y);
-    ctx.lineTo(mouse.x, zone.y + zone.h);
-    ctx.moveTo(zone.x, mouse.y);
-    ctx.lineTo(zone.x + zone.w, mouse.y);
+    ctx.moveTo(mouse.x, 0);
+    ctx.lineTo(mouse.x, H);
+    ctx.moveTo(0, mouse.y);
+    ctx.lineTo(W, mouse.y);
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Координаты
-    ctx.fillStyle = 'rgba(232, 49, 42, 0.65)';
-    ctx.font = '9px "JetBrains Mono", monospace';
+    ctx.fillStyle = 'rgba(232, 49, 42, 0.6)';
+    ctx.font = '10px "JetBrains Mono", monospace';
     ctx.fillText(`X: ${Math.round(mouse.x)}`, mouse.x + 8, mouse.y - 8);
     ctx.fillText(`Y: ${Math.round(mouse.y)}`, mouse.x + 8, mouse.y + 14);
   }
 
-  function drawZoneFrame(zone) {
-    // Тонкая рамка вокруг рабочей зоны — будто это область макета
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-    ctx.lineWidth = 1;
-    ctx.setLineDash([2, 6]);
-    ctx.strokeRect(zone.x, zone.y, zone.w, zone.h);
-    ctx.setLineDash([]);
-
-    // Подпись зоны "ARTBOARD" сверху-слева
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
-    ctx.font = '9px "JetBrains Mono", monospace';
-    ctx.fillText('ARTBOARD / SPREAD PREVIEW', zone.x, zone.y - 8);
+  function drawBackgroundDots() {
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
+    const margin = 30;
+    const step = 60;
+    for (let x = margin; x < W; x += step) {
+      ctx.fillRect(x, margin, 1, 1);
+      ctx.fillRect(x, H - margin, 1, 1);
+    }
+    for (let y = margin; y < H; y += step) {
+      ctx.fillRect(margin, y, 1, 1);
+      ctx.fillRect(W - margin, y, 1, 1);
+    }
   }
 
+  // === РИСОВАНИЕ ЗАМЕТОК ===
+  function drawNote(note) {
+    const writeP = Math.min(1, note.age / note.writeDur);
+    const lifeStart = note.writeDur;
+    const lifeEnd = lifeStart + note.lifeDur;
+    const strikeEnd = lifeEnd + note.strikeDur;
+    const fadeEnd = strikeEnd + note.fadeDur;
+
+    // Прозрачность зависит от стадии
+    let alpha = 1;
+    if (note.age > strikeEnd) {
+      const fadeP = (note.age - strikeEnd) / note.fadeDur;
+      alpha = Math.max(0, 1 - fadeP);
+    }
+
+    if (alpha <= 0) return false; // удалить
+
+    ctx.save();
+    ctx.translate(note.x, note.y);
+    ctx.rotate(note.angle);
+
+    // Цвет — иногда красный (важная заметка), иногда белый
+    const isRed = note.text.includes('красный') || note.text.includes('red');
+    const color = isRed
+      ? `rgba(232, 49, 42, ${0.85 * alpha})`
+      : `rgba(255, 255, 255, ${0.65 * alpha})`;
+    ctx.fillStyle = color;
+    ctx.font = `500 ${note.fontSize}px "Caveat", cursive`;
+
+    // Рисуем текст ПО БУКВАМ — постепенно (эффект написания)
+    const visibleLen = Math.floor(note.text.length * writeP);
+    const visible = note.text.substring(0, visibleLen);
+    ctx.fillText(visible, 0, 0);
+
+    // Зачёркивание — если перешли в фазу
+    if (note.age > lifeEnd) {
+      const strikeP = Math.min(1, (note.age - lifeEnd) / note.strikeDur);
+      const textWidth = ctx.measureText(note.text).width;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-3, -note.fontSize * 0.3);
+      ctx.lineTo(-3 + textWidth * strikeP, -note.fontSize * 0.3);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+
+    // Стрелка (если есть) — рисуется после написания текста
+    if (note.hasArrow && writeP >= 1 && note.age < strikeEnd) {
+      const arrowAlpha = note.age > lifeEnd
+        ? Math.max(0, 1 - (note.age - lifeEnd) / note.strikeDur)
+        : 1;
+      const ax = note.x + Math.cos(note.arrowAngle) * 30;
+      const ay = note.y + Math.sin(note.arrowAngle) * 30;
+      const ex = ax + Math.cos(note.arrowAngle) * note.arrowLength;
+      const ey = ay + Math.sin(note.arrowAngle) * note.arrowLength;
+
+      ctx.strokeStyle = `rgba(255, 255, 255, ${0.45 * arrowAlpha * alpha})`;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(ax, ay);
+      // Кривая Безье — стрелка не прямая, а слегка изогнутая
+      const midX = (ax + ex) / 2 + (Math.random() - 0.5) * 5;
+      const midY = (ay + ey) / 2 + (Math.random() - 0.5) * 5;
+      ctx.quadraticCurveTo(midX, midY, ex, ey);
+      ctx.stroke();
+
+      // Наконечник стрелки
+      const headSize = 8;
+      const headAng1 = note.arrowAngle + Math.PI - 0.4;
+      const headAng2 = note.arrowAngle + Math.PI + 0.4;
+      ctx.beginPath();
+      ctx.moveTo(ex, ey);
+      ctx.lineTo(ex + Math.cos(headAng1) * headSize, ey + Math.sin(headAng1) * headSize);
+      ctx.moveTo(ex, ey);
+      ctx.lineTo(ex + Math.cos(headAng2) * headSize, ey + Math.sin(headAng2) * headSize);
+      ctx.stroke();
+    }
+
+    note.age++;
+    return note.age < fadeEnd;
+  }
+
+  // === АНИМАЦИЯ ===
   function animate() {
     requestAnimationFrame(animate);
     time += 1;
@@ -2518,8 +2670,7 @@
 
     ctx.clearRect(0, 0, W, H);
 
-    const zone = getZone();
-    drawZoneFrame(zone);
+    drawBackgroundDots();
 
     // Прогресс жизни раскладки
     let layoutAlpha = 1;
@@ -2532,7 +2683,6 @@
 
     ctx.save();
     ctx.globalAlpha = layoutAlpha;
-
     currentLayout.forEach((spread, i) => {
       const localOffset = i * 0.15;
       let p;
@@ -2541,12 +2691,20 @@
       } else {
         p = 2;
       }
-      drawSpread(spread, p, zone);
+      drawSpread(spread, p);
     });
-
     ctx.restore();
 
-    drawCursorGuides(zone);
+    // Рисуем все живые заметки
+    notes = notes.filter(n => drawNote(n));
+
+    // Спавним новые заметки — каждые 60-100 кадров (1-1.7 сек)
+    if (time - lastNoteSpawn > 60 + Math.random() * 60 && notes.length < 5 && !isMobile) {
+      spawnNote();
+      lastNoteSpawn = time;
+    }
+
+    drawCursorGuides();
 
     if (layoutAge >= LAYOUT_LIFE) {
       layoutIdx++;
