@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VOGARDEN — THE END / LYKBOOK</title>
+<title>THE END — Премиальные выпускные альбомы</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&family=Noto+Serif+SC:wght@900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -15,294 +15,741 @@
     --black: #0a0a0a;
     --white: #fff;
     --red: #e8312a;
-    --garden: #c8b88a;
   }
 
   html, body {
     background: var(--black);
     color: var(--white);
     font-family: 'Inter', sans-serif;
-    overflow-x: hidden;
+    overflow: hidden;             /* НЕТ скролла на главной */
+    height: 100vh;
+    width: 100%;
   }
 
-  /* Скрываем системный курсор на десктопе */
+  body.overlay-open {
+    overflow: hidden;
+  }
+
   @media (hover: hover) and (pointer: fine) {
     html, body, * { cursor: none !important; }
   }
 
-  /* 3D-сцена: 500vh — компактно и без пустоты */
-  .scene { position: relative; width: 100%; height: 500vh; }
-
-  /* WebGL canvas — фиксирован */
-  #webgl {
+  /* ============ ЭКРАН ЗАГРУЗКИ ============ */
+  #loader {
     position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100vh;
-    z-index: 1;
+    inset: 0;
+    background: var(--black);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    transition: opacity 0.6s ease, visibility 0.6s ease;
   }
 
-  /* === КАСТОМНЫЙ КУРСОР === */
-  .cursor-dot, .cursor-ring {
-    position: fixed; top: 0; left: 0;
-    pointer-events: none; z-index: 10000;
-    transform: translate(-50%, -50%); will-change: transform;
+  #loader.hidden { opacity: 0; visibility: hidden; }
+
+  #glitch-text {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: var(--white);
+    white-space: nowrap;
+    user-select: none;
+    transition: color 0.2s ease;
   }
+
+  #glitch-text.flash { color: var(--red); }
+
+  /* ============ КАСТОМНЫЙ КУРСОР ============ */
+  .cursor-dot, .cursor-ring {
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 10000;
+    transform: translate(-50%, -50%);
+    will-change: transform;
+  }
+
   .cursor-dot {
-    width: 6px; height: 6px;
-    background: var(--red); border-radius: 50%;
+    width: 6px;
+    height: 6px;
+    background: var(--red);
+    border-radius: 50%;
     transition: opacity 0.2s ease;
   }
+
   .cursor-ring {
-    width: 36px; height: 36px;
-    border: 1.5px solid var(--red); border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    border: 1.5px solid var(--red);
+    border-radius: 50%;
     transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1),
                 height 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-                background 0.3s ease;
+                background 0.3s ease,
+                opacity 0.2s ease;
   }
+
   .cursor-ring.hover {
-    width: 70px; height: 70px;
+    width: 70px;
+    height: 70px;
     background: rgba(232, 49, 42, 0.1);
   }
+
   @media (hover: none) or (pointer: coarse) {
     .cursor-dot, .cursor-ring { display: none; }
   }
 
-  /* === FIXED УГЛОВЫЕ НАДПИСИ === */
+  /* ============ FIXED УГЛОВЫЕ НАДПИСИ ============ */
   .corner {
-    position: fixed; z-index: 50;
+    position: fixed;
+    z-index: 50;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 11px; letter-spacing: 1.5px;
+    font-size: 11px;
+    letter-spacing: 1.5px;
     text-transform: uppercase;
     color: rgba(255,255,255,0.7);
     line-height: 1.5;
     mix-blend-mode: difference;
     pointer-events: none;
   }
+
   .corner-tl { top: 24px; left: 24px; }
   .corner-tr { top: 24px; right: 24px; text-align: right; }
   .corner-bl { bottom: 24px; left: 24px; }
-  .corner-br { bottom: 24px; right: 24px; text-align: right;
-               display: flex; align-items: center; gap: 12px; }
-  .corner .red-dot {
-    display: inline-block; width: 6px; height: 6px;
-    background: var(--red); border-radius: 50%;
-    margin-right: 6px; vertical-align: middle;
-    animation: blink 1.5s ease-in-out infinite;
-  }
-  @keyframes blink { 0%,100% {opacity:1} 50% {opacity:0.3} }
-
-  .scroll-progress-bar {
-    width: 80px; height: 1px;
-    background: rgba(255,255,255,0.2);
-    position: relative;
-  }
-  .scroll-progress-bar::after {
-    content: ''; position: absolute; top: 0; left: 0; height: 100%;
-    width: var(--progress, 0%);
-    background: var(--red);
-    transition: width 0.1s ease;
-  }
-
-  /* === КНОПКА ВОЗВРАТА === */
-  .back-btn {
-    position: fixed;
-    top: 24px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 60;
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 700;
-    font-size: 12px;
-    letter-spacing: 2.5px;
-    text-transform: uppercase;
-    color: var(--white);
-    text-decoration: none;
-    padding: 6px 4px;
-    transition: color 0.3s ease, transform 0.3s ease;
-    mix-blend-mode: difference;
-  }
-  .back-btn::before { content: '['; margin-right: 4px; color: rgba(255,255,255,0.4); }
-  .back-btn::after  { content: ']'; margin-left: 4px;  color: rgba(255,255,255,0.4); }
-  .back-btn:hover { color: var(--red); transform: translateX(-50%) translateY(-2px); }
-
-  /* === ОВЕРЛЕИ ТЕКСТА (ПОВЕРХ 3D) === */
-  .overlay-text {
-    position: fixed;
-    z-index: 10;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.6s ease;
-  }
-  .overlay-text.visible {
-    opacity: 1;
-  }
-
-  /* === ВИДЕО-СЕКЦИЯ (отдельная, после 3D) === */
-  .video-section {
-    position: relative;
-    z-index: 5;
-    background: #050505;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 80px 6vw;
-  }
-
-  .video-section-inner {
-    width: 100%;
-    max-width: 1400px;
-    text-align: center;
-  }
-
-  .video-label {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 3px;
-    color: rgba(255,255,255,0.5);
-    margin-bottom: 32px;
-  }
-
-  .video-frame {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    background: #000;
-    overflow: hidden;
-    box-shadow: 0 30px 80px rgba(232, 49, 42, 0.15);
-  }
-
-  .video-frame iframe {
-    width: 100%;
-    height: 100%;
-    border: 0;
-    display: block;
-  }
-
-  .video-hint {
-    margin-top: 32px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 3px;
-    color: rgba(255,255,255,0.4);
-    animation: bounce 2s ease-in-out infinite;
-  }
-
-  @media (max-width: 768px) {
-    .video-section { padding: 40px 4vw; }
-    .video-label { font-size: 9px; letter-spacing: 2px; }
-  }
-
-  /* Canvas с частицами VOGARDEN */
-  .title-canvas {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100vh;
-    z-index: 9;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.6s ease;
-  }
-  .title-canvas.visible {
-    opacity: 1;
-  }
-  /* Когда листают вниз — частицы тоже плавно тают */
-  .title-canvas.fading {
-    opacity: 0;
-    transition: opacity 1.2s ease;
-  }
-
-  /* Заголовок VOGARDEN — большой по центру в начале */
-  .intro-title {
-    top: 70%; left: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center;
-    width: 90%;
-  }
-  .intro-title .sub {
-    margin-top: 24px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.7);
-  }
-  .intro-title .scroll-hint {
-    margin-top: 48px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 3px;
-    color: rgba(255,255,255,0.5);
-    animation: bounce 2s ease-in-out infinite;
-  }
-  @keyframes bounce {
-    0%,100% { transform: translateY(0); }
-    50% { transform: translateY(8px); }
-  }
-
-  /* Подписи фаз слева снизу */
-  .phase-label {
-    bottom: 80px; left: 24px;
-    max-width: 320px;
-  }
-  .phase-label .num {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 3px;
-    color: var(--red);
-    margin-bottom: 12px;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .phase-label .num::before {
-    content: ''; width: 24px; height: 1px; background: var(--red);
-  }
-  .phase-label h2 {
-    font-family: 'Inter', sans-serif;
-    font-weight: 900;
-    font-size: clamp(28px, 4vw, 56px);
-    line-height: 1.0;
-    letter-spacing: -0.02em;
-    color: var(--white);
-    text-transform: uppercase;
-    margin-bottom: 12px;
-  }
-  .phase-label p {
-    font-family: 'Inter', sans-serif;
-    font-size: 14px;
-    line-height: 1.5;
-    color: rgba(255,255,255,0.7);
-  }
-
-  /* === ФИНАЛЬНАЯ СЕКЦИЯ (после 3D) === */
-  .final {
-    position: relative;
-    z-index: 5;
-    background: var(--black);
-    padding: 120px 6vw 80px;
-  }
-
-  .final-wrap {
-    max-width: 1100px;
-    margin: 0 auto;
-  }
-
-  .final-label {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 3px;
-    color: rgba(255,255,255,0.5);
-    margin-bottom: 32px;
+  .corner-br {
+    bottom: 24px;
+    right: 24px;
+    text-align: right;
     display: flex;
     align-items: center;
     gap: 12px;
   }
-  .final-label::before {
-    content: ''; width: 32px; height: 1px; background: var(--red);
+
+  .corner .red-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--red);
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+    animation: blink 1.5s ease-in-out infinite;
   }
 
-  .final h2 {
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* ============ ГЛАВНЫЙ ЭКРАН ============ */
+  .hero {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    background: #000;
+    opacity: 0;
+    transition: opacity 1s ease 0.3s;
+  }
+
+  .hero.visible { opacity: 1; }
+
+  /* Морфинг-канвас и зерно невидимы пока идёт переход */
+  .hero-morph,
+  .hero-grain {
+    opacity: 0;
+    transition: opacity 1.5s ease;
+  }
+
+  /* После окончания интро — каждый слой получает свою правильную opacity */
+  .hero.intro-done .hero-morph { opacity: 1; }
+  .hero.intro-done .hero-grain { opacity: 0.04; }
+
+  .hero-morph {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: #000;
+  }
+
+  .hero-grain {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    opacity: 0.04;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    animation: grain 0.5s steps(2) infinite;
+  }
+
+  @keyframes grain {
+    0%   { transform: translate(0,0); }
+    25%  { transform: translate(-2%,1%); }
+    50%  { transform: translate(1%,-2%); }
+    75%  { transform: translate(-1%,2%); }
+    100% { transform: translate(2%,-1%); }
+  }
+
+  /* Центральный контент главного экрана */
+  .hero-content {
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    text-align: center;
+    padding: 100px 24px 80px;
+  }
+
+  /* НАВ-СТРОКИ С КНОПКАМИ */
+  .nav-projects, .nav-sections {
+    display: flex;
+    gap: clamp(20px, 3vw, 48px);
+    justify-content: center;
+    flex-wrap: wrap;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: opacity 0.8s ease 1.6s, transform 0.8s ease 1.6s;
+  }
+
+  .nav-sections {
+    transform: translateY(20px);
+    transition: opacity 0.8s ease 1.8s, transform 0.8s ease 1.8s;
+  }
+
+  .hero.visible .nav-projects,
+  .hero.visible .nav-sections {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Кнопка-ссылка в стиле кода: [ ↗ NAME ] */
+  .nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.85);
+    text-decoration: none;
+    background: none;
+    border: none;
+    padding: 6px 4px;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Скобки [ ] вокруг каждой кнопки */
+  .nav-link::before,
+  .nav-link::after {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 13px;
+    color: rgba(255,255,255,0.4);
+    transition: color 0.3s ease, transform 0.3s ease;
+  }
+
+  .nav-link::before {
+    content: '[';
+    margin-right: 4px;
+  }
+
+  .nav-link::after {
+    content: ']';
+    margin-left: 4px;
+  }
+
+  /* Стрелка */
+  .nav-link .arrow {
+    display: inline-block;
+    color: rgba(255,255,255,0.5);
+    font-size: 12px;
+    transition: color 0.3s ease, transform 0.3s ease;
+  }
+
+  /* Hover */
+  .nav-link:hover {
+    color: var(--red);
+    transform: translateY(-2px);
+  }
+
+  .nav-link:hover::before,
+  .nav-link:hover::after {
+    color: var(--red);
+  }
+
+  .nav-link:hover .arrow {
+    color: var(--red);
+    transform: translate(2px, -2px);
+  }
+
+  .nav-sections .nav-link:hover .arrow {
+    transform: translateY(2px);
+  }
+
+  /* Центральный заголовок */
+  .hero-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    width: 100%;
+  }
+
+  /* THE END — белый, статичный, поверх морфинг-фона */
+  .hero-title {
+    position: relative;
+    z-index: 6;
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(80px, 17vw, 240px);
+    letter-spacing: -0.06em;
+    line-height: 0.85;
+    color: #fff;
+    text-transform: uppercase;
+    text-align: center;
+    user-select: none;
+    margin: 0;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 1.2s ease 0.5s, transform 1.2s ease 0.5s;
+  }
+
+  .hero.visible .hero-title {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .hero-subtitle {
+    position: relative;
+    z-index: 6;
+    margin-top: 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+    text-align: center;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.8s ease 1.5s, transform 0.8s ease 1.5s;
+    white-space: nowrap;
+  }
+
+  .hero.visible .hero-subtitle {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ============ OVERLAY (выезжающие секции) ============ */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: var(--black);
+    transform: translateY(100%);
+    transition: transform 0.7s cubic-bezier(0.76, 0, 0.24, 1);
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .overlay.open {
+    transform: translateY(0);
+  }
+
+  /* Кнопка закрытия */
+  .overlay-close {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 200;
+    width: 48px;
+    height: 48px;
+    background: none;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: var(--white);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .overlay-close.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .overlay-close:hover {
+    background: var(--red);
+    border-color: var(--red);
+    transform: rotate(90deg);
+  }
+
+  /* ============ ABOUT ОВЕРЛЕЙ ============ */
+  .about {
+    position: relative;
+    padding: 120px 8vw 120px;
+    background: var(--black);
+  }
+
+  .about-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 48px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .about-label::before {
+    content: '';
+    width: 32px;
+    height: 1px;
+    background: var(--red);
+  }
+
+  .about-title {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(48px, 10vw, 160px);
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    color: var(--white);
+    margin-bottom: 80px;
+  }
+
+  .about-title .red { color: var(--red); }
+
+  .about-manifest {
+    max-width: 800px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: clamp(18px, 2.2vw, 28px);
+    line-height: 1.4;
+    color: rgba(255,255,255,0.85);
+    margin-bottom: 80px;
+  }
+
+  .about-manifest p { margin-bottom: 24px; }
+  .about-manifest strong { font-weight: 900; color: var(--white); }
+
+  /* Цифры */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+    margin: 80px 0;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding: 60px 0;
+  }
+
+  .stat-number {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(60px, 9vw, 140px);
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+    color: var(--white);
+    display: flex;
+    align-items: baseline;
+  }
+
+  .stat-number .suffix {
+    color: var(--red);
+    font-size: 0.6em;
+    margin-left: 4px;
+  }
+
+  .stat-label {
+    margin-top: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.5;
+  }
+
+  /* Цитата */
+  .quote-block {
+    text-align: center;
+    margin: 120px auto;
+    max-width: 1000px;
+  }
+
+  .quote-block .q {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(36px, 7vw, 100px);
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    color: var(--white);
+  }
+
+  .quote-block .q-red { color: var(--red); display: block; }
+
+  /* Бегущая галерея фото */
+  .photo-marquee {
+    margin: 100px -8vw;
+    overflow: hidden;
+  }
+
+  .photo-track {
+    display: flex;
+    gap: 24px;
+    animation: photo-scroll 60s linear infinite;
+    width: max-content;
+  }
+
+  .photo-track:hover { animation-play-state: paused; }
+
+  .photo-track img {
+    height: 380px;
+    width: auto;
+    object-fit: cover;
+    filter: grayscale(20%) brightness(0.9);
+    transition: filter 0.4s ease, transform 0.4s ease;
+  }
+
+  .photo-track img:hover {
+    filter: grayscale(0%) brightness(1);
+    transform: scale(1.02);
+  }
+
+  @keyframes photo-scroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* ============ PROJECTS / СЕТКА ПЛИТОК ============ */
+  .projects {
+    position: relative;
+    padding: 120px 6vw;
+    background: var(--black);
+  }
+
+  .projects-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 64px;
+    flex-wrap: wrap;
+    gap: 24px;
+  }
+
+  .projects-title {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(40px, 7vw, 100px);
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    color: var(--white);
+  }
+
+  .projects-title .red { color: var(--red); }
+
+  .projects-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    max-width: 280px;
+    line-height: 1.6;
+  }
+
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .project-card:first-child {
+    grid-column: span 2;
+  }
+
+  .project-card {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: #111;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .project-card:first-child {
+    aspect-ratio: 8 / 3;
+  }
+
+  .project-cover {
+    position: absolute;
+    inset: 0;
+    transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                filter 0.5s ease;
+  }
+
+  .project-card[data-project="duo"]  .project-cover {
+    background: radial-gradient(circle at 30% 40%, #2a2a2a, #0a0a0a 70%);
+  }
+  .project-card[data-project="red"]  .project-cover {
+    background: radial-gradient(circle at 70% 50%, #3a1614, #0a0a0a 70%);
+  }
+  .project-card[data-project="lime"] .project-cover {
+    background: radial-gradient(circle at 40% 60%, #1a2818, #0a0a0a 70%);
+  }
+  .project-card[data-project="vgrd"] .project-cover {
+    background: radial-gradient(circle at 60% 30%, #1f1f2e, #0a0a0a 70%);
+  }
+  .project-card[data-project="echo"] .project-cover {
+    background: radial-gradient(circle at 50% 50%, #2a1f1a, #0a0a0a 70%);
+  }
+
+  .project-card:hover .project-cover {
+    transform: scale(1.05);
+    filter: brightness(0.5);
+  }
+
+  .project-deco {
+    position: absolute;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: clamp(40px, 10vw, 200px);
+    color: rgba(255,255,255,0.04);
+    letter-spacing: -0.05em;
+    line-height: 1;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  .project-card:nth-child(1) .project-deco { top: 8%; left: 6%; }
+  .project-card:nth-child(2) .project-deco { bottom: 6%; right: 6%; }
+  .project-card:nth-child(3) .project-deco { top: 8%; right: 8%; }
+  .project-card:nth-child(4) .project-deco { bottom: 6%; left: 6%; }
+  .project-card:nth-child(5) .project-deco { top: 8%; left: 8%; }
+
+  .project-info {
+    position: absolute;
+    z-index: 2;
+    bottom: 32px;
+    left: 32px;
+    right: 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px;
+  }
+
+  .project-name {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(36px, 5vw, 72px);
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    line-height: 0.9;
+    color: var(--white);
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                color 0.4s ease;
+  }
+
+  .project-card:hover .project-name {
+    color: var(--red);
+    transform: translateX(-8px);
+  }
+
+  .project-badge {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    z-index: 2;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .project-badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--red);
+    border-radius: 50%;
+  }
+
+  .project-cta {
+    position: absolute;
+    z-index: 2;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) translateY(20px);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--white);
+    opacity: 0;
+    transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+    white-space: nowrap;
+    border: 1px solid var(--white);
+    padding: 14px 28px;
+  }
+
+  .project-card:hover .project-cta {
+    opacity: 1;
+    transform: translate(-50%, -50%) translateY(0);
+  }
+
+  /* ============ CONTACT ОВЕРЛЕЙ ============ */
+  .contact {
+    padding: 120px 6vw;
+    background: var(--black);
+  }
+
+  .contact-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 48px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .contact-label::before {
+    content: '';
+    width: 32px;
+    height: 1px;
+    background: var(--red);
+  }
+
+  .contact-title {
     font-family: 'Inter', sans-serif;
     font-weight: 900;
     font-size: clamp(48px, 9vw, 140px);
@@ -310,148 +757,169 @@
     letter-spacing: -0.03em;
     text-transform: uppercase;
     color: var(--white);
-    margin-bottom: 64px;
+    margin-bottom: 80px;
   }
-  .final h2 .red { color: var(--red); }
 
-  .final-grid {
+  .contact-title .red { color: var(--red); }
+
+  .contact-grid {
     display: grid;
-    grid-template-columns: 1.2fr 1fr;
-    gap: 80px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
     margin-bottom: 100px;
   }
 
-  .final-text p {
-    font-family: 'Inter', sans-serif;
-    font-size: clamp(16px, 1.6vw, 19px);
-    line-height: 1.6;
-    color: rgba(255,255,255,0.85);
-    margin-bottom: 20px;
-  }
-
-  .final-text strong { font-weight: 900; color: var(--white); }
-
-  .final-specs {
-    border: 1px solid rgba(255,255,255,0.1);
+  .contact-card {
+    background: #111;
     padding: 32px;
-  }
-
-  .spec-row {
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.4s ease, transform 0.4s ease;
     display: flex;
+    flex-direction: column;
     justify-content: space-between;
-    padding: 16px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
+    aspect-ratio: 1.4 / 1;
+    border: 1px solid rgba(255,255,255,0.06);
   }
-  .spec-row:last-child { border-bottom: none; }
 
-  .spec-label { color: rgba(255,255,255,0.5); }
-  .spec-value { color: var(--white); font-weight: 700; }
+  .contact-card:hover {
+    background: var(--red);
+    transform: translateY(-4px);
+  }
 
-  .price-block {
-    margin-top: 24px;
-    padding-top: 24px;
-    border-top: 1px solid rgba(255,255,255,0.2);
-  }
-  .price-num {
-    font-family: 'Inter', sans-serif;
-    font-weight: 900;
-    font-size: clamp(40px, 5vw, 64px);
-    color: var(--red);
-    line-height: 0.9;
-    letter-spacing: -0.03em;
-  }
-  .price-label {
+  .contact-card-label {
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
     letter-spacing: 2px;
     color: rgba(255,255,255,0.5);
     text-transform: uppercase;
-    margin-top: 8px;
   }
 
-  /* Включает */
-  .includes {
+  .contact-card:hover .contact-card-label {
+    color: rgba(255,255,255,0.7);
+  }
+
+  .contact-card-value {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(20px, 2.4vw, 32px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--white);
+    margin: 16px 0;
+  }
+
+  .contact-card-cta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--red);
+    transition: color 0.3s ease;
+  }
+
+  .contact-card:hover .contact-card-cta {
+    color: var(--white);
+  }
+
+  /* JOBS блок */
+  .contact-jobs {
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 48px;
+    margin-bottom: 80px;
+    max-width: 900px;
+  }
+
+  .contact-jobs-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--red);
+    margin-bottom: 24px;
+  }
+
+  .contact-jobs-text {
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(18px, 2.2vw, 28px);
+    line-height: 1.4;
+    color: rgba(255,255,255,0.85);
+    margin-bottom: 24px;
+  }
+
+  .contact-jobs-text strong {
+    color: var(--white);
+    font-weight: 900;
+  }
+
+  .contact-jobs-link {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--white);
+    text-decoration: none;
+    border-bottom: 1px solid var(--red);
+    padding-bottom: 4px;
+    transition: color 0.3s ease;
+  }
+
+  .contact-jobs-link:hover { color: var(--red); }
+
+  /* RELATED блок */
+  .contact-related {
     margin-bottom: 80px;
   }
-  .includes h3 {
+
+  .contact-related-label {
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
     letter-spacing: 3px;
     color: rgba(255,255,255,0.5);
     margin-bottom: 24px;
   }
-  .includes ul {
-    list-style: none;
+
+  .contact-related-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-  .includes li {
-    font-family: 'Inter', sans-serif;
-    font-size: 15px;
-    color: rgba(255,255,255,0.85);
-    padding: 16px 20px;
-    border-left: 2px solid var(--red);
-    background: #111;
-  }
-
-  /* CTA */
-  .cta-block {
-    border-top: 1px solid rgba(255,255,255,0.1);
-    padding-top: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 24px;
-  }
-  .cta-text {
-    font-family: 'Inter', sans-serif;
-    font-size: clamp(20px, 2vw, 28px);
-    font-weight: 900;
-    color: var(--white);
-    text-transform: uppercase;
-    line-height: 1.1;
-  }
-  .cta-buttons {
-    display: flex;
+    grid-template-columns: repeat(3, 1fr);
     gap: 16px;
-    flex-wrap: wrap;
-  }
-  .btn {
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 700;
-    font-size: 13px;
-    letter-spacing: 2.5px;
-    text-transform: uppercase;
-    color: var(--white);
-    text-decoration: none;
-    padding: 16px 28px;
-    border: 1px solid var(--white);
-    transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-  }
-  .btn-primary {
-    background: var(--red);
-    border-color: var(--red);
-  }
-  .btn-primary:hover {
-    background: var(--white);
-    color: var(--black);
-    border-color: var(--white);
-  }
-  .btn:hover {
-    background: var(--white);
-    color: var(--black);
   }
 
-  .final-footer {
-    margin-top: 80px;
-    padding-top: 32px;
+  .related-link {
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+    background: #0f0f0f;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.3s ease;
+    border-left: 2px solid transparent;
+  }
+
+  .related-link:hover {
+    background: #1a1a1a;
+    border-left-color: var(--red);
+  }
+
+  .related-name {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: 18px;
+    color: var(--white);
+    margin-bottom: 8px;
+  }
+
+  .related-desc {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+  }
+
+  /* FOOTER */
+  .contact-footer {
     border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 32px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
     letter-spacing: 2px;
@@ -460,26 +928,549 @@
     line-height: 1.8;
   }
 
+  .contact-footer p { margin-bottom: 8px; }
+
+  /* ============ PHOTO GALLERY (MASONRY) ============ */
+  .photo-gallery {
+    padding: 120px 4vw;
+    background: var(--black);
+  }
+
+  .photo-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-left: 4vw;
+  }
+
+  .photo-label::before {
+    content: '';
+    width: 32px;
+    height: 1px;
+    background: var(--red);
+  }
+
+  .photo-title {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(48px, 9vw, 140px);
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    color: var(--white);
+    padding-left: 4vw;
+    margin-bottom: 24px;
+  }
+
+  .photo-title .red { color: var(--red); }
+
+  .photo-sub {
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(14px, 1.6vw, 18px);
+    line-height: 1.5;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 80px;
+    max-width: 500px;
+    padding-left: 4vw;
+  }
+
+  /* Masonry-сетка через CSS columns */
+  .masonry {
+    column-count: 4;
+    column-gap: 16px;
+  }
+
+  .masonry-item {
+    break-inside: avoid;
+    margin-bottom: 16px;
+    overflow: hidden;
+    position: relative;
+    background: #111;
+  }
+
+  .masonry-item img {
+    width: 100%;
+    height: auto;
+    display: block;
+    transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                filter 0.5s ease;
+    filter: grayscale(15%) brightness(0.92);
+  }
+
+  .masonry-item:hover img {
+    transform: scale(1.04);
+    filter: grayscale(0%) brightness(1.05);
+  }
+
+  .masonry-item::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 60%, rgba(232,49,42,0.15));
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+  }
+
+  .masonry-item:hover::after {
+    opacity: 1;
+  }
+
+  /* Счётчик внизу галереи */
+  .photo-counter {
+    margin-top: 80px;
+    padding: 60px 4vw;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    align-items: baseline;
+    gap: 24px;
+  }
+
+  .photo-counter-num {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(60px, 10vw, 140px);
+    color: var(--red);
+    letter-spacing: -0.04em;
+    line-height: 0.9;
+  }
+
+  .photo-counter-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+  }
+
+  /* ============ REELS ОВЕРЛЕЙ ============ */
+  .reels {
+    padding: 120px 6vw;
+    background: var(--black);
+  }
+
+  .reels-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .reels-label::before {
+    content: '';
+    width: 32px;
+    height: 1px;
+    background: var(--red);
+  }
+
+  .reels-title {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(48px, 9vw, 140px);
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    color: var(--white);
+    margin-bottom: 32px;
+  }
+
+  .reels-title .red { color: var(--red); }
+
+  .reels-sub {
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(16px, 1.8vw, 22px);
+    line-height: 1.5;
+    color: rgba(255,255,255,0.75);
+    margin-bottom: 80px;
+    max-width: 700px;
+  }
+
+  .reels-sub strong {
+    color: var(--white);
+    font-weight: 900;
+  }
+
+  /* Сетка вертикальных видео */
+  .reels-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 80px;
+  }
+
+  .reel-card {
+    position: relative;
+    cursor: none;
+    overflow: hidden;
+    background: #111;
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .reel-card:hover {
+    transform: translateY(-8px);
+  }
+
+  /* Frame под вертикальное видео 9:16 */
+  .reel-frame {
+    position: relative;
+    aspect-ratio: 9 / 16;
+    overflow: hidden;
+    background: #0a0a0a;
+  }
+
+  .reel-frame iframe {
+    position: absolute;
+    /* Растягиваем iframe с запасом, чтобы скрыть UI Vimeo */
+    top: -5%;
+    left: -5%;
+    width: 110%;
+    height: 110%;
+    border: 0;
+    pointer-events: none;
+  }
+
+  /* Затемнение поверх видео для читаемости текста */
+  .reel-frame::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg,
+      rgba(0,0,0,0.0) 50%,
+      rgba(0,0,0,0.7) 100%);
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+
+  .reel-card:hover .reel-frame::after {
+    opacity: 0.5;
+  }
+
+  /* Метаданные снизу карточки */
+  .reel-meta {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .reel-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.7);
+  }
+
+  .reel-action {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--white);
+    background: var(--red);
+    padding: 6px 12px;
+    transform: translateX(8px);
+    opacity: 0;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.4s ease;
+  }
+
+  .reel-card:hover .reel-action {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  /* Footer секции */
+  .reels-footer {
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 24px;
+  }
+
+  .reels-footer p {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+  }
+
+  .reels-link {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--white);
+    text-decoration: none;
+    border-bottom: 1px solid var(--red);
+    padding-bottom: 4px;
+    transition: color 0.3s ease, transform 0.3s ease;
+  }
+
+  .reels-link:hover {
+    color: var(--red);
+    transform: translateX(4px);
+  }
+
+  /* Fullscreen видео плеер */
+  .reel-player {
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    background: rgba(0,0,0,0.95);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .reel-player.active {
+    display: flex;
+  }
+
+  .reel-player-close {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 310;
+    width: 48px;
+    height: 48px;
+    background: none;
+    border: 1px solid rgba(255,255,255,0.3);
+    color: var(--white);
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s ease, transform 0.3s ease;
+  }
+
+  .reel-player-close:hover {
+    background: var(--red);
+    border-color: var(--red);
+    transform: rotate(90deg);
+  }
+
+  .reel-player-frame {
+    width: min(420px, 90vw);
+    aspect-ratio: 9 / 16;
+    max-height: 90vh;
+    transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .reel-player-frame.switching {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  .reel-player-frame iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  /* Кнопки переключения */
+  .reel-player-nav {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 310;
+    width: 56px;
+    height: 56px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 32px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .reel-player-prev { left: 24px; }
+  .reel-player-next { right: 24px; }
+
+  .reel-player-nav:hover {
+    background: var(--red);
+    border-color: var(--red);
+    transform: translateY(-50%) scale(1.08);
+  }
+
+  /* Счётчик внизу */
+  .reel-player-counter {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 310;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 4px;
+    color: rgba(255,255,255,0.7);
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 10px 18px;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  /* Адаптив для плеера на мобильных */
+  @media (max-width: 600px) {
+    .reel-player-nav {
+      width: 44px;
+      height: 44px;
+      font-size: 24px;
+    }
+    .reel-player-prev { left: 12px; }
+    .reel-player-next { right: 12px; }
+    .reel-player-counter {
+      font-size: 11px;
+      letter-spacing: 3px;
+      padding: 8px 14px;
+      bottom: 20px;
+    }
+  }
+
+  /* ============ COMING SOON ОВЕРЛЕИ ============ */
+  .coming-soon {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 24px;
+    text-align: center;
+  }
+
+  .coming-soon-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 32px;
+  }
+
+  .coming-soon-title {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(60px, 14vw, 200px);
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+    text-transform: uppercase;
+    color: var(--white);
+  }
+
+  .coming-soon-title .red { color: var(--red); }
+
+  .coming-soon-text {
+    margin-top: 48px;
+    font-family: 'Inter', sans-serif;
+    font-size: 18px;
+    color: rgba(255,255,255,0.6);
+    max-width: 500px;
+    line-height: 1.6;
+  }
+
+  /* Появление при скролле внутри оверлеев */
+  .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Адаптив */
   @media (max-width: 768px) {
     .corner { font-size: 9px; letter-spacing: 1px; }
     .corner-tl, .corner-tr { top: 16px; }
     .corner-tl, .corner-bl { left: 16px; }
     .corner-tr, .corner-br { right: 16px; }
     .corner-bl, .corner-br { bottom: 16px; }
-    .scroll-progress-bar { width: 50px; }
 
-    .phase-label { left: 16px; bottom: 60px; max-width: 70%; }
-    .phase-label h2 { font-size: 28px; }
-    .phase-label p { font-size: 12px; }
+    .nav-link { font-size: 11px; letter-spacing: 1.5px; padding: 4px 2px; }
+    .nav-link::before, .nav-link::after { font-size: 11px; }
+    .nav-projects, .nav-sections { gap: 14px; }
 
-    .final { padding: 80px 6vw; }
-    .final-grid { grid-template-columns: 1fr; gap: 40px; }
-    .includes ul { grid-template-columns: 1fr; }
-    .cta-block { flex-direction: column; align-items: flex-start; }
+    .hero-content { padding: 80px 16px 60px; }
+    .hero-subtitle { font-size: 10px; letter-spacing: 2px; }
+
+    .about { padding: 80px 6vw; }
+    .stats { grid-template-columns: 1fr; gap: 60px; }
+    .photo-track img { height: 240px; }
+    .photo-marquee { margin-left: -6vw; margin-right: -6vw; }
+
+    .projects-grid {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto;
+    }
+    .project-card,
+    .project-card:first-child {
+      grid-column: span 1;
+      aspect-ratio: 4 / 3;
+    }
+    .project-name { font-size: 48px; }
+
+    .contact { padding: 80px 6vw; }
+    .contact-grid { grid-template-columns: 1fr; }
+    .contact-related-grid { grid-template-columns: 1fr; }
+    .contact-jobs { padding: 32px; }
+
+    .photo-gallery { padding: 80px 4vw; }
+    .masonry { column-count: 2; column-gap: 8px; }
+    .masonry-item { margin-bottom: 8px; }
+    .photo-counter { flex-direction: column; gap: 12px; padding: 40px 4vw; }
+
+    .reels { padding: 80px 6vw; }
+    .reels-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .reels-footer { flex-direction: column; align-items: flex-start; }
+  }
+
+  /* Планшеты */
+  @media (max-width: 1100px) and (min-width: 769px) {
+    .masonry { column-count: 3; }
+    .reels-grid { grid-template-columns: repeat(2, 1fr); }
   }
 </style>
 </head>
 <body>
+
+<!-- ============ ЭКРАН ЗАГРУЗКИ ============ -->
+<div id="loader">
+  <div id="glitch-text">·</div>
+</div>
 
 <!-- ============ КАСТОМНЫЙ КУРСОР ============ -->
 <div class="cursor-dot"></div>
@@ -490,398 +1481,590 @@
   THE END<br>
   EST. 2022
 </div>
+
 <div class="corner corner-tr">
   <span class="red-dot"></span>RECORDING<br>
   BY LYKBOOK
 </div>
+
 <div class="corner corner-bl">
-  <span id="phase-name">INTRO</span><br>
-  VOGARDEN / VGRD
+  <span id="section-name">INTRO</span><br>
+  PREMIUM LINE
 </div>
+
 <div class="corner corner-br">
-  <span id="scroll-percent">00</span>%
-  <div class="scroll-progress-bar" id="scroll-bar"></div>
+  BY LYKBOOK
 </div>
 
-<!-- Назад на главную -->
-<a href="/" class="back-btn">↶ THE END</a>
+<!-- ============ ГЛАВНЫЙ ЭКРАН ============ -->
+<section class="hero" id="hero">
 
-<!-- ============ 3D СЦЕНА ============ -->
-<div class="scene" id="scene">
-  <canvas id="webgl"></canvas>
-</div>
+  <!-- 3D canvas для морфинг-частиц (фон) -->
+  <canvas id="morph-canvas" class="hero-morph"></canvas>
 
-<!-- ============ ТЕКСТОВЫЕ ОВЕРЛЕИ ============ -->
+  <div class="hero-grain"></div>
 
-<!-- Открывающий заголовок: VOGARDEN из частиц + сабтайтл -->
-<canvas id="title-canvas" class="title-canvas"></canvas>
-<div class="overlay-text intro-title" id="intro-title">
-  <div class="sub">— РАЙСКИЙ САД, СОЗДАННЫЙ СВОИМИ РУКАМИ —</div>
-  <div class="scroll-hint">↓ SCROLL</div>
-</div>
+  <!-- ВЕСЬ КОНТЕНТ ГЛАВНОЙ -->
+  <div class="hero-content">
 
-<!-- Подпись для сада -->
-<div class="overlay-text phase-label" id="label-garden">
-  <div class="num">PHASE / 01</div>
-  <h2>САД</h2>
-  <p>Альбом-номер. Авторская концепция. Нежность, энергия, свобода.</p>
-</div>
+    <!-- ВЕРХ: ПРОЕКТЫ (внешние ссылки) -->
+    <nav class="nav-projects">
+      <a class="nav-link" href="https://theend.school/lime"><span class="arrow">↗</span> LIME</a>
+      <a class="nav-link" href="https://theend.school/indevelopment"><span class="arrow">↗</span> ECHO</a>
+      <a class="nav-link" href="https://theend.school/red"><span class="arrow">↗</span> RED</a>
+      <a class="nav-link" href="https://theend.school/ember"><span class="arrow">↗</span> DUO</a>
+      <a class="nav-link" href="https://theend.school/indevelopment"><span class="arrow">↗</span> VGRD</a>
+    </nav>
 
-<!-- Подпись для перехода (плавная смена цвета сад→красная) -->
-<div class="overlay-text phase-label" id="label-wall">
-  <div class="num">PHASE / 02</div>
-  <h2>ПЕРЕХОД</h2>
-  <p>Из тёплого сада — в красную комнату.<br>То же издание, новый язык.</p>
-</div>
-
-<!-- Подпись для китайской комнаты -->
-<div class="overlay-text phase-label" id="label-china">
-  <div class="num">PHASE / 03</div>
-  <h2>红 / RED EDITION</h2>
-  <p>Альбом, переосмысленный в эстетике востока. Иероглифы, лаконизм, контраст.</p>
-</div>
-
-<!-- ============ ВИДЕО-СЕКЦИЯ (отдельная, не в 3D) ============ -->
-<section class="video-section">
-  <div class="video-section-inner">
-    <div class="video-label">[ ТИЗЕР АЛЬБОМА / VOGARDEN ]</div>
-    <div class="video-frame">
-      <iframe
-        src="https://player.vimeo.com/video/1187985473?background=1&autoplay=1&loop=1&muted=1&autopause=0&controls=0&badge=0"
-        frameborder="0"
-        allow="autoplay; fullscreen"
-        title="VOGARDEN teaser"></iframe>
+    <!-- ЦЕНТР: ЗАГОЛОВОК -->
+    <div class="hero-center">
+      <h1 class="hero-title" id="hero-title">THE END</h1>
+      <div class="hero-subtitle">— ПРЕМИАЛЬНЫЕ ВЫПУСКНЫЕ АЛЬБОМЫ —</div>
     </div>
-    <div class="video-hint">↓ ПРОДОЛЖИТЬ</div>
+
+    <!-- НИЗ: РАЗДЕЛЫ (открывают оверлеи) -->
+    <nav class="nav-sections">
+      <button class="nav-link" data-overlay="works"><span class="arrow">↓</span> WORKS</button>
+      <button class="nav-link" data-overlay="reels"><span class="arrow">↓</span> REELS</button>
+      <button class="nav-link" data-overlay="about"><span class="arrow">↓</span> ABOUT</button>
+      <button class="nav-link" data-overlay="photo"><span class="arrow">↓</span> PHOTO</button>
+      <button class="nav-link" data-overlay="contact"><span class="arrow">↓</span> CONTACT</button>
+    </nav>
+
   </div>
 </section>
 
-<!-- ============ ФИНАЛЬНАЯ СЕКЦИЯ ============ -->
-<section class="final">
-  <div class="final-wrap">
+<!-- Кнопка закрытия оверлея -->
+<button class="overlay-close" id="overlay-close" aria-label="Закрыть">×</button>
 
-    <div class="final-label">[ VGRD / СПЕЦИФИКАЦИЯ ]</div>
+<!-- ============ ОВЕРЛЕЙ: ABOUT ============ -->
+<div class="overlay" id="overlay-about" data-name="ABOUT">
+  <section class="about">
 
-    <h2>
-      VOGARDEN — КОГДА ВЫПУСКНОЙ<br>
-      СТАНОВИТСЯ <span class="red">КОЛЛЕКЦИОННЫМ ИЗДАНИЕМ.</span>
+    <div class="about-label reveal">[ ABOUT / 03 ]</div>
+
+    <h2 class="about-title glitch-title reveal" id="about-title">
+      КОГДА ХОЧЕТСЯ<br>
+      <span class="red">БОЛЬШЕГО.</span>
     </h2>
 
-    <div class="final-grid">
-      <div class="final-text">
-        <p>
-          <strong>VOGARDEN</strong> — выпускной альбом в формате модного номера.
-          Ребята принесли нам концепцию <strong>«райского сада»</strong> — образ,
-          в котором сочетается нежность, энергия и свобода.
-        </p>
-        <p>
-          Мы оформили её как <strong>полноценный редакционный проект:</strong>
-          мягкий переплёт, съёмка, авторская вёрстка, развороты — как из журнала.
-        </p>
-        <p>
-          Здесь каждый — герой, каждая страница — кадр из мечты.
-        </p>
+    <div class="about-manifest reveal">
+      <p>
+        Мы делаем альбомы, которые <strong>не хочется убирать на полку.</strong>
+        Которые листаешь сам, показываешь гостям, достаёшь через десять лет
+        и думаешь — вот это да.
+      </p>
+      <p>
+        Нас называют по-разному. Одни говорят — лучшая студия в Москве.
+        Другие — слишком дорого и непонятно зачем так заморачиваться.
+        Третьи молча копируют наши решения — и это, наверное,
+        <strong>самый честный комплимент.</strong>
+      </p>
+      <p>
+        Обе реакции нас устраивают. Мы давно перестали делать альбомы для всех.
+      </p>
+    </div>
+
+    <div class="stats reveal">
+      <div class="stat">
+        <div class="stat-number" data-target="604">0</div>
+        <div class="stat-label">классов в год<br>с нами работают</div>
       </div>
-
-      <div class="final-specs">
-        <div class="spec-row">
-          <span class="spec-label">Размер</span>
-          <span class="spec-value">21×30 см</span>
+      <div class="stat">
+        <div class="stat-number">
+          <span data-target="50">0</span><span class="suffix">+</span>
         </div>
-        <div class="spec-row">
-          <span class="spec-label">Кол-во страниц</span>
-          <span class="spec-value">до 100</span>
-        </div>
-        <div class="spec-row">
-          <span class="spec-label">Переплёт</span>
-          <span class="spec-value">мягкий</span>
-        </div>
-        <div class="spec-row">
-          <span class="spec-label">Тираж</span>
-          <span class="spec-value">от 30 шт.</span>
-        </div>
-
-        <div class="price-block">
-          <div class="price-num">10 000 ₽</div>
-          <div class="price-label">от / экземпляр</div>
-        </div>
+        <div class="stat-label">проектов<br>под линейкой THE END</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number" data-target="15">0</div>
+        <div class="stat-label">лет<br>в индустрии</div>
       </div>
     </div>
 
-    <div class="includes">
-      <h3>[ АЛЬБОМ ВКЛЮЧАЕТ ]</h3>
-      <ul>
-        <li>Разворот классного руководителя и его пожелание выпускникам</li>
-        <li>Разворот с учителями</li>
-        <li>Личный разворот выпускника с цитатой и групповым фото</li>
-        <li>Классическая общая фотография</li>
-        <li>Персональная обложка</li>
-        <li>6 разворотов с групповыми снимками</li>
-      </ul>
+    <div class="quote-block reveal">
+      <div class="q">
+        Каждый проект начинается с нуля.
+        Иногда мы переделываем разворот три раза —
+        не потому что клиент просит, а потому что
+        <span class="q-red">сами не можем остановиться.</span>
+      </div>
     </div>
 
-    <div class="cta-block">
-      <div class="cta-text">
-        Готовы<br>
-        сделать <span style="color:var(--red)">так же?</span>
+    <div class="photo-marquee">
+      <div class="photo-track">
+        <img src="https://i.ibb.co/6cFzHCdZ/1-4.jpg" alt="">
+        <img src="https://i.ibb.co/3mWH90nD/1-5.jpg" alt="">
+        <img src="https://i.ibb.co/fzBgv3Bh/1-12.jpg" alt="">
+        <img src="https://i.ibb.co/XfPBVJ0Z/1-25.jpg" alt="">
+        <img src="https://i.ibb.co/BDNNxGZ/1-29.jpg" alt="">
+        <img src="https://i.ibb.co/bg9FM3BB/1-42.jpg" alt="">
+        <img src="https://i.ibb.co/YTXTW2t1/1-37.jpg" alt="">
+        <img src="https://i.ibb.co/pjCmNv86/1-35.jpg" alt="">
+        <img src="https://i.ibb.co/TBLpBHsf/1-32.jpg" alt="">
+        <img src="https://i.ibb.co/6cFzHCdZ/1-4.jpg" alt="">
+        <img src="https://i.ibb.co/3mWH90nD/1-5.jpg" alt="">
+        <img src="https://i.ibb.co/fzBgv3Bh/1-12.jpg" alt="">
+        <img src="https://i.ibb.co/XfPBVJ0Z/1-25.jpg" alt="">
+        <img src="https://i.ibb.co/BDNNxGZ/1-29.jpg" alt="">
+        <img src="https://i.ibb.co/bg9FM3BB/1-42.jpg" alt="">
+        <img src="https://i.ibb.co/YTXTW2t1/1-37.jpg" alt="">
+        <img src="https://i.ibb.co/pjCmNv86/1-35.jpg" alt="">
+        <img src="https://i.ibb.co/TBLpBHsf/1-32.jpg" alt="">
       </div>
-      <div class="cta-buttons">
-        <a href="https://wa.me/79581002777" class="btn btn-primary" target="_blank">
-          ЗАБРОНИРОВАТЬ →
+    </div>
+
+    <div class="quote-block reveal">
+      <div class="q">
+        Это болезнь.<br>
+        <span class="q-red">Но красивая.</span>
+      </div>
+    </div>
+
+    <div class="about-manifest reveal">
+      <p>
+        В команде нет случайных людей. Каждый прошёл через проекты, после которых
+        понимаешь — либо ты горишь этим, либо нет. <strong>Середины не бывает.</strong>
+      </p>
+    </div>
+
+  </section>
+</div>
+
+<!-- ============ COMING SOON ОВЕРЛЕИ ============ -->
+<!-- ============ ОВЕРЛЕЙ: WORKS (5 ПЛИТОК ПРОЕКТОВ) ============ -->
+<div class="overlay" id="overlay-works" data-name="WORKS">
+  <section class="projects">
+
+    <div class="projects-header">
+      <h2 class="projects-title glitch-title reveal">
+        ПЯТЬ <span class="red">ЛИНЕЕК.</span><br>
+        ПЯТЬ ИСТОРИЙ.
+      </h2>
+      <div class="projects-sub reveal">
+        [ WORKS / 01 ]<br><br>
+        Под зонтиком THE END работают пять самостоятельных линеек.
+        У каждой — свой характер.
+      </div>
+    </div>
+
+    <div class="projects-grid">
+
+      <a class="project-card reveal" data-project="duo" href="https://theend.school/ember">
+        <div class="project-cover"></div>
+        <div class="project-deco">01</div>
+        <div class="project-badge">DUO / 01</div>
+        <div class="project-info">
+          <div class="project-name">DUO</div>
+        </div>
+        <div class="project-cta">ENTER →</div>
+      </a>
+
+      <a class="project-card reveal" data-project="red" href="https://theend.school/red">
+        <div class="project-cover"></div>
+        <div class="project-deco">02</div>
+        <div class="project-badge">RED / 02</div>
+        <div class="project-info">
+          <div class="project-name">RED</div>
+        </div>
+        <div class="project-cta">ENTER →</div>
+      </a>
+
+      <a class="project-card reveal" data-project="lime" href="https://theend.school/lime">
+        <div class="project-cover"></div>
+        <div class="project-deco">03</div>
+        <div class="project-badge">LIME / 03</div>
+        <div class="project-info">
+          <div class="project-name">LIME</div>
+        </div>
+        <div class="project-cta">ENTER →</div>
+      </a>
+
+      <a class="project-card reveal" data-project="vgrd" href="https://theend.school/indevelopment">
+        <div class="project-cover"></div>
+        <div class="project-deco">04</div>
+        <div class="project-badge">VGRD / 04</div>
+        <div class="project-info">
+          <div class="project-name">VGRD</div>
+        </div>
+        <div class="project-cta">ENTER →</div>
+      </a>
+
+      <a class="project-card reveal" data-project="echo" href="https://theend.school/indevelopment">
+        <div class="project-cover"></div>
+        <div class="project-deco">05</div>
+        <div class="project-badge">ECHO / 05</div>
+        <div class="project-info">
+          <div class="project-name">ECHO</div>
+        </div>
+        <div class="project-cta">ENTER →</div>
+      </a>
+
+    </div>
+
+  </section>
+</div>
+
+<!-- ============ ОВЕРЛЕЙ: REELS ============ -->
+<div class="overlay" id="overlay-reels" data-name="REELS">
+  <section class="reels">
+
+    <div class="reels-label reveal">[ REELS / 02 ]</div>
+
+    <h2 class="reels-title glitch-title reveal">
+      ДВИГАЕТСЯ?<br>
+      <span class="red">ЗНАЧИТ ЖИВОЕ.</span>
+    </h2>
+
+    <div class="reels-sub reveal">
+      Альбом — это статика. <strong>Рилсы — это пульс студии.</strong>
+      Бэкстейдж со съёмок, тизеры готовых проектов и моменты,
+      которые в книгу не помещаются.
+    </div>
+
+    <div class="reels-grid">
+
+      <div class="reel-card reveal" data-vimeo="1187386215">
+        <div class="reel-frame">
+          <iframe
+            src="https://player.vimeo.com/video/1187386215?background=1&autoplay=1&loop=1&muted=1&autopause=0&controls=0&badge=0"
+            frameborder="0"
+            allow="autoplay; fullscreen"
+            title="Reel 01"></iframe>
+        </div>
+        <div class="reel-meta">
+          <span class="reel-num">01</span>
+          <span class="reel-action">PLAY →</span>
+        </div>
+      </div>
+
+      <div class="reel-card reveal" data-vimeo="1187386717">
+        <div class="reel-frame">
+          <iframe
+            src="https://player.vimeo.com/video/1187386717?background=1&autoplay=1&loop=1&muted=1&autopause=0&controls=0&badge=0"
+            frameborder="0"
+            allow="autoplay; fullscreen"
+            title="Reel 02"></iframe>
+        </div>
+        <div class="reel-meta">
+          <span class="reel-num">02</span>
+          <span class="reel-action">PLAY →</span>
+        </div>
+      </div>
+
+      <div class="reel-card reveal" data-vimeo="1187387046">
+        <div class="reel-frame">
+          <iframe
+            src="https://player.vimeo.com/video/1187387046?background=1&autoplay=1&loop=1&muted=1&autopause=0&controls=0&badge=0"
+            frameborder="0"
+            allow="autoplay; fullscreen"
+            title="Reel 03"></iframe>
+        </div>
+        <div class="reel-meta">
+          <span class="reel-num">03</span>
+          <span class="reel-action">PLAY →</span>
+        </div>
+      </div>
+
+      <div class="reel-card reveal" data-vimeo="1187389446">
+        <div class="reel-frame">
+          <iframe
+            src="https://player.vimeo.com/video/1187389446?background=1&autoplay=1&loop=1&muted=1&autopause=0&controls=0&badge=0"
+            frameborder="0"
+            allow="autoplay; fullscreen"
+            title="Reel 04"></iframe>
+        </div>
+        <div class="reel-meta">
+          <span class="reel-num">04</span>
+          <span class="reel-action">PLAY →</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="reels-footer reveal">
+      <p>Хочешь видеть больше? Свежие рилсы выходят каждую неделю.</p>
+      <a href="https://t.me/lykbook" target="_blank" class="reels-link">
+        @LYKBOOK В TELEGRAM →
+      </a>
+    </div>
+
+  </section>
+</div>
+
+<!-- ============ FULLSCREEN ВИДЕО ПЛЕЕР ============ -->
+<div class="reel-player" id="reel-player">
+  <button class="reel-player-close" id="reel-player-close" aria-label="Закрыть">×</button>
+  <button class="reel-player-nav reel-player-prev" id="reel-player-prev" aria-label="Предыдущее">‹</button>
+  <button class="reel-player-nav reel-player-next" id="reel-player-next" aria-label="Следующее">›</button>
+  <div class="reel-player-counter" id="reel-player-counter">01 / 04</div>
+  <div class="reel-player-frame" id="reel-player-frame"></div>
+</div>
+
+<!-- ============ ОВЕРЛЕЙ: PHOTO ============ -->
+<div class="overlay" id="overlay-photo" data-name="PHOTO">
+  <section class="photo-gallery">
+
+    <div class="photo-label reveal">[ PHOTO / 04 ]</div>
+
+    <h2 class="photo-title glitch-title reveal">
+      АРХИВ <span class="red">КАДРОВ.</span>
+    </h2>
+
+    <div class="photo-sub reveal">
+      Фрагменты из съёмок, бэкстейдж, портреты,
+      детали готовых проектов.
+    </div>
+
+    <div class="masonry">
+      <div class="masonry-item"><img src="https://i.ibb.co/67kTJdV7/IMAGE-2026-04-23-19-16-35.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/XZdBPzJw/2026-04-15-17-29-49.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/r2BPT0tW/2026-04-21-20-42-40.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/HD07gPMS/2026-04-21-20-43-07.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/TxrMCFsf/2026-04-21-20-43-17.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/4nckckdd/2026-04-21-20-55-32.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/wNh26BSx/2026-04-21-20-43-41.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/LXS3Cp1n/IMAGE-2026-03-24-19-17-28.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/KjWTDzrX/IMAGE-2026-03-24-19-16-54.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/tT5fj8ss/IMAGE-2026-03-24-19-17-02.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/p6CxSXNM/2026-04-28-17-25-44.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/B5ngqR15/2026-04-28-17-26-01.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/wZPFCDtn/2026-04-28-17-26-07.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/1fsWyPDF/2026-04-28-17-26-19.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/k2tXGgNn/2026-04-28-17-26-22.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/rRm7z0kR/2026-04-28-17-26-36.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/zVQfypch/2026-04-28-17-26-46.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/HLQBWpnP/2026-04-28-17-27-07.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/V0LNyqs5/2026-04-28-17-27-15.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/SDTJ2ckt/2026-04-28-17-27-22.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/gb91jcsy/2026-04-28-17-28-12.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/MD6WDLmJ/2026-04-28-17-28-21.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/Vcb9z63W/2026-04-28-17-28-25.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/DDL5Xy9B/2026-04-28-17-28-28.jpg" alt="" loading="lazy"></div>
+    </div>
+
+    <div class="photo-counter reveal">
+      <span class="photo-counter-num">24</span>
+      <span class="photo-counter-label">кадра в архиве</span>
+    </div>
+
+  </section>
+</div>
+
+<div class="overlay" id="overlay-contact" data-name="CONTACT">
+  <section class="contact">
+
+    <div class="contact-label reveal">[ CONTACT / 05 ]</div>
+
+    <h2 class="contact-title glitch-title reveal">
+      ПОГОВОРИМ?<br>
+      <span class="red">МЫ ЗДЕСЬ.</span>
+    </h2>
+
+    <div class="contact-grid">
+
+      <a href="https://wa.me/79581002777" class="contact-card reveal" target="_blank">
+        <div class="contact-card-label">WHATSAPP</div>
+        <div class="contact-card-value">+7 (958) 100-27-77</div>
+        <div class="contact-card-cta">написать →</div>
+      </a>
+
+      <a href="https://t.me/msklykbook_bot" class="contact-card reveal" target="_blank">
+        <div class="contact-card-label">TELEGRAM</div>
+        <div class="contact-card-value">@msklykbook_bot</div>
+        <div class="contact-card-cta">записаться →</div>
+      </a>
+
+      <a href="mailto:gomel.lookbook@gmail.com" class="contact-card reveal">
+        <div class="contact-card-label">EMAIL</div>
+        <div class="contact-card-value">gomel.lookbook<br>@gmail.com</div>
+        <div class="contact-card-cta">написать →</div>
+      </a>
+
+      <a href="https://t.me/lykbook" class="contact-card reveal" target="_blank">
+        <div class="contact-card-label">TELEGRAM КАНАЛ</div>
+        <div class="contact-card-value">t.me/lykbook</div>
+        <div class="contact-card-cta">подписаться →</div>
+      </a>
+
+      <a href="https://vk.com/lykbook" class="contact-card reveal" target="_blank">
+        <div class="contact-card-label">ВКОНТАКТЕ</div>
+        <div class="contact-card-value">vk.com/lykbook</div>
+        <div class="contact-card-cta">открыть →</div>
+      </a>
+
+      <a href="tel:+79581002777" class="contact-card reveal">
+        <div class="contact-card-label">ТЕЛЕФОН</div>
+        <div class="contact-card-value">+7 (958)<br>100-27-77</div>
+        <div class="contact-card-cta">позвонить →</div>
+      </a>
+
+    </div>
+
+    <div class="contact-jobs reveal">
+      <div class="contact-jobs-label">[ JOBS ]</div>
+      <p class="contact-jobs-text">
+        Мы всегда ищем молодые таланты. Если ты <strong>фотограф, дизайнер,
+        ретушёр</strong>, умеешь работать с рекламой или контентом —
+        напиши нам в личку.
+      </p>
+      <a href="https://t.me/rubanik_andrey" class="contact-jobs-link" target="_blank">
+        @rubanik_andrey →
+      </a>
+    </div>
+
+    <div class="contact-related reveal">
+      <div class="contact-related-label">[ RELATED ]</div>
+      <div class="contact-related-grid">
+        <a href="https://lykbook.com" target="_blank" class="related-link">
+          <span class="related-name">LYKBOOK.COM</span>
+          <span class="related-desc">основной сайт</span>
         </a>
-        <a href="/" class="btn">
-          ↶ К ПРОЕКТАМ
+        <a href="https://kidsbook.ru" target="_blank" class="related-link">
+          <span class="related-name">KIDSBOOK.RU</span>
+          <span class="related-desc">начальная школа</span>
+        </a>
+        <a href="https://maket.school" target="_blank" class="related-link">
+          <span class="related-name">MAKET.SCHOOL</span>
+          <span class="related-desc">продажа макетов</span>
         </a>
       </div>
     </div>
 
-    <div class="final-footer">
-      <p>VOGARDEN — линейка проекта THE END / Made by LYKBOOK</p>
+    <div class="contact-footer reveal">
+      <p>THE END — ПРЕМИАЛЬНАЯ ЛИНЕЙКА ПРОЕКТНЫХ АЛЬБОМОВ ОТ СТУДИИ LYKBOOK</p>
       <p>© LYKBOOK 2022 — 2026 / Не является публичной офертой</p>
     </div>
 
-  </div>
-</section>
+  </section>
+</div>
 
 
 <script>
-/* ============ ЧАСТИЦЫ VOGARDEN — СБОРКА ИЗ ВЗРЫВА ============ */
+/* ============ 1. ЗАГРУЗКА С ГЛИТЧЕМ ============ */
 (function() {
-  if (typeof THREE === 'undefined') return;
+  const glitchEl = document.getElementById('glitch-text');
+  const loader = document.getElementById('loader');
+  const hero = document.getElementById('hero');
 
-  const canvas = document.getElementById('title-canvas');
-  if (!canvas) return;
+  const chars = '的一是不了人我在有他这为之大来以个中上们到说国和地也子时道出而要于就下得可你年生自会那后能对着事其里所去行过家十用发天如然作方成者多';
+  const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const digits = '0123456789';
+  const symbols = '!@#$%&*+=?<>/\\|';
+  const allChars = chars + latin + digits + symbols;
 
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(
-    50, window.innerWidth / window.innerHeight, 0.1, 1000
-  );
-  camera.position.z = 30;
+  const finalText = 'THE END';
+  const totalDuration = 2500;
+  const startTime = performance.now();
 
-  const renderer = new THREE.WebGLRenderer({
-    canvas: canvas, alpha: true, antialias: true
-  });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.setSize(window.innerWidth, window.innerHeight);
-
-  // Получаем точки контура текста
-  function getTextPoints(text, fontSize) {
-    const off = document.createElement('canvas');
-    const ctx = off.getContext('2d');
-    off.width = 1400; off.height = 300;
-    ctx.fillStyle = '#000'; ctx.fillRect(0, 0, off.width, off.height);
-    ctx.fillStyle = '#fff';
-    ctx.font = `900 ${fontSize}px Inter, sans-serif`;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(text, off.width / 2, off.height / 2);
-    const data = ctx.getImageData(0, 0, off.width, off.height).data;
-    const pts = [];
-    const step = 3;
-    for (let y = 0; y < off.height; y += step) {
-      for (let x = 0; x < off.width; x += step) {
-        const idx = (y * off.width + x) * 4;
-        if (data[idx] > 128) {
-          const px = (x - off.width / 2) * 0.04;
-          const py = -(y - off.height / 2) * 0.04;
-          pts.push({ x: px, y: py });
-        }
-      }
+  function getRandomString(length) {
+    let s = '';
+    for (let i = 0; i < length; i++) {
+      s += allChars[Math.floor(Math.random() * allChars.length)];
     }
-    return pts;
+    return s;
   }
 
-  const isMobile = window.innerWidth < 768;
-  const fontSize = isMobile ? 70 : 170;
-  const points = getTextPoints('VOGARDEN', fontSize);
+  let lastUpdate = 0;
 
-  // Если мобилка — отодвигаем камеру чтобы было видно больше
-  if (isMobile) {
-    camera.position.z = 38;
-  }
+  function animate(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / totalDuration, 1);
+    const interval = 40 + progress * 80;
 
-  const count = points.length;
-  const positions = new Float32Array(count * 3);
-  const targets = new Float32Array(count * 3);
-  const velocities = new Float32Array(count * 3);
-  const colors = new Float32Array(count * 3);
+    if (now - lastUpdate >= interval) {
+      lastUpdate = now;
+      const len = Math.max(1, Math.round(1 + progress * 6));
 
-  for (let i = 0; i < count; i++) {
-    targets[i * 3]     = points[i].x;
-    targets[i * 3 + 1] = points[i].y;
-    targets[i * 3 + 2] = (Math.random() - 0.5) * 0.3;
-
-    // Стартовая позиция — РАЗЛЕТЕВШИЕСЯ из центра (взрыв)
-    const angle = Math.random() * Math.PI * 2;
-    const distance = 15 + Math.random() * 25;
-    positions[i * 3]     = Math.cos(angle) * distance;
-    positions[i * 3 + 1] = Math.sin(angle) * distance * 0.7;
-    positions[i * 3 + 2] = (Math.random() - 0.5) * 20;
-
-    // Стартовая скорость — наружу (как от взрыва, замедляется)
-    velocities[i * 3]     = Math.cos(angle) * 0.05;
-    velocities[i * 3 + 1] = Math.sin(angle) * 0.05;
-    velocities[i * 3 + 2] = 0;
-
-    const b = 0.7 + Math.random() * 0.3;
-    colors[i * 3] = b; colors[i * 3 + 1] = b; colors[i * 3 + 2] = b;
-  }
-
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-  function makeCircleTexture() {
-    const c = document.createElement('canvas');
-    c.width = c.height = 64;
-    const cx = c.getContext('2d');
-    const grad = cx.createRadialGradient(32, 32, 0, 32, 32, 32);
-    grad.addColorStop(0,   'rgba(255,255,255,1)');
-    grad.addColorStop(0.4, 'rgba(255,255,255,0.6)');
-    grad.addColorStop(1,   'rgba(255,255,255,0)');
-    cx.fillStyle = grad; cx.fillRect(0, 0, 64, 64);
-    return new THREE.CanvasTexture(c);
-  }
-
-  const material = new THREE.PointsMaterial({
-    size: 0.18,
-    map: makeCircleTexture(),
-    vertexColors: true,
-    transparent: true,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-    sizeAttenuation: true,
-    opacity: 0
-  });
-
-  const pointsObj = new THREE.Points(geometry, material);
-  scene.add(pointsObj);
-
-  // Курсор для интерактивности
-  const mouse = new THREE.Vector3(1000, 1000, 0);
-  let mouseVisible = false;
-
-  window.addEventListener('mousemove', (e) => {
-    const x = (e.clientX / window.innerWidth) * 2 - 1;
-    const y = -(e.clientY / window.innerHeight) * 2 + 1;
-    const v = new THREE.Vector3(x, y, 0.5);
-    v.unproject(camera);
-    const dir = v.sub(camera.position).normalize();
-    const distance = -camera.position.z / dir.z;
-    mouse.copy(camera.position).add(dir.multiplyScalar(distance));
-    mouseVisible = true;
-  });
-
-  // Состояния: 'gather' (сборка) → 'idle' (живёт)
-  let mode = 'starting';
-  let modeStart = performance.now();
-
-  // Стартуем "сборку" с маленькой задержкой после загрузки
-  setTimeout(() => {
-    canvas.classList.add('visible');
-    material.opacity = 1.0;
-    mode = 'gather';
-    modeStart = performance.now();
-  }, 400);
-
-  let time = 0;
-  const repulsionRadius = 2.0;
-  const repulsionStrength = 0.10;
-
-  // Затухание заголовка при скролле
-  let scrollFade = 0;
-
-  window.addEventListener('scroll', () => {
-    const max = document.documentElement.scrollHeight - window.innerHeight;
-    if (max > 0) {
-      const p = window.scrollY / max;
-      // Заголовок виден до 8% скролла, потом постепенно тает
-      scrollFade = Math.max(0, Math.min(1, (p - 0.02) / 0.06));
-      if (mode === 'idle') {
-        material.opacity = 1 - scrollFade;
-      }
-    }
-  });
-
-  function animate() {
-    requestAnimationFrame(animate);
-    time += 0.01;
-    const now = performance.now();
-    const elapsed = now - modeStart;
-
-    // Переход из gather в idle через 1.8 сек
-    if (mode === 'gather' && elapsed > 1800) {
-      mode = 'idle';
-      modeStart = now;
-    }
-
-    if (mode === 'starting') {
-      renderer.render(scene, camera);
-      return;
-    }
-
-    const pos = geometry.attributes.position.array;
-    for (let i = 0; i < count; i++) {
-      const ix = i * 3;
-
-      if (mode === 'gather') {
-        // Магнетизм к цели + затухающие исходные скорости
-        const dx = targets[ix]     - pos[ix];
-        const dy = targets[ix + 1] - pos[ix + 1];
-        const dz = targets[ix + 2] - pos[ix + 2];
-        const gp = Math.min(elapsed / 1800, 1);
-        const pull = 0.012 + gp * 0.035;
-        velocities[ix]     += dx * pull;
-        velocities[ix + 1] += dy * pull;
-        velocities[ix + 2] += dz * pull;
-        velocities[ix]     *= 0.85;
-        velocities[ix + 1] *= 0.85;
-        velocities[ix + 2] *= 0.85;
-      } else {
-        // idle: магнетизм + расталкивание от курсора
-        const dx = targets[ix]     - pos[ix];
-        const dy = targets[ix + 1] - pos[ix + 1];
-        const dz = targets[ix + 2] - pos[ix + 2];
-
-        if (mouseVisible) {
-          const mdx = pos[ix] - mouse.x;
-          const mdy = pos[ix + 1] - mouse.y;
-          const distSq = mdx * mdx + mdy * mdy;
-          if (distSq < repulsionRadius * repulsionRadius) {
-            const dist = Math.sqrt(distSq) || 0.001;
-            const force = (1 - dist / repulsionRadius) * repulsionStrength;
-            velocities[ix]     += (mdx / dist) * force;
-            velocities[ix + 1] += (mdy / dist) * force;
+      if (progress < 0.85) {
+        glitchEl.textContent = getRandomString(len);
+      } else if (progress < 1) {
+        const revealProgress = (progress - 0.85) / 0.15;
+        let result = '';
+        for (let i = 0; i < finalText.length; i++) {
+          if (Math.random() < revealProgress) {
+            result += finalText[i];
+          } else {
+            result += finalText[i] === ' '
+              ? ' '
+              : allChars[Math.floor(Math.random() * allChars.length)];
           }
         }
-
-        velocities[ix]     += dx * 0.025;
-        velocities[ix + 1] += dy * 0.025;
-        velocities[ix + 2] += dz * 0.03;
-        velocities[ix]     *= 0.82;
-        velocities[ix + 1] *= 0.82;
-        velocities[ix + 2] *= 0.82;
+        glitchEl.textContent = result;
       }
-
-      pos[ix]     += velocities[ix];
-      pos[ix + 1] += velocities[ix + 1];
-      pos[ix + 2] += velocities[ix + 2];
     }
 
-    geometry.attributes.position.needsUpdate = true;
-    if (mode === 'idle') pointsObj.rotation.y = Math.sin(time * 0.2) * 0.04;
-
-    renderer.render(scene, camera);
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      finishLoader();
+    }
   }
-  animate();
 
-  window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  });
+  function finishLoader() {
+    glitchEl.textContent = finalText;
+    setTimeout(() => {
+      glitchEl.classList.add('flash');
+      setTimeout(() => glitchEl.classList.remove('flash'), 150);
+    }, 250);
+
+    // Через 500мс: убираем прелоадер, показываем hero + морфинг
+    setTimeout(() => {
+      // Скрываем текстовые буквы загрузчика (плавно)
+      glitchEl.style.transition = 'opacity 0.3s ease';
+      glitchEl.style.opacity = '0';
+
+      // Скрываем чёрный фон загрузчика и показываем hero
+      loader.style.transition = 'opacity 1.2s ease';
+      loader.style.opacity = '0';
+      setTimeout(() => loader.classList.add('hidden'), 1300);
+
+      hero.classList.add('visible');
+      hero.classList.add('intro-done');  // включаем морфинг-фон
+    }, 500);
+  }
+
+  function animateHeroTitle() {
+    const titleEl = document.getElementById('hero-title');
+    const finalTitle = 'THE END';
+    const duration = 1000;
+    const startT = performance.now();
+    let lastT = 0;
+
+    function tick(now) {
+      const elapsed = now - startT;
+      const p = Math.min(elapsed / duration, 1);
+
+      if (now - lastT >= 50) {
+        lastT = now;
+        let result = '';
+        for (let i = 0; i < finalTitle.length; i++) {
+          if (finalTitle[i] === ' ') {
+            result += ' ';
+          } else if (Math.random() < p) {
+            result += finalTitle[i];
+          } else {
+            result += allChars[Math.floor(Math.random() * allChars.length)];
+          }
+        }
+        titleEl.textContent = result;
+      }
+
+      if (p < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        titleEl.textContent = finalTitle;
+      }
+    }
+
+    titleEl.textContent = getRandomString(finalTitle.length);
+    requestAnimationFrame(tick);
+  }
+
+  requestAnimationFrame(animate);
 })();
 
-/* ============ КАСТОМНЫЙ КУРСОР ============ */
+/* ============ 2. КАСТОМНЫЙ КУРСОР ============ */
 (function() {
   const dot = document.querySelector('.cursor-dot');
   const ring = document.querySelector('.cursor-ring');
@@ -893,7 +2076,8 @@
   let ringX = mouseX, ringY = mouseY;
 
   document.addEventListener('mousemove', (e) => {
-    mouseX = e.clientX; mouseY = e.clientY;
+    mouseX = e.clientX;
+    mouseY = e.clientY;
   });
 
   function loop() {
@@ -901,515 +2085,622 @@
     dotY += (mouseY - dotY) * 0.9;
     ringX += (mouseX - ringX) * 0.15;
     ringY += (mouseY - ringY) * 0.15;
-    dot.style.transform  = `translate(${dotX}px, ${dotY}px) translate(-50%, -50%)`;
+
+    dot.style.transform = `translate(${dotX}px, ${dotY}px) translate(-50%, -50%)`;
     ring.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
+
     requestAnimationFrame(loop);
   }
   loop();
 
+  const hoverables = 'a, button, .nav-link, [data-magnet]';
   document.addEventListener('mouseover', (e) => {
-    if (e.target.closest('a, button, .btn')) ring.classList.add('hover');
+    if (e.target.closest(hoverables)) ring.classList.add('hover');
   });
   document.addEventListener('mouseout', (e) => {
-    if (e.target.closest('a, button, .btn')) ring.classList.remove('hover');
+    if (e.target.closest(hoverables)) ring.classList.remove('hover');
+  });
+
+  document.addEventListener('mouseleave', () => {
+    dot.style.opacity = '0';
+    ring.style.opacity = '0';
+  });
+  document.addEventListener('mouseenter', () => {
+    dot.style.opacity = '1';
+    ring.style.opacity = '1';
   });
 })();
 
-/* ============ СКРОЛЛ-ИНДИКАТОР + ФАЗЫ ============ */
+/* ============ 3. УПРАВЛЕНИЕ ОВЕРЛЕЯМИ ============ */
 (function() {
-  const percentEl = document.getElementById('scroll-percent');
-  const barEl = document.getElementById('scroll-bar');
-  const phaseEl = document.getElementById('phase-name');
+  const closeBtn = document.getElementById('overlay-close');
+  const sectionLabel = document.getElementById('section-name');
+  let activeOverlay = null;
 
-  const intro = document.getElementById('intro-title');
-  const labelGarden = document.getElementById('label-garden');
-  const labelWall = document.getElementById('label-wall');
-  const labelChina = document.getElementById('label-china');
+  function openOverlay(name) {
+    const overlay = document.getElementById('overlay-' + name);
+    if (!overlay) return;
 
-  function update() {
-    // Прогресс считаем относительно 3D-сцены (а не всей страницы)
-    const sceneEl = document.getElementById('scene');
-    const sh = sceneEl ? sceneEl.offsetHeight - window.innerHeight : 1;
-    const p = sh > 0 ? Math.max(0, Math.min(1, window.scrollY / sh)) : 0;
+    if (activeOverlay) closeOverlay();
 
-    const percent = Math.round(p * 100);
-    percentEl.textContent = percent.toString().padStart(2, '0');
-    barEl.style.setProperty('--progress', percent + '%');
+    overlay.classList.add('open');
+    overlay.scrollTop = 0;
+    document.body.classList.add('overlay-open');
+    activeOverlay = overlay;
+    closeBtn.classList.add('visible');
 
-    // Подзаголовок виден только в самом начале
-    intro.classList.toggle('visible', p < 0.08 && document.body.dataset.titleReady === '1');
-    // Сад: 10-50%
-    labelGarden.classList.toggle('visible', p >= 0.10 && p < 0.48);
-    // Переход (плавная смена цвета): 50-60%
-    labelWall.classList.toggle('visible',   p >= 0.50 && p < 0.60);
-    // Китайская: 60% и до конца 3D-сцены
-    labelChina.classList.toggle('visible',  p >= 0.62 && p < 0.99);
-
-    // Видео теперь отдельная секция после 3D — не управляется отсюда
-
-    let phase;
-    if (p < 0.10) phase = 'INTRO';
-    else if (p < 0.48) phase = 'GARDEN';
-    else if (p < 0.62) phase = 'TRANSFORMATION';
-    else if (p < 1.0)  phase = 'RED EDITION';
-    else phase = 'TEASER';
-
-    // Если скроллим за пределами 3D — определяем фазу по реальной позиции
-    const finalSection = document.querySelector('.final');
-    const videoSection = document.querySelector('.video-section');
-    if (finalSection) {
-      const finalRect = finalSection.getBoundingClientRect();
-      if (finalRect.top < window.innerHeight * 0.5) phase = 'SPECS';
-    }
-    if (videoSection && phase !== 'SPECS') {
-      const vRect = videoSection.getBoundingClientRect();
-      if (vRect.top < window.innerHeight * 0.5 && vRect.bottom > 0) phase = 'TEASER';
+    // Меняем подпись слева снизу
+    if (sectionLabel) {
+      sectionLabel.textContent = overlay.dataset.name || name.toUpperCase();
     }
 
-    if (phaseEl.textContent !== phase) phaseEl.textContent = phase;
+    // Запускаем reveal-эффекты внутри оверлея
+    setTimeout(() => triggerReveals(overlay), 400);
+
+    // Запускаем счётчики если в оверлее есть data-target
+    setTimeout(() => triggerCounters(overlay), 600);
+
+    // Глитч-эффект для всех заголовков с классом .glitch-title в этом оверлее
+    setTimeout(() => triggerGlitchTitles(overlay), 500);
   }
 
-  // Подзаголовок появляется после того как соберутся частицы (~2.5 сек)
-  setTimeout(() => {
-    document.body.dataset.titleReady = '1';
-    update();
-  }, 2400);
+  function closeOverlay() {
+    if (!activeOverlay) return;
 
-  window.addEventListener('scroll', update, { passive: true });
-  update();
+    // Сбрасываем флаги глитча и счётчиков, чтобы при повторном открытии
+    // эффект сыграл заново
+    activeOverlay.querySelectorAll('.glitch-title').forEach(el => {
+      delete el.dataset.glitched;
+    });
+    activeOverlay.querySelectorAll('[data-target]').forEach(el => {
+      delete el.dataset.counted;
+      el.textContent = '0';
+    });
+    // Скрываем reveal-элементы — пусть появятся заново при следующем открытии
+    activeOverlay.querySelectorAll('.reveal').forEach(el => {
+      el.classList.remove('visible');
+    });
+
+    activeOverlay.classList.remove('open');
+    document.body.classList.remove('overlay-open');
+    closeBtn.classList.remove('visible');
+    activeOverlay = null;
+    if (sectionLabel) sectionLabel.textContent = 'INTRO';
+  }
+
+  // Привязываем кнопки навигации
+  document.querySelectorAll('[data-overlay]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      openOverlay(btn.dataset.overlay);
+    });
+  });
+
+  // Кнопка закрытия
+  closeBtn.addEventListener('click', closeOverlay);
+
+  // ESC для закрытия
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeOverlay();
+  });
+
+  /* === Reveal-эффекты === */
+  function triggerReveals(container) {
+    const reveals = container.querySelectorAll('.reveal');
+    reveals.forEach((el, i) => {
+      setTimeout(() => el.classList.add('visible'), i * 100);
+    });
+  }
+
+  /* === Счётчики цифр === */
+  function triggerCounters(container) {
+    const numbers = container.querySelectorAll('[data-target]');
+    numbers.forEach(el => animateCount(el));
+  }
+
+  function animateCount(el) {
+    if (el.dataset.counted) return;
+    el.dataset.counted = '1';
+    const target = parseInt(el.dataset.target, 10);
+    const duration = 2000;
+    const startTime = performance.now();
+
+    function tick(now) {
+      const elapsed = now - startTime;
+      const p = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      const current = Math.round(target * eased);
+      el.textContent = current;
+      if (p < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        el.textContent = target;
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+
+  /* === Глитч-эффект для всех заголовков с классом .glitch-title === */
+  function triggerGlitchTitles(container) {
+    const titles = container.querySelectorAll('.glitch-title');
+    titles.forEach((titleEl, idx) => {
+      // Небольшая задержка между разными заголовками если их несколько
+      setTimeout(() => glitchTitle(titleEl), idx * 200);
+    });
+  }
+
+  function glitchTitle(titleEl) {
+    if (!titleEl || titleEl.dataset.glitched) return;
+    titleEl.dataset.glitched = '1';
+
+    const originalHTML = titleEl.innerHTML;
+    const originalText = titleEl.textContent.trim();
+
+    const chars = '的一是不了人我在有他这为之大来以个中上们到说国';
+    const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const symbols = '!@#$%&*+=?<>/\\|';
+    const allChars = chars + latin + symbols;
+
+    const duration = 1000;
+    const startT = performance.now();
+    let lastT = 0;
+
+    function tick(now) {
+      const elapsed = now - startT;
+      const p = Math.min(elapsed / duration, 1);
+
+      if (now - lastT >= 50) {
+        lastT = now;
+        let result = '';
+        for (let i = 0; i < originalText.length; i++) {
+          const ch = originalText[i];
+          if (ch === ' ' || ch === '\n') {
+            result += ch;
+          } else if (Math.random() < p) {
+            result += ch;
+          } else {
+            result += allChars[Math.floor(Math.random() * allChars.length)];
+          }
+        }
+        titleEl.textContent = result;
+      }
+
+      if (p < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        // Восстанавливаем оригинальную HTML-разметку (с красными span и br)
+        titleEl.innerHTML = originalHTML;
+      }
+    }
+
+    titleEl.textContent = originalText;
+    requestAnimationFrame(tick);
+  }
 })();
 
-/* ============ THREE.JS — 3D СЦЕНА ============ */
+
+/* ============ 5. МОРФИНГ-ЧАСТИЦЫ ФОНА ============ */
+/* Облако точек, которое постоянно меняет форму:
+   ЛОГО АЛЬБОМА → СПИРАЛЬ → СЕРДЦЕ → БЕСКОНЕЧНОСТЬ → R → E → D → ...
+   Реактивно к курсору. Цвет меняется в зависимости от формы. */
 (function() {
   if (typeof THREE === 'undefined') return;
 
-  const canvas = document.getElementById('webgl');
+  const canvas = document.getElementById('morph-canvas');
   if (!canvas) return;
 
-  // === Сцена и камера ===
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x0a0a0a, 0.035);
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.z = 18;
 
-  const camera = new THREE.PerspectiveCamera(
-    65, window.innerWidth / window.innerHeight, 0.1, 200
-  );
-  camera.position.set(0, 0, 0);
-
-  const renderer = new THREE.WebGLRenderer({
-    canvas: canvas, antialias: true, alpha: false
-  });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setClearColor(0x050505, 1);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  renderer.setClearColor(0x000000, 0);
 
-  // === Освещение ===
-  const ambient = new THREE.AmbientLight(0x222222);
-  scene.add(ambient);
+  // Сколько частиц
+  const COUNT = 4500;
 
-  // Свет сада — тёплый кремовый
-  const gardenLight = new THREE.PointLight(0xffe6b8, 1.5, 30);
-  gardenLight.position.set(0, 3, -10);
-  scene.add(gardenLight);
+  // ===== ГЕНЕРАТОРЫ ФОРМ =====
+  // Каждый возвращает массив [x,y,z, x,y,z, ...] длиной COUNT*3
 
-  // Дополнительные тёплые акценты
-  const warmLight = new THREE.PointLight(0xffd28a, 1.0, 20);
-  warmLight.position.set(3, -1, -5);
-  scene.add(warmLight);
-
-  // Свет стены — нейтральный (между садом и Китаем)
-  const wallLight = new THREE.PointLight(0xffffff, 1.0, 20);
-  wallLight.position.set(0, 0, -55);
-  scene.add(wallLight);
-
-  // Свет китайской комнаты — НЕЙТРАЛЬНЫЙ белый
-  // (фотки сами уже содержат красный цвет, не нужно их красить ещё больше)
-  const chinaLight1 = new THREE.PointLight(0xffeeee, 1.5, 30);
-  chinaLight1.position.set(0, 3, -75);
-  scene.add(chinaLight1);
-
-  const chinaLight2 = new THREE.PointLight(0xffffff, 1.0, 25);
-  chinaLight2.position.set(-2, -1, -90);
-  scene.add(chinaLight2);
-
-  // === Картинки разворотов VOGARDEN (твои с ImgBB) ===
-  const gardenImages = [
-    'https://i.ibb.co/hJNgjxzd/3.jpg',
-    'https://i.ibb.co/HfRxJ8TV/10.jpg',
-    'https://i.ibb.co/prhV74Kk/11.jpg',
-    'https://i.ibb.co/nsqfXQJn/19.jpg',
-    'https://i.ibb.co/hxq0QC3j/8.jpg',
-    'https://i.ibb.co/zVTs082h/27.jpg',
-    'https://i.ibb.co/93cwpJvT/14.jpg',
-    'https://i.ibb.co/4LXN1Lh/5.jpg',
-    'https://i.ibb.co/21ZYmZmH/16.jpg',
-    'https://i.ibb.co/s9nBW9H9/17.jpg'
-  ];
-  // Картинки китайской версии — пока те же (заменим позже)
-  // === Картинки китайской версии (старые с Tilda) ===
-  const chinaImages = [
-    'https://static.tildacdn.com/tild6139-6239-4564-b631-323765396465/000-15.jpg',
-    'https://static.tildacdn.com/tild6661-3830-4735-b139-653364653430/000-25.jpg',
-    'https://static.tildacdn.com/tild3932-6236-4962-a465-313561636433/000-17.jpg',
-    'https://static.tildacdn.com/tild6338-6430-4234-b932-313561373732/000-28.jpg',
-    'https://static.tildacdn.com/tild6534-3634-4737-a530-666364613764/000-24.jpg',
-    'https://static.tildacdn.com/tild3539-3033-4865-a434-323830363737/000-29.jpg',
-    'https://static.tildacdn.com/tild3866-6262-4464-b136-356332393938/000-46.jpg',
-    'https://static.tildacdn.com/tild3436-6335-4534-b038-373333336231/000-45.jpg',
-    'https://static.tildacdn.com/tild3130-3632-4439-b664-336338326461/000-02.jpg',
-    'https://static.tildacdn.com/tild6537-6331-4666-a138-373931633264/000-04.jpg'
-  ];
-
-  const loader = new THREE.TextureLoader();
-  // Камера стартует в z=0. Длина коридора: 130 единиц.
-  //
-  // 0%   камера в z=0 (старт, чёрный экран, VOGARDEN)
-  // ~10% начинается сад (z=-13)
-  // ~40% последний разворот сада (z=-50)
-  // ~55% начинается красная комната
-  // ~95% последний разворот красной (z=-123)
-  //
-  const gardenStart = -25;
-  const gardenLength = 40;        // от -25 до -65
-  const chinaStart = -75;
-  const chinaLength = 55;         // от -75 до -130 (до самого конца)
-
-  // Размещаем развороты сада попеременно слева/справа
-  function makePhotoPlanes(images, startZ, length, side1Color) {
-    const planes = [];
-    const spacing = length / images.length;
-    // На мобильном делаем развороты меньше и ближе к центру
-    const isMob = window.innerWidth < 768;
-    const sizeH = isMob ? 2.4 : 3.6;
-    const sideOffset = isMob ? 2.6 : 4.0;
-    images.forEach((url, i) => {
-      loader.load(url, (tex) => {
-        tex.minFilter = THREE.LinearFilter;
-        const h = sizeH;
-        const w = h * 1.5;
-        const geo = new THREE.PlaneGeometry(w, h);
-        const mat = new THREE.MeshStandardMaterial({
-          map: tex,
-          roughness: 0.4,
-          metalness: 0.05,
-          side: THREE.DoubleSide
-        });
-        const mesh = new THREE.Mesh(geo, mat);
-        const z = startZ - (i * spacing + 2);
-        const side = i % 2 === 0 ? -1 : 1;
-        mesh.position.set(side * sideOffset, (Math.random() - 0.5) * 0.8, z);
-        mesh.rotation.y = side * -0.3;
-        mesh.userData.baseY = mesh.position.y;
-        scene.add(mesh);
-        planes.push(mesh);
-      });
-    });
-    return planes;
-  }
-
-  const gardenPlanes = makePhotoPlanes(gardenImages, gardenStart, gardenLength);
-  const chinaPlanes  = makePhotoPlanes(chinaImages,  chinaStart,  chinaLength);
-
-  // Силуэт травы / листа — рисуем canvas-ом, кладём как текстуру
-  function makeGrassTexture() {
-    const c = document.createElement('canvas');
-    c.width = 256; c.height = 256;
-    const cx = c.getContext('2d');
-    cx.clearRect(0, 0, 256, 256);
-    cx.fillStyle = 'rgba(40, 30, 20, 0.95)';
-    for (let i = 0; i < 6; i++) {
-      cx.beginPath();
-      const x = 30 + i * 40 + (Math.random() * 20 - 10);
-      cx.moveTo(x, 256);
-      const cx1 = x + (Math.random() - 0.5) * 80;
-      const cx2 = x + (Math.random() - 0.5) * 60;
-      const y2 = 60 + Math.random() * 80;
-      cx.quadraticCurveTo(cx1, 180, cx2, y2);
-      cx.lineTo(cx2 + 6, y2);
-      cx.quadraticCurveTo(cx1 + 8, 180, x + 8, 256);
-      cx.closePath();
-      cx.fill();
+  // Сфера (равномерное распределение по поверхности)
+  function shapeSphere() {
+    const arr = new Float32Array(COUNT * 3);
+    const radius = 5;
+    for (let i = 0; i < COUNT; i++) {
+      // Метод Фибоначчи для равномерного распределения по сфере
+      const phi = Math.acos(1 - 2 * (i + 0.5) / COUNT);
+      const theta = Math.PI * (1 + Math.sqrt(5)) * i;
+      const r = radius + (Math.random() - 0.5) * 0.3;
+      arr[i*3]     = r * Math.cos(theta) * Math.sin(phi);
+      arr[i*3 + 1] = r * Math.sin(theta) * Math.sin(phi);
+      arr[i*3 + 2] = r * Math.cos(phi);
     }
-    return new THREE.CanvasTexture(c);
+    return arr;
   }
 
-  function makeLeafTexture() {
-    const c = document.createElement('canvas');
-    c.width = 256; c.height = 256;
-    const cx = c.getContext('2d');
-    cx.fillStyle = 'rgba(30, 25, 15, 0.92)';
-    cx.beginPath();
-    cx.moveTo(128, 256);
-    cx.bezierCurveTo(40, 200, 30, 90, 100, 40);
-    cx.bezierCurveTo(140, 60, 160, 150, 128, 256);
-    cx.fill();
-    cx.beginPath();
-    cx.moveTo(128, 256);
-    cx.bezierCurveTo(216, 200, 226, 90, 156, 40);
-    cx.bezierCurveTo(116, 60, 96, 150, 128, 256);
-    cx.fill();
-    return new THREE.CanvasTexture(c);
-  }
-
-  const grassTex = makeGrassTexture();
-  const leafTex = makeLeafTexture();
-
-  // Позиции для растений — ряд снизу, по всей длине сада
-  const plants = [];
-  function addPlant(texture, x, z, scale, opacityVal) {
-    const geo = new THREE.PlaneGeometry(scale, scale);
-    const mat = new THREE.MeshBasicMaterial({
-      map: texture,
-      transparent: true,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-      opacity: opacityVal
-    });
-    const m = new THREE.Mesh(geo, mat);
-    m.position.set(x, -2.5 + scale * 0.3, z);
-    m.userData = {
-      baseScale: scale,
-      growth: 0
-    };
-    m.scale.set(0.01, 0.01, 0.01);
-    scene.add(m);
-    plants.push(m);
-    return m;
-  }
-
-  // Заполняем сад только тенями — без PNG цветов
-  // Растения от z=-23 до z=-65 (новая длина сада)
-  for (let z = -23; z > -65; z -= 2) {
-    const count = 3 + Math.floor(Math.random() * 2);
-    for (let i = 0; i < count; i++) {
-      const tex = Math.random() > 0.5 ? grassTex : leafTex;
-      const x = (Math.random() - 0.5) * 14;
-      const scale = 1.0 + Math.random() * 1.2;
-      const opacity = 0.7 + Math.random() * 0.3;
-      addPlant(tex, x, z + (Math.random() - 0.5) * 1.5, scale, opacity);
+  // Тор (бублик)
+  function shapeTorus() {
+    const arr = new Float32Array(COUNT * 3);
+    const R = 4;       // большой радиус
+    const r = 1.5;     // малый радиус (толщина)
+    for (let i = 0; i < COUNT; i++) {
+      const u = Math.random() * Math.PI * 2;
+      const v = Math.random() * Math.PI * 2;
+      const noise = (Math.random() - 0.5) * 0.2;
+      arr[i*3]     = (R + (r + noise) * Math.cos(v)) * Math.cos(u);
+      arr[i*3 + 1] = (r + noise) * Math.sin(v);
+      arr[i*3 + 2] = (R + (r + noise) * Math.cos(v)) * Math.sin(u);
     }
+    return arr;
   }
 
-  // 3D-стены убраны — переход между садом и красной комнатой делается
-  // через красную вспышку, а финальное видео — через HTML iframe
-
-  /* ===== КИТАЙСКИЕ ИЕРОГЛИФЫ — ПАДАЮТ КАК ДОЖДЬ ===== */
-  const chineseChars = '永和九年岁在癸丑暮春之初会于会稽山阴之兰亭修禊事也群贤毕至少长咸集此地有崇山峻岭茂林修竹';
-
-  function makeCharTexture(ch) {
-    const c = document.createElement('canvas');
-    c.width = 128; c.height = 128;
-    const cx = c.getContext('2d');
-    cx.clearRect(0, 0, 128, 128);
-    cx.fillStyle = '#fff';
-    cx.font = '900 90px "Noto Serif SC", serif';
-    cx.textAlign = 'center';
-    cx.textBaseline = 'middle';
-    cx.fillText(ch, 64, 64);
-    return new THREE.CanvasTexture(c);
+  // Двойная спираль ДНК
+  function shapeSpiral() {
+    const arr = new Float32Array(COUNT * 3);
+    const turns = 5;
+    const radius = 4;
+    const height = 14;
+    for (let i = 0; i < COUNT; i++) {
+      const t = i / COUNT;
+      const isSecond = i % 2 === 0;
+      const a = t * turns * Math.PI * 2 + (isSecond ? Math.PI : 0);
+      const noise = (Math.random() - 0.5) * 0.4;
+      arr[i*3]     = Math.cos(a) * (radius + noise);
+      arr[i*3 + 1] = (t - 0.5) * height + noise * 0.3;
+      arr[i*3 + 2] = Math.sin(a) * (radius + noise);
+    }
+    return arr;
   }
 
-  const chars = [];
-  // 80 иероглифов разбросаны по китайской комнате
-  for (let i = 0; i < 80; i++) {
-    const ch = chineseChars[Math.floor(Math.random() * chineseChars.length)];
-    const tex = makeCharTexture(ch);
-    const mat = new THREE.MeshBasicMaterial({
-      map: tex,
-      transparent: true,
-      depthWrite: false,
-      opacity: 0.4 + Math.random() * 0.5,
-      color: 0xff5040
-    });
-    const sz = 0.5 + Math.random() * 0.9;
-    const geo = new THREE.PlaneGeometry(sz, sz);
-    const m = new THREE.Mesh(geo, mat);
-    m.position.set(
-      (Math.random() - 0.5) * 14,
-      4 + Math.random() * 8,           // стартовая высота
-      chinaStart - Math.random() * chinaLength
-    );
-    m.userData = {
-      fallSpeed: 0.005 + Math.random() * 0.02,
-      baseY: m.position.y,
-      offset: Math.random() * Math.PI * 2
-    };
-    scene.add(m);
-    chars.push(m);
+  // Сердце (классическое уравнение)
+  function shapeHeart() {
+    const arr = new Float32Array(COUNT * 3);
+    for (let i = 0; i < COUNT; i++) {
+      // Параметрическое уравнение сердца
+      const t = (i / COUNT) * Math.PI * 2;
+      const scale = 0.5;
+      const x = scale * 16 * Math.pow(Math.sin(t), 3);
+      const y = scale * (13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+      // Добавляем толщину: каждая точка + нормаль * случайную глубину
+      const r = Math.random();
+      const innerScale = 0.3 + r * 0.7;
+      const z = (Math.random() - 0.5) * 1.5;
+      arr[i*3]     = x * innerScale;
+      arr[i*3 + 1] = y * innerScale;
+      arr[i*3 + 2] = z;
+    }
+    return arr;
   }
 
-  // Осколки добавим только для финального пробития (см. ниже)
-
-  /* ===== ПЫЛИНКИ ===== */
-  const dustGroup = new THREE.Group();
-  for (let i = 0; i < 250; i++) {
-    const len = 0.04 + Math.random() * 0.12;
-    const dGeo = new THREE.PlaneGeometry(len, 0.002);
-    const dMat = new THREE.MeshBasicMaterial({
-      color: 0xffffff, transparent: true,
-      opacity: 0.08 + Math.random() * 0.1,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false, side: THREE.DoubleSide
-    });
-    const d = new THREE.Mesh(dGeo, dMat);
-    d.position.set(
-      (Math.random() - 0.5) * 12,
-      (Math.random() - 0.5) * 6,
-      -Math.random() * 110
-    );
-    d.rotation.z = Math.random() * Math.PI;
-    d.userData = {
-      speed: 0.0005 + Math.random() * 0.002,
-      offset: Math.random() * Math.PI * 2
-    };
-    dustGroup.add(d);
+  // Знак бесконечности (лемниската)
+  function shapeInfinity() {
+    const arr = new Float32Array(COUNT * 3);
+    for (let i = 0; i < COUNT; i++) {
+      const t = (i / COUNT) * Math.PI * 2;
+      const scale = 5;
+      const denom = 1 + Math.sin(t) * Math.sin(t);
+      const x = (scale * Math.cos(t)) / denom;
+      const y = (scale * Math.sin(t) * Math.cos(t)) / denom;
+      const noise = (Math.random() - 0.5) * 0.6;
+      const z = (Math.random() - 0.5) * 1.2;
+      arr[i*3]     = x + noise;
+      arr[i*3 + 1] = y * 1.5 + noise;  // вытягиваем по вертикали
+      arr[i*3 + 2] = z;
+    }
+    return arr;
   }
-  scene.add(dustGroup);
 
-  /* ===== СКРОЛЛ ===== */
-  let scrollProgress = 0, targetProgress = 0;
+  // Текст-шейп (рисует слово или букву на canvas, потом сэмплит точки)
+  function shapeFromText(text, fontSize) {
+    const cnv = document.createElement('canvas');
+    cnv.width = 900;
+    cnv.height = 300;
+    const ctx = cnv.getContext('2d');
+    ctx.fillStyle = '#fff';
+    ctx.font = `900 ${fontSize}px Inter, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, cnv.width/2, cnv.height/2);
+
+    const img = ctx.getImageData(0, 0, cnv.width, cnv.height);
+    const pts = [];
+    for (let y = 0; y < cnv.height; y += 2) {
+      for (let x = 0; x < cnv.width; x += 2) {
+        const idx = (y * cnv.width + x) * 4;
+        if (img.data[idx + 3] > 128) {
+          // Преобразуем в координаты сцены
+          const sx = (x - cnv.width/2)  * 0.018;
+          const sy = -(y - cnv.height/2) * 0.018;
+          pts.push([sx, sy]);
+        }
+      }
+    }
+
+    const arr = new Float32Array(COUNT * 3);
+    if (pts.length === 0) return arr;
+    for (let i = 0; i < COUNT; i++) {
+      const p = pts[Math.floor(Math.random() * pts.length)];
+      const z = (Math.random() - 0.5) * 0.8;
+      arr[i*3]     = p[0] + (Math.random() - 0.5) * 0.1;
+      arr[i*3 + 1] = p[1] + (Math.random() - 0.5) * 0.1;
+      arr[i*3 + 2] = z;
+    }
+    return arr;
+  }
+
+  // ===== СПИСОК ФОРМ — 10 штук, все красные =====
+  // Чередуются: геометрия → слово-проект → геометрия → слово...
+  const RED = 0xe8312a;
+  const shapes = [
+    { make: () => shapeSphere(),                  color: RED, name: 'SPHERE' },
+    { make: () => shapeFromText('VGRD', 200),     color: RED, name: 'VGRD' },
+    { make: () => shapeInfinity(),                color: RED, name: 'INFINITY' },
+    { make: () => shapeFromText('LIME', 200),     color: RED, name: 'LIME' },
+    { make: () => shapeSpiral(),                  color: RED, name: 'DNA' },
+    { make: () => shapeFromText('RED', 240),      color: RED, name: 'RED' },
+    { make: () => shapeHeart(),                   color: RED, name: 'HEART' },
+    { make: () => shapeFromText('DUO', 240),      color: RED, name: 'DUO' },
+    { make: () => shapeTorus(),                   color: RED, name: 'TORUS' },
+    { make: () => shapeFromText('ECHO', 200),     color: RED, name: 'ECHO' },
+  ];
+
+  // ===== ПОЛЯ ДЛЯ ЧАСТИЦ =====
+  const positions = new Float32Array(COUNT * 3);
+  const targets   = new Float32Array(COUNT * 3);
+  const velocities = new Float32Array(COUNT * 3);
+
+  // Стартовая форма — сфера
+  let currentShapeIdx = 0;
+  let currentTarget = shapes[0].make();
+  positions.set(currentTarget);
+  targets.set(currentTarget);
+
+  // Цвет — сглаживается между формами
+  const currentColor = new THREE.Color(shapes[0].color);
+  const targetColor = new THREE.Color(shapes[0].color);
+
+  // ===== СОЗДАНИЕ POINTS =====
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+  const material = new THREE.PointsMaterial({
+    color: shapes[0].color,
+    size: 0.045,
+    transparent: true,
+    opacity: 0.9,
+    sizeAttenuation: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+
+  const points = new THREE.Points(geometry, material);
+  scene.add(points);
+
+  // ===== КУРСОР =====
   let mouseX = 0, mouseY = 0;
+  let mouseActive = false;
+  let mouseWorld = new THREE.Vector3();
 
   window.addEventListener('mousemove', (e) => {
-    mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
-    mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+    mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+    mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+    mouseActive = true;
+    // Преобразуем в мировые координаты (на плоскости z=0)
+    const vec = new THREE.Vector3(mouseX, mouseY, 0.5);
+    vec.unproject(camera);
+    const dir = vec.sub(camera.position).normalize();
+    const dist = -camera.position.z / dir.z;
+    mouseWorld.copy(camera.position).add(dir.multiplyScalar(dist));
   });
+  window.addEventListener('mouseleave', () => { mouseActive = false; });
 
-  window.addEventListener('scroll', () => {
-    const sh = document.getElementById('scene').offsetHeight - window.innerHeight;
-    if (sh > 0) {
-      targetProgress = Math.max(0, Math.min(1, window.scrollY / sh));
+  // ===== СМЕНА ФОРМЫ ПО ТАЙМЕРУ =====
+  const SHAPE_DURATION = 3500; // ms на каждую форму
+  let lastShapeChange = performance.now();
+
+  function nextShape() {
+    currentShapeIdx = (currentShapeIdx + 1) % shapes.length;
+    const newTarget = shapes[currentShapeIdx].make();
+    targets.set(newTarget);
+    targetColor.set(shapes[currentShapeIdx].color);
+    lastShapeChange = performance.now();
+  }
+
+  // ===== АНИМАЦИЯ =====
+  const repulsionRadius = 1.8;
+  const repulsionStrength = 0.08;
+
+  function animate() {
+    requestAnimationFrame(animate);
+
+    const now = performance.now();
+    if (now - lastShapeChange > SHAPE_DURATION) nextShape();
+
+    // Плавный переход цвета
+    currentColor.lerp(targetColor, 0.02);
+    material.color.copy(currentColor);
+
+    const pos = geometry.attributes.position.array;
+
+    for (let i = 0; i < COUNT; i++) {
+      const ix = i * 3;
+
+      // Притяжение к цели
+      const dx = targets[ix]     - pos[ix];
+      const dy = targets[ix + 1] - pos[ix + 1];
+      const dz = targets[ix + 2] - pos[ix + 2];
+
+      velocities[ix]     += dx * 0.012;
+      velocities[ix + 1] += dy * 0.012;
+      velocities[ix + 2] += dz * 0.012;
+
+      // Расталкивание от курсора (только X/Y, не Z)
+      if (mouseActive) {
+        const mdx = pos[ix]     - mouseWorld.x;
+        const mdy = pos[ix + 1] - mouseWorld.y;
+        const distSq = mdx * mdx + mdy * mdy;
+        if (distSq < repulsionRadius * repulsionRadius) {
+          const dist = Math.sqrt(distSq) || 0.001;
+          const force = (1 - dist / repulsionRadius) * repulsionStrength;
+          velocities[ix]     += (mdx / dist) * force;
+          velocities[ix + 1] += (mdy / dist) * force;
+        }
+      }
+
+      // Демпфирование (трение)
+      velocities[ix]     *= 0.92;
+      velocities[ix + 1] *= 0.92;
+      velocities[ix + 2] *= 0.92;
+
+      // Применяем скорость
+      pos[ix]     += velocities[ix];
+      pos[ix + 1] += velocities[ix + 1];
+      pos[ix + 2] += velocities[ix + 2];
     }
-  });
 
+    geometry.attributes.position.needsUpdate = true;
+
+    // Медленное вращение всей сцены — добавляет жизни
+    points.rotation.y += 0.0008;
+
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  // ===== РЕСАЙЗ =====
   window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
+})();
 
-  /* ===== АНИМАЦИОННЫЙ ЦИКЛ ===== */
-  let time = 0;
-  const corridorTotal = 120; // камера движется от 0 до -120 (последний разворот на -118)
 
-  function animate() {
-    requestAnimationFrame(animate);
-    time += 0.01;
-    scrollProgress += (targetProgress - scrollProgress) * 0.06;
+/* ============ 6. FULLSCREEN ПЛЕЕР ДЛЯ РИЛСОВ ============ */
+(function() {
+  const player = document.getElementById('reel-player');
+  const playerFrame = document.getElementById('reel-player-frame');
+  const playerClose = document.getElementById('reel-player-close');
+  const playerPrev = document.getElementById('reel-player-prev');
+  const playerNext = document.getElementById('reel-player-next');
+  const playerCounter = document.getElementById('reel-player-counter');
 
-    // Камера движется по Z в зависимости от скролла
-    const camZ = -scrollProgress * corridorTotal;
-    camera.position.z = camZ;
-    camera.position.x = mouseX * 0.4;
-    camera.position.y = mouseY * 0.25 + Math.sin(time * 0.5) * 0.1;
-    camera.rotation.y = mouseX * -0.025;
-    camera.rotation.x = mouseY * -0.015;
+  if (!player || !playerFrame) return;
 
-    // Цвет фона/тумана + плотность
-    // Туман плотный везде (видно только в радиусе ~25 единиц)
-    // На старте ещё плотнее (чтобы не просвечивал сад при загрузке)
-    const fogDensityStart = 0.20;
-    const fogDensityFlow = 0.07;  // было 0.035 — теперь плотнее
-    const fogTransition = Math.max(0, Math.min(1, (scrollProgress - 0.04) / 0.10));
-    const currentFogDensity = fogDensityStart + (fogDensityFlow - fogDensityStart) * fogTransition;
-    scene.fog.density = currentFogDensity;
+  // Собираем список всех видео из карточек на странице (в порядке появления)
+  const reelCards = Array.from(document.querySelectorAll('.reel-card'));
+  const reelIds = reelCards.map(c => c.dataset.vimeo).filter(Boolean);
+  let currentIndex = 0;
 
-    // Цвет фона/тумана — главная метка какая ты в комнате
-    // САД: глубокий тёмный с лёгким зеленоватым подтоном
-    // ПЕРЕХОД: плавно (50-60%)
-    // КРАСНАЯ: глубокий чёрный с лёгким красноватым оттенком
-    let fogR, fogG, fogB;
-    if (scrollProgress < 0.50) {
-      // Глубокий тёмный с лёгким зеленоватым (как в полумраке)
-      fogR = 0.02; fogG = 0.04; fogB = 0.02;
-    } else if (scrollProgress < 0.60) {
-      // Переход через 10% скролла
-      const t = (scrollProgress - 0.50) / 0.10;
-      fogR = 0.02 + t * 0.08;     // 0.02 → 0.10
-      fogG = 0.04 - t * 0.02;     // 0.04 → 0.02
-      fogB = 0.02;                // остаётся 0.02
-    } else {
-      // Глубокий чёрный с красноватым оттенком
-      fogR = 0.10; fogG = 0.02; fogB = 0.02;
+  function pad2(n) { return n.toString().padStart(2, '0'); }
+
+  function updateCounter() {
+    if (playerCounter) {
+      playerCounter.textContent = pad2(currentIndex + 1) + ' / ' + pad2(reelIds.length);
     }
-    scene.fog.color.setRGB(fogR, fogG, fogB);
-    renderer.setClearColor(new THREE.Color(fogR, fogG, fogB), 1);
-
-    // Освещение — переход 50-60%
-    if (scrollProgress < 0.50) {
-      gardenLight.intensity = 1.5 + Math.sin(time * 2) * 0.2;
-      warmLight.intensity = 1.0;
-      chinaLight1.intensity = 0;
-      chinaLight2.intensity = 0;
-    } else if (scrollProgress < 0.60) {
-      const t = (scrollProgress - 0.50) / 0.10;
-      gardenLight.intensity = 1.5 * (1 - t);
-      warmLight.intensity = 1.0 * (1 - t);
-      chinaLight1.intensity = 1.5 * t;
-      chinaLight2.intensity = 1.0 * t;
-    } else {
-      gardenLight.intensity = 0;
-      warmLight.intensity = 0;
-      chinaLight1.intensity = 1.5 + Math.sin(time * 2.5) * 0.2;
-      chinaLight2.intensity = 1.0 + Math.cos(time * 1.8) * 0.15;
-    }
-
-    // Свет двигается с камерой
-    gardenLight.position.z = camZ - 8;
-    warmLight.position.z = camZ - 5;
-    chinaLight1.position.z = camZ - 8;
-    chinaLight2.position.z = camZ - 5;
-
-    // Развороты — лёгкое покачивание
-    [...gardenPlanes, ...chinaPlanes].forEach((p, i) => {
-      if (p && p.userData) {
-        p.position.y = (p.userData.baseY || 0) + Math.sin(time * 0.7 + i) * 0.08;
-      }
-    });
-
-    /* === РАСТЕНИЯ "РАСТУТ" по мере приближения камеры === */
-    plants.forEach((p) => {
-      const distFromCam = Math.abs(p.position.z - camZ);
-      // Растение начинает расти за 20 единиц до того как мы подойдём
-      // и достигает полного размера когда мы рядом
-      const growthZ = 25;
-      const targetGrowth = Math.max(0, Math.min(1, 1 - (distFromCam - 5) / growthZ));
-      p.userData.growth += (targetGrowth - p.userData.growth) * 0.05;
-      const s = p.userData.baseScale * Math.max(0.01, p.userData.growth);
-      p.scale.set(s, s, s);
-      // Лёгкое покачивание (как от ветра)
-      p.rotation.z = Math.sin(time * 0.8 + p.position.x) * 0.05;
-    });
-
-    // 3D-стены убраны полностью — никакого пробития в 3D нет.
-    // Переход сад→китайцы делается через цвет/туман (см. выше).
-    // Финальное видео — через HTML iframe (см. ниже).
-
-    /* === ИЕРОГЛИФЫ ПАДАЮТ === */
-    chars.forEach((ch) => {
-      const distFromCam = Math.abs(ch.position.z - camZ);
-      // Видны в красной комнате (от ~-70 до самого конца)
-      const inZone = ch.position.z < -68;
-      const visTarget = inZone ? Math.max(0, Math.min(1, 1 - (distFromCam - 5) / 30)) : 0;
-      ch.material.opacity = visTarget * (0.4 + Math.sin(time * 2 + ch.userData.offset) * 0.15);
-
-      ch.position.y -= ch.userData.fallSpeed;
-      if (ch.position.y < -3) {
-        ch.position.y = 8 + Math.random() * 4;
-        ch.position.x = (Math.random() - 0.5) * 14;
-      }
-      ch.rotation.z = Math.sin(time + ch.userData.offset) * 0.15;
-    });
-
-    /* === ПЫЛЬ === */
-    dustGroup.children.forEach((d) => {
-      d.position.y += Math.sin(time * 0.8 + d.userData.offset) * d.userData.speed;
-      d.position.x += Math.cos(time * 0.5 + d.userData.offset) * d.userData.speed * 0.5;
-      d.rotation.z += 0.001;
-    });
-
-    renderer.render(scene, camera);
   }
-  animate();
+
+  function loadReel(index) {
+    const total = reelIds.length;
+    if (total === 0) return;
+
+    // Зацикливаем индекс
+    currentIndex = ((index % total) + total) % total;
+    const vimeoId = reelIds[currentIndex];
+
+    // Анимация переключения
+    playerFrame.classList.add('switching');
+
+    setTimeout(() => {
+      playerFrame.innerHTML = `
+        <iframe
+          src="https://player.vimeo.com/video/${vimeoId}?autoplay=1&loop=1&muted=0&autopause=0&controls=1&badge=0"
+          frameborder="0"
+          allow="autoplay; fullscreen; picture-in-picture"
+          allowfullscreen></iframe>
+      `;
+      playerFrame.classList.remove('switching');
+      updateCounter();
+    }, 250);
+  }
+
+  function openReel(vimeoId) {
+    const idx = reelIds.indexOf(vimeoId);
+    currentIndex = idx >= 0 ? idx : 0;
+
+    // Сразу вставляем без анимации (первое открытие)
+    playerFrame.innerHTML = `
+      <iframe
+        src="https://player.vimeo.com/video/${reelIds[currentIndex]}?autoplay=1&loop=1&muted=0&autopause=0&controls=1&badge=0"
+        frameborder="0"
+        allow="autoplay; fullscreen; picture-in-picture"
+        allowfullscreen></iframe>
+    `;
+    updateCounter();
+
+    player.classList.add('active');
+    document.body.classList.add('overlay-open');
+  }
+
+  function closeReel() {
+    player.classList.remove('active');
+    setTimeout(() => { playerFrame.innerHTML = ''; }, 300);
+  }
+
+  function nextReel() { loadReel(currentIndex + 1); }
+  function prevReel() { loadReel(currentIndex - 1); }
+
+  // Клик на карточки в галерее
+  reelCards.forEach(card => {
+    card.addEventListener('click', () => {
+      const vimeoId = card.dataset.vimeo;
+      if (vimeoId) openReel(vimeoId);
+    });
+  });
+
+  // Кнопки управления
+  playerClose.addEventListener('click', closeReel);
+  if (playerPrev) playerPrev.addEventListener('click', prevReel);
+  if (playerNext) playerNext.addEventListener('click', nextReel);
+
+  // Клавиши: ESC закрыть, ←→ листать
+  document.addEventListener('keydown', (e) => {
+    if (!player.classList.contains('active')) return;
+
+    if (e.key === 'Escape') {
+      closeReel();
+      e.stopPropagation();
+    } else if (e.key === 'ArrowLeft') {
+      prevReel();
+    } else if (e.key === 'ArrowRight') {
+      nextReel();
+    }
+  });
+
+  // Клик по тёмному фону — закрытие
+  player.addEventListener('click', (e) => {
+    if (e.target === player) closeReel();
+  });
+
+  // Свайпы на мобильных
+  let touchStartX = 0;
+  let touchEndX = 0;
+
+  player.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+  }, { passive: true });
+
+  player.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    const diff = touchEndX - touchStartX;
+    // Минимальный свайп 50px
+    if (Math.abs(diff) > 50) {
+      if (diff < 0) nextReel();
+      else prevReel();
+    }
+  }, { passive: true });
 })();
 </script>
 
