@@ -2301,8 +2301,8 @@
   const scene = new THREE.Scene();
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-  // Достаточно точек чтобы они сливались (жидкость), но не тормозило
-  const COUNT = 70;
+  // 110 точек — больше плотности
+  const COUNT = 110;
 
   // === ГЕНЕРАТОРЫ ФОРМ — чистая геометрия в стиле Apple ===
 
