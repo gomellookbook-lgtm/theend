@@ -2304,31 +2304,10 @@
   // Достаточно точек чтобы они сливались (жидкость), но не тормозило
   const COUNT = 70;
 
-  // === ГЕНЕРАТОРЫ ФОРМ ===
-  function shapeSphere() {
-    const arr = new Float32Array(COUNT * 2);
-    const radius = 0.40;
-    for (let i = 0; i < COUNT; i++) {
-      const phi = Math.acos(1 - 2 * (i + 0.5) / COUNT);
-      const theta = Math.PI * (1 + Math.sqrt(5)) * i;
-      arr[i*2]     = radius * Math.cos(theta) * Math.sin(phi);
-      arr[i*2 + 1] = radius * Math.sin(theta) * Math.sin(phi);
-    }
-    return arr;
-  }
+  // === ГЕНЕРАТОРЫ ФОРМ — школьные/выпускные ===
 
-  function shapeInfinity() {
-    const arr = new Float32Array(COUNT * 2);
-    for (let i = 0; i < COUNT; i++) {
-      const t = (i / COUNT) * Math.PI * 2;
-      const denom = 1 + Math.sin(t) * Math.sin(t);
-      arr[i*2]     = (0.85 * Math.cos(t)) / denom;
-      arr[i*2 + 1] = (0.85 * Math.sin(t) * Math.cos(t)) / denom * 1.4;
-    }
-    return arr;
-  }
-
-  function shapeSpiral() {
+  // 1. ДНК-СПИРАЛЬ — двойная спираль
+  function shapeDNA() {
     const arr = new Float32Array(COUNT * 2);
     const turns = 2.5;
     for (let i = 0; i < COUNT; i++) {
@@ -2341,35 +2320,117 @@
     return arr;
   }
 
-  function shapeHeart() {
+  // 2. ПЛОСКАЯ СПИРАЛЬ — раковина (логарифмическая)
+  function shapeFlatSpiral() {
+    const arr = new Float32Array(COUNT * 2);
+    const turns = 3;
+    for (let i = 0; i < COUNT; i++) {
+      const t = i / COUNT;
+      const a = t * turns * Math.PI * 2;
+      const r = 0.05 + t * 0.55;  // радиус растёт от центра
+      arr[i*2]     = Math.cos(a) * r;
+      arr[i*2 + 1] = Math.sin(a) * r;
+    }
+    return arr;
+  }
+
+  // 3. КАПЛЯ воды — круглая снизу, заострённая сверху
+  function shapeDrop() {
     const arr = new Float32Array(COUNT * 2);
     for (let i = 0; i < COUNT; i++) {
       const t = (i / COUNT) * Math.PI * 2;
-      const scale = 0.038;
-      arr[i*2]     = scale * 16 * Math.pow(Math.sin(t), 3);
-      arr[i*2 + 1] = scale * (13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t)) - 0.05;
+      // Параметрика капли: верх острый, низ круглый
+      const r = 0.45 * (1 - Math.sin(t)) * 0.5 + 0.25;
+      // Сдвигаем по y чтобы остриё было сверху
+      arr[i*2]     = Math.sin(t) * r * 0.85;
+      arr[i*2 + 1] = -Math.cos(t) * r - r * 0.35 + 0.1;
     }
     return arr;
   }
 
-  function shapeTorus() {
+  // 4. ПЕСОЧНЫЕ ЧАСЫ — две треугольные формы соединённые в центре
+  function shapeHourglass() {
     const arr = new Float32Array(COUNT * 2);
-    const R = 0.55;
+    const half = COUNT / 2;
     for (let i = 0; i < COUNT; i++) {
-      const a = (i / COUNT) * Math.PI * 2;
-      arr[i*2]     = Math.cos(a) * R;
-      arr[i*2 + 1] = Math.sin(a) * R * 0.7;
+      // Распределяем точки: половина в верхнем треугольнике, половина в нижнем
+      const isTop = i < half;
+      const localT = isTop ? (i / half) : ((i - half) / half);
+      // Внутри треугольника — случайно
+      const u = Math.random();
+      const v = Math.random();
+      // Координата по высоте: верх треугольник от 0 до 0.7, низ от 0 до -0.7
+      const y = isTop ? (0.7 * (1 - u)) : (-0.7 * (1 - u));
+      // Ширина — от 0 в центре до 0.45 на краях
+      const width = 0.45 * u;
+      const x = (v - 0.5) * 2 * width;
+      arr[i*2]     = x;
+      arr[i*2 + 1] = y;
     }
     return arr;
   }
 
-  // === СПИСОК ФОРМ — только геометрия ===
+  // 5. ЦИФРА 11 — рисуем через canvas
+  function shapeNumber11() {
+    const cnv = document.createElement('canvas');
+    cnv.width = 400;
+    cnv.height = 300;
+    const ctx = cnv.getContext('2d');
+    ctx.fillStyle = '#fff';
+    ctx.font = `900 220px Inter, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('11', cnv.width/2, cnv.height/2);
+    const img = ctx.getImageData(0, 0, cnv.width, cnv.height);
+    const pts = [];
+    for (let y = 0; y < cnv.height; y += 3) {
+      for (let x = 0; x < cnv.width; x += 3) {
+        const idx = (y * cnv.width + x) * 4;
+        if (img.data[idx + 3] > 128) pts.push([x, y]);
+      }
+    }
+    const arr = new Float32Array(COUNT * 2);
+    if (pts.length === 0) return arr;
+    for (let i = 0; i < COUNT; i++) {
+      const p = pts[Math.floor(Math.random() * pts.length)];
+      arr[i*2]     = (p[0] - cnv.width/2)  * 0.0042;
+      arr[i*2 + 1] = -(p[1] - cnv.height/2) * 0.0042;
+    }
+    return arr;
+  }
+
+  // 6. ЯБЛОКО — круглое тело с черенком сверху
+  function shapeApple() {
+    const arr = new Float32Array(COUNT * 2);
+    const stemPoints = Math.floor(COUNT * 0.10); // 10% точек на черенок
+    const bodyPoints = COUNT - stemPoints;
+
+    // Тело яблока — круг с лёгкой выемкой сверху
+    for (let i = 0; i < bodyPoints; i++) {
+      const t = (i / bodyPoints) * Math.PI * 2;
+      // Чуть приплюснутый круг + выемка сверху
+      const r = 0.45 - 0.06 * Math.max(0, Math.sin(t));
+      arr[i*2]     = Math.cos(t) * r;
+      arr[i*2 + 1] = Math.sin(t) * r * 0.95 - 0.03;
+    }
+
+    // Черенок — несколько точек прямой линией вверх
+    for (let i = 0; i < stemPoints; i++) {
+      const t = i / stemPoints;
+      arr[(bodyPoints + i)*2]     = -0.02 + (Math.random() - 0.5) * 0.03;
+      arr[(bodyPoints + i)*2 + 1] = 0.45 + t * 0.18;
+    }
+    return arr;
+  }
+
+  // === СПИСОК ФОРМ — 6 школьных ===
   const shapes = [
-    () => shapeSphere(),
-    () => shapeInfinity(),
-    () => shapeSpiral(),
-    () => shapeHeart(),
-    () => shapeTorus(),
+    () => shapeDNA(),
+    () => shapeFlatSpiral(),
+    () => shapeDrop(),
+    () => shapeHourglass(),
+    () => shapeNumber11(),
+    () => shapeApple(),
   ];
 
   // === ДАННЫЕ ЧАСТИЦ ===
