@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE END — Премиальные выпускные альбомы</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&family=Caveat:wght@400;500;600&family=Kalam:wght@300;400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --black: #0a0a0a;
+    --white: #fff;
+    --pink: #ff1493;
+    --pink-light: #ff69b4;
+    --pink-pale: #ffb6c1;
+  }
+
+  html, body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    height: 100vh;
+    width: 100%;
+  }
+
+  body.overlay-open { overflow: hidden; }
+
+  @media (hover: hover) and (pointer: fine) {
+    html, body, * { cursor: none !important; }
+  }
+
+  /* ============ ЭКРАН ЗАГРУЗКИ ============ */
+  #loader {
+    position: fixed; inset: 0;
+    background: var(--black);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999;
+    transition: opacity 0.6s ease, visibility 0.6s ease;
+  }
+  #loader.hidden { opacity: 0; visibility: hidden; }
+
+  #glitch-text {
+    font-family: 'Inter', sans-serif; font-weight: 900;
+    font-size: 14px; letter-spacing: 2px;
+    color: var(--white); white-space: nowrap;
+    user-select: none; transition: color 0.2s ease;
+  }
+  #glitch-text.flash { color: var(--pink); }
+
+  /* ============ КАСТОМНЫЙ КУРСОР ============ */
+  .cursor-dot, .cursor-ring {
+    position: fixed; top: 0; left: 0;
+    pointer-events: none; z-index: 10000;
+    transform: translate(-50%, -50%);
+    will-change: transform;
+  }
+  .cursor-dot {
+    width: 6px; height: 6px;
+    background: var(--pink); border-radius: 50%;
+    transition: opacity 0.2s ease;
+  }
+  .cursor-ring {
+    width: 36px; height: 36px;
+    border: 1.5px solid var(--pink); border-radius: 50%;
+    transition: width 0.3s cubic-bezier(0.16,1,0.3,1),
+                height 0.3s cubic-bezier(0.16,1,0.3,1),
+                background 0.3s ease, opacity 0.2s ease;
+  }
+  .cursor-ring.hover {
+    width: 70px; height: 70px;
+    background: rgba(255,20,147,0.1);
+  }
+  @media (hover: none) or (pointer: coarse) {
+    .cursor-dot, .cursor-ring { display: none; }
+  }
+
+  /* ============ FIXED УГЛОВЫЕ НАДПИСИ ============ */
+  .corner {
+    position: fixed; z-index: 50;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(255,182,210,0.7);
+    line-height: 1.5; mix-blend-mode: normal;
+    pointer-events: none;
+  }
+  .corner-tl { top: 24px; left: 24px; }
+  .corner-tr { top: 24px; right: 24px; text-align: right; }
+  .corner-bl { bottom: 24px; left: 24px; }
+  .corner-br { bottom: 24px; right: 24px; text-align: right; display: flex; align-items: center; gap: 12px; }
+
+  .corner .pink-dot {
+    display: inline-block; width: 6px; height: 6px;
+    background: var(--pink); border-radius: 50%;
+    margin-right: 6px; vertical-align: middle;
+    animation: blink 1.5s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* ============ ГЛАВНЫЙ ЭКРАН ============ */
+  .hero {
+    position: fixed; inset: 0; overflow: hidden;
+    opacity: 0; transition: opacity 1s ease 0.3s;
+  }
+  .hero.visible { opacity: 1; }
+
+  /* Фото-фон */
+  .hero-photo-bg {
+    position: absolute; inset: 0; z-index: 0;
+    background: url('https://i.ibb.co/F4scFZkr/2026-05-03-15-02-57.jpg') center/cover no-repeat;
+  }
+  /* Тёмный оверлей поверх фото */
+  .hero-photo-overlay {
+    position: absolute; inset: 0; z-index: 1;
+    background: linear-gradient(135deg,
+      rgba(8,2,10,0.75) 0%,
+      rgba(20,0,20,0.58) 40%,
+      rgba(8,2,10,0.80) 100%);
+  }
+  /* Розовый тинт */
+  .hero-pink-tint {
+    position: absolute; inset: 0; z-index: 2;
+    background: radial-gradient(ellipse at 50% 50%,
+      rgba(255,20,147,0.09) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-morph {
+    position: absolute; inset: 0; z-index: 3;
+    pointer-events: none; background: transparent;
+    opacity: 0; transition: opacity 1.5s ease;
+  }
+  .hero.intro-done .hero-morph { opacity: 1; }
+
+  .hero-grain {
+    position: absolute; inset: 0; z-index: 5;
+    opacity: 0.04; pointer-events: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    animation: grain 0.5s steps(2) infinite;
+  }
+  @keyframes grain {
+    0%   { transform: translate(0,0); }
+    25%  { transform: translate(-2%,1%); }
+    50%  { transform: translate(1%,-2%); }
+    75%  { transform: translate(-1%,2%); }
+    100% { transform: translate(2%,-1%); }
+  }
+
+  .hero-content {
+    position: absolute; inset: 0; z-index: 6;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: space-between;
+    text-align: center; padding: 100px 24px 80px;
+  }
+
+  /* НАВ */
+  .nav-projects, .nav-sections {
+    display: flex; gap: clamp(20px,3vw,48px);
+    justify-content: center; flex-wrap: wrap;
+    opacity: 0; transform: translateY(-20px);
+    transition: opacity 0.8s ease 1.6s, transform 0.8s ease 1.6s;
+  }
+  .nav-sections {
+    transform: translateY(20px);
+    transition: opacity 0.8s ease 1.8s, transform 0.8s ease 1.8s;
+  }
+  .hero.visible .nav-projects,
+  .hero.visible .nav-sections { opacity: 1; transform: translateY(0); }
+
+  .nav-link {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'JetBrains Mono', monospace; font-weight: 700;
+    font-size: 13px; letter-spacing: 2.5px; text-transform: uppercase;
+    color: rgba(255,182,210,0.85); text-decoration: none;
+    background: none; border: none; padding: 6px 4px;
+    cursor: pointer; position: relative;
+    transition: color 0.3s ease, transform 0.3s cubic-bezier(0.16,1,0.3,1);
+  }
+  .nav-link::before, .nav-link::after {
+    font-family: 'JetBrains Mono', monospace; font-weight: 700;
+    font-size: 13px; color: rgba(255,182,210,0.35);
+    transition: color 0.3s ease;
+  }
+  .nav-link::before { content: '['; margin-right: 4px; }
+  .nav-link::after  { content: ']'; margin-left: 4px; }
+  .nav-link .arrow {
+    display: inline-block; color: rgba(255,182,210,0.5);
+    font-size: 12px; transition: color 0.3s ease, transform 0.3s ease;
+  }
+  .nav-link:hover { color: var(--pink); transform: translateY(-2px); }
+  .nav-link:hover::before, .nav-link:hover::after { color: var(--pink); }
+  .nav-link:hover .arrow { color: var(--pink); transform: translate(2px,-2px); }
+  .nav-sections .nav-link:hover .arrow { transform: translateY(2px); }
+
+  .hero-center {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    flex: 1; width: 100%;
+  }
+
+  .hero-title {
+    position: relative; z-index: 6;
+    font-family: 'Inter', sans-serif; font-weight: 900;
+    font-size: clamp(48px,9vw,130px);
+    letter-spacing: -0.04em; line-height: 0.85;
+    color: #fff; text-transform: uppercase;
+    text-align: center; user-select: none; margin: 0;
+    white-space: nowrap;
+    text-shadow: 0 0 40px rgba(255,20,147,0.5), 0 0 90px rgba(255,20,147,0.2);
+    opacity: 0; transform: translateY(20px);
+    transition: opacity 1.2s ease 0.5s, transform 1.2s ease 0.5s;
+  }
+  .hero.visible .hero-title { opacity: 1; transform: translateY(0); }
+
+  .hero-subtitle {
+    position: relative; z-index: 6;
+    margin-top: 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; letter-spacing: 4px; text-transform: uppercase;
+    color: rgba(255,182,210,0.6); text-align: center;
+    opacity: 0; transform: translateY(20px);
+    transition: opacity 0.8s ease 1.5s, transform 0.8s ease 1.5s;
+    white-space: nowrap;
+  }
+  .hero.visible .hero-subtitle { opacity: 1; transform: translateY(0); }
+
+  /* JOKE TICKER */
+  #hero-joke {
+    position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+    z-index: 55; font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+    color: rgba(255,150,200,0.45); pointer-events: none;
+    white-space: nowrap; transition: opacity 0.4s ease;
+  }
+
+  /* ============ OVERLAY ============ */
+  .overlay {
+    position: fixed; inset: 0; z-index: 100;
+    background: var(--black);
+    transform: translateY(100%);
+    transition: transform 0.7s cubic-bezier(0.76,0,0.24,1);
+    overflow-y: auto; overflow-x: hidden;
+  }
+  .overlay.open { transform: translateY(0); }
+
+  .overlay-close {
+    position: fixed; top: 24px; right: 24px; z-index: 200;
+    width: 48px; height: 48px; background: none;
+    border: 1px solid rgba(255,182,210,0.25);
+    color: var(--white); font-family: 'JetBrains Mono', monospace;
+    font-size: 18px; display: flex; align-items: center; justify-content: center;
+    transition: background 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+    opacity: 0; pointer-events: none;
+  }
+  .overlay-close.visible { opacity: 1; pointer-events: auto; }
+  .overlay-close:hover {
+    background: var(--pink); border-color: var(--pink); transform: rotate(90deg);
+  }
+
+  /* ============ ABOUT ============ */
+  .about { position: relative; padding: 120px 8vw; background: var(--black); }
+
+  .about-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    letter-spacing: 3px; text-transform: uppercase;
+    color: rgba(255,182,210,0.5); margin-bottom: 48px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .about-label::before { content:''; width:32px; height:1px; background:var(--pink); }
+
+  .about-title {
+    font-family: 'Inter', sans-serif; font-weight: 900;
+    font-size: clamp(48px,10vw,160px); line-height: 1.0;
+    letter-spacing: -0.03em; text-transform: uppercase;
+    color: var(--white); margin-bottom: 80px;
+  }
+  .about-title .red { color: var(--pink); }
+
+  .about-manifest {
+    max-width: 800px; font-family: 'Inter', sans-serif;
+    font-size: clamp(18px,2.2vw,28px); line-height: 1.4;
+    color: rgba(255,255,255,0.85); margin-bottom: 80px;
+  }
+  .about-manifest p { margin-bottom: 24px; }
+  .about-manifest strong { font-weight: 900; color: var(--white); }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(3,1fr); gap: 40px;
+    margin: 80px 0; border-top: 1px solid rgba(255,182,210,0.1);
+    border-bottom: 1px solid rgba(255,182,210,0.1); padding: 60px 0;
+  }
+  .stat-number {
+    font-family: 'Inter', sans-serif; font-weight: 900;
+    font-size: clamp(60px,9vw,140px); line-height: 0.9;
+    letter-spacing: -0.04em; color: var(--white);
+    display: flex; align-items: baseline;
+  }
+  .stat-number .suffix { color: var(--pink); font-size: 0.6em; margin-left: 4px; }
+  .stat-label {
+    margin-top: 16px; font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+    color: rgba(255,182,210,0.5); line-height: 1.5;
+  }
+
+  .quote-block { text-align: center; margin: 120px auto; max-width: 1000px; }
+  .quote-block .q {
+    font-family: 'Inter', sans-serif; font-weight: 900;
+    font-size: clamp(36px,7vw,100px); line-height: 0.95;
+    letter-spacing: -0.03em; text-transform: uppercase; color: var(--white);
+  }
+  .quote-block .q-red { color: var(--pink); display: block; }
+
+  .photo-marquee { margin: 100px -8vw; overflow: hidden; }
+  .photo-track {
+    display: flex; gap: 24px;
+    animation: photo-scroll 60s linear infinite; width: max-content;
+  }
+  .photo-track:hover { animation-play-state: paused; }
+  .photo-track img {
+    height: 380px; width: auto; object-fit: cover;
+    filter: grayscale(20%) brightness(0.9);
+    transition: filter 0.4s ease, transform 0.4s ease;
+  }
+  .photo-track img:hover { filter: grayscale(0%) brightness(1); transform: scale(1.02); }
+  @keyframes photo-scroll { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+
+  /* ============ WORKS ============ */
+  .projects { position: relative; padding: 120px 6vw; background: var(--black); }
+
+  .projects-header {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    margin-bottom: 64px; flex-wrap: wrap; gap: 24px;
+  }
+  .projects-title {
+    font-family: 'Inter', sans-serif; font-weight: 900;
+    font-size: clamp(40px,7vw,100px); line-height: 1.0;
+    letter-spacing: -0.03em; text-transform: uppercase; color: var(--white);
+  }
+  .projects-title .red { color: var(--pink); }
+  .projects-sub {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    letter-spacing: 2px; text-transform: uppercase;
+    color: rgba(255,182,210,0.5); max-width: 280px; line-height: 1.6;
+  }
+
+  .projects-grid {
+    display: grid; grid-template-columns: repeat(3,1fr);
+    grid-template-rows: repeat(2,1fr); gap: 16px;
+  }
+  .project-card:first-child { grid-column: span 2; }
+  .project-card {
+    position: relative; aspect-ratio: 4/3;
+    overflow: hidden; background: #111;
+    text-decoration: none; color: inherit;
+  }
+  .project-card:first-child { aspect-ratio: 8/3; }
+
+  .project-cover {
+    position: absolute; inset: 0;
+    transition: transform 0.7s cubic-bezier(0.16,1,0.3,1), filter 0.5s ease;
+  }
+  .project-card[data-project="duo"]  .project-cover { background: radial-gradient(circle at 30% 40%, #2a1a2a, #0a0a0a 70%); }
+  .project-card[data-project="red"]  .project-cover { background: radial-gradient(circle at 70% 50%, #3a0a2a, #0a0a0a 70%); }
+  .project-card[data-project="lime"] .project-cover { background: radial-gradient(circle at 40% 60%, #2a1828, #0a0a0a 70%); }
+  .project-card[data-project="vgrd"] .project-cover { background: radial-gradient(circle at 60% 30%, #2e1f2e, #0a0a0a 70%); }
+  .project-card[data-project="echo"] .project-cover { background: radial-gradient(circle at 50% 50%, #2a1a24, #0a0a0a 70%); }
+  .project-card:hover .project-cover { transform: scale(1.05); filter: brightness(0.5); }
+
+  .project-deco {
+    position: absolute; font-family: 'JetBrains Mono', monospace; font-weight: 700;
+    font-size: clamp(40px,10vw,200px); color: rgba(255,182,210,0.04);
+    letter-spacing: -0.05em; line-height: 1;
+    user-select: none; pointer-events: none;
+  }
+  .project-card:nth-child(1) .project-deco { top:8%; left:6%; }
+  .project-card:nth-child(2) .project-deco { bottom:6%; right:6%; }
+  .project-card:nth-child(3) .project-deco { top:8%; right:8%; }
+  .project-card:nth-child(4) .project-deco { bottom:6%; left:6%; }
+  .project-card:nth-child(5) .project-deco { top:8%; left:8%; }
+
+  .project-info {
+    position: absolute; z-index: 2; bottom: 32px; left: 32px; right: 32px;
+    display: flex; justify-content: space-between; align-items: flex-end; gap: 16px;
+  }
+  .project-name {
+    font-family: 'Inter', sans-serif; font-weight: 900;
+    font-size: clamp(36px,5vw,72px); letter-spacing: -0.02em;
+    text-transform: uppercase; line-height: 0.9; color: var(--white);
+    transition: transform 0.5s cubic-bezier(0.16,1,0.3,1), color 0.4s ease;
+  }
+  .project-card:hover .project-name { color: var(--pink); transform: translateX(-8px); }
+
+  .project-badge {
+    position: absolute; top: 24px; left: 24px; z-index: 2;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 2px; text-transform: uppercase;
+    color: rgba(255,182,210,0.4); display: flex; align-items: center; gap: 8px;
+  }
+  .project-badge::before { content:''; width:6px; height:6px; background:var(--pink); border-radius:50%; }
+
+  .project-cta {
+    position: absolute; z-index: 2; top: 50%; left: 50%;
+    transform: translate(-50%,-50%) translateY(20px);
+    font-family: 'JetBrains Mono', monospace; font-size: 13px;
+    letter-spacing: 4px; text-transform: uppercase; color: var(--white);
+    opacity: 0;
+    transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.16,1,0.3,1);
+    pointer-events: none; white-space: nowrap;
+    border: 1px solid var(--white); padding: 14px 28px;
+  }
+  .project-card:hover .project-cta { opacity:1; transform:translate(-50%,-50%) translateY(0); }
+
+  /* ============ CONTACT ============ */
+  .contact { padding: 120px 6vw; background: var(--black); }
+
+  .contact-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    letter-spacing: 3px; text-transform: uppercase;
+    color: rgba(255,182,210,0.5); margin-bottom: 48px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .contact-label::before { content:''; width:32px; height:1px; background:var(--pink); }
+
+  .contact-title {
+    font-family: 'Inter', sans-serif; font-weight: 900;
+    font-size: clamp(48px,9vw,140px); line-height: 1.0;
+    letter-spacing: -0.03em; text-transform: uppercase;
+    color: var(--white); margin-bottom: 80px;
+  }
+  .contact-title .red { color: var(--pink); }
+
+  .contact-grid {
+    display: grid; grid-template-columns: repeat(3,1fr);
+    gap: 16px; margin-bottom: 100px;
+  }
+  .contact-card {
+    background: #111; padding: 32px;
+    text-decoration: none; color: inherit;
+    transition: background 0.4s ease, transform 0.4s ease;
+    display: flex; flex-direction: column; justify-content: space-between;
+    aspect-ratio: 1.4/1; border: 1px solid rgba(255,182,210,0.06);
+  }
+  .contact-card:hover { background: var(--pink); transform: translateY(-4px); }
+  .contact-card-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    letter-spacing: 2px; color: rgba(255,182,210,0.5); text-transform: uppercase;
+  }
+  .contact-card:hover .contact-card-label { color: rgba(255,255,255,0.7); }
+  .contact-card-value {
+    font-family: 'Inter', sans-serif; font-weight: 900;
+    font-size: clamp(20px,2.4vw,32px); line-height: 1.05;
+    letter-spacing: -0.02em; color: var(--white); margin: 16px 0;
+  }
+  .contact-card-cta {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    letter-spacing: 2px; text-transform: uppercase;
+    color: var(--pink); transition: color 0.3s ease;
+  }
+  .contact-card:hover .contact-card-cta { color: var(--white); }
+
+  .contact-jobs {
+    border: 1px solid rgba(255,182,210,0.12);
+    padding: 48px; margin-bottom: 80px; max-width: 900px;
+  }
+  .contact-jobs-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    letter-spacing: 3px; color: var(--pink); margin-bottom: 24px;
+  }
+  .contact-jobs-text {
+    font-family: 'Inter', sans-serif; font-size: clamp(18px,2.2vw,28px);
+    line-height: 1.4; color: rgba(255,255,255,0.85); margin-bottom: 24px;
+  }
+  .contact-jobs-text strong { color: var(--white); font-weight: 900; }
+  .contact-jobs-link {
+    font-family: 'JetBrains Mono', monospace; font-size: 14px;
+    letter-spacing: 2px; text-transform: uppercase; color: var(--white);
+    text-decoration: none; border-bottom: 1px solid var(--pink); padding-bottom: 4px;
+    transition: color 0.3s ease;
+  }
+  .contact-jobs-link:hover { color: var(--pink); }
+
+  .contact-related { margin-bottom: 80px; }
+  .contact-related-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    letter-spacing: 3px; color: rgba(255,182,210,0.5); margin-bottom: 24px;
+  }
+  .contact-related-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+  .related-link {
+    display: flex; flex-direction: column; padding: 24px;
+    background: #0f0f0f; text-decoration: none; color: inherit;
+    transition: background 0.3s ease; border-left: 2px solid transparent;
+  }
+  .related-link:hover { background: #1a1a1a; border-left-color: var(--pink); }
+  .related-name { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 18px; color: var(--white); margin-bottom: 8px; }
+  .related-desc { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 1.5px; color: rgba(255,182,210,0.4); text-transform: uppercase; }
+
+  .contact-footer {
+    border-top: 1px solid rgba(255,182,210,0.1); padding-top: 32px;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 2px; color: rgba(255,182,210,0.3);
+    text-transform: uppercase; line-height: 1.8;
+  }
+  .contact-footer p { margin-bottom: 8px; }
+
+  /* ============ PHOTO GALLERY ============ */
+  .photo-gallery { padding: 120px 4vw; background: var(--black); }
+  .photo-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    letter-spacing: 3px; text-transform: uppercase;
+    color: rgba(255,182,210,0.5); margin-bottom: 32px;
+    display: flex; align-items: center; gap: 12px; padding-left: 4vw;
+  }
+  .photo-label::before { content:''; width:32px; height:1px; background:var(--pink); }
+  .photo-title {
+    font-family: 'Inter', sans-serif; font-weight: 900;
+    font-size: clamp(48px,9vw,140px); line-height: 1.0;
+    letter-spacing: -0.03em; text-transform: uppercase;
+    color: var(--white); padding-left: 4vw; margin-bottom: 24px;
+  }
+  .photo-title .red { color: var(--pink); }
+  .photo-sub {
+    font-family: 'Inter', sans-serif; font-size: clamp(14px,1.6vw,18px);
+    line-height: 1.5; color: rgba(255,255,255,0.6);
+    margin-bottom: 80px; max-width: 500px; padding-left: 4vw;
+  }
+
+  .masonry { column-count: 4; column-gap: 16px; }
+  .masonry-item { break-inside: avoid; margin-bottom: 16px; overflow: hidden; position: relative; background: #111; }
+  .masonry-item img {
+    width: 100%; height: auto; display: block;
+    transition: transform 0.7s cubic-bezier(0.16,1,0.3,1), filter 0.5s ease;
+    filter: grayscale(15%) brightness(0.92);
+  }
+  .masonry-item:hover img { transform: scale(1.04); filter: grayscale(0%) brightness(1.05); }
+  .masonry-item::after {
+    content:''; position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 60%, rgba(255,20,147,0.15));
+    opacity: 0; transition: opacity 0.4s ease; pointer-events: none;
+  }
+  .masonry-item:hover::after { opacity: 1; }
+
+  .photo-counter {
+    margin-top: 80px; padding: 60px 4vw;
+    border-top: 1px solid rgba(255,182,210,0.1);
+    display: flex; align-items: baseline; gap: 24px;
+  }
+  .photo-counter-num { font-family:'Inter',sans-serif; font-weight:900; font-size:clamp(60px,10vw,140px); color:var(--pink); letter-spacing:-0.04em; line-height:0.9; }
+  .photo-counter-label { font-family:'JetBrains Mono',monospace; font-size:13px; letter-spacing:3px; text-transform:uppercase; color:rgba(255,182,210,0.5); }
+
+  /* ============ REELS ============ */
+  .reels { padding: 120px 6vw; background: var(--black); }
+  .reels-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    letter-spacing: 3px; text-transform: uppercase;
+    color: rgba(255,182,210,0.5); margin-bottom: 32px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .reels-label::before { content:''; width:32px; height:1px; background:var(--pink); }
+  .reels-title {
+    font-family: 'Inter', sans-serif; font-weight: 900;
+    font-size: clamp(48px,9vw,140px); line-height: 1.0;
+    letter-spacing: -0.03em; text-transform: uppercase;
+    color: var(--white); margin-bottom: 32px;
+  }
+  .reels-title .red { color: var(--pink); }
+  .reels-sub {
+    font-family: 'Inter', sans-serif; font-size: clamp(16px,1.8vw,22px);
+    line-height: 1.5; color: rgba(255,255,255,0.75);
+    margin-bottom: 80px; max-width: 700px;
+  }
+  .reels-sub strong { color: var(--white); font-weight: 900; }
+
+  .reels-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 80px; }
+  .reel-card {
+    position: relative; cursor: none; overflow: hidden; background: #111;
+    transition: transform 0.5s cubic-bezier(0.16,1,0.3,1);
+  }
+  .reel-card:hover { transform: translateY(-8px); }
+  .reel-frame { position: relative; aspect-ratio: 9/16; overflow: hidden; background: #0a0a0a; }
+  .reel-frame iframe {
+    position: absolute; top: -5%; left: -5%; width: 110%; height: 110%;
+    border: 0; pointer-events: none;
+  }
+  .reel-frame::after {
+    content:''; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,0.7) 100%);
+    pointer-events: none; transition: opacity 0.4s ease;
+  }
+  .reel-card:hover .reel-frame::after { opacity: 0.5; }
+  .reel-meta {
+    position: absolute; bottom: 16px; left: 16px; right: 16px; z-index: 2;
+    display: flex; justify-content: space-between; align-items: center; pointer-events: none;
+  }
+  .reel-num { font-family:'JetBrains Mono',monospace; font-weight:700; font-size:12px; letter-spacing:2px; color:rgba(255,255,255,0.7); }
+  .reel-action {
+    font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:2px;
+    text-transform:uppercase; color:var(--white); background:var(--pink); padding:6px 12px;
+    transform:translateX(8px); opacity:0;
+    transition: transform 0.4s cubic-bezier(0.16,1,0.3,1), opacity 0.4s ease;
+  }
+  .reel-card:hover .reel-action { transform:translateX(0); opacity:1; }
+
+  .reels-footer {
+    border-top: 1px solid rgba(255,182,210,0.1); padding-top: 40px;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 24px;
+  }
+  .reels-footer p { font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:2px; text-transform:uppercase; color:rgba(255,182,210,0.5); }
+  .reels-link {
+    font-family:'JetBrains Mono',monospace; font-size:13px; letter-spacing:3px;
+    text-transform:uppercase; color:var(--white); text-decoration:none;
+    border-bottom:1px solid var(--pink); padding-bottom:4px;
+    transition: color 0.3s ease, transform 0.3s ease;
+  }
+  .reels-link:hover { color:var(--pink); transform:translateX(4px); }
+
+  /* FULLSCREEN ПЛЕЕР */
+  .reel-player {
+    position: fixed; inset: 0; z-index: 300;
+    background: rgba(0,0,0,0.95); display: none;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  }
+  .reel-player.active { display: flex; }
+  .reel-player-close {
+    position: fixed; top: 24px; right: 24px; z-index: 310;
+    width: 48px; height: 48px; background: none;
+    border: 1px solid rgba(255,255,255,0.3); color: var(--white);
+    font-size: 24px; display: flex; align-items: center; justify-content: center;
+    transition: background 0.3s ease, transform 0.3s ease;
+  }
+  .reel-player-close:hover { background: var(--pink); border-color: var(--pink); transform: rotate(90deg); }
+  .reel-player-frame {
+    width: min(420px,90vw); aspect-ratio: 9/16; max-height: 90vh;
+    transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.16,1,0.3,1);
+  }
+  .reel-player-frame.switching { opacity:0; transform:scale(0.95); }
+  .reel-player-frame iframe { width:100%; height:100%; border:0; }
+  .reel-player-nav {
+    position: fixed; top: 50%; transform: translateY(-50%); z-index: 310;
+    width: 56px; height: 56px; background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.2); color: var(--white);
+    font-family: 'Inter', sans-serif; font-size: 32px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  }
+  .reel-player-prev { left: 24px; }
+  .reel-player-next { right: 24px; }
+  .reel-player-nav:hover { background:var(--pink); border-color:var(--pink); transform:translateY(-50%) scale(1.08); }
+  .reel-player-counter {
+    position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); z-index: 310;
+    font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13px; letter-spacing:4px;
+    color:rgba(255,255,255,0.7); background:rgba(0,0,0,0.4); backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px); padding:10px 18px; border:1px solid rgba(255,255,255,0.15);
+  }
+
+  /* REVEAL */
+  .reveal {
+    opacity: 0; transform: translateY(40px);
+    transition: opacity 1s cubic-bezier(0.16,1,0.3,1), transform 1s cubic-bezier(0.16,1,0.3,1);
+  }
+  .reveal.visible { opacity:1; transform:translateY(0); }
+
+  /* АДАПТИВ */
+  @media (max-width: 768px) {
+    .corner { font-size:9px; letter-spacing:1px; }
+    .corner-tl,.corner-tr { top:16px; }
+    .corner-tl,.corner-bl { left:16px; }
+    .corner-tr,.corner-br { right:16px; }
+    .corner-bl,.corner-br { bottom:16px; }
+    .nav-link { font-size:11px; letter-spacing:1.5px; padding:4px 2px; }
+    .nav-link::before,.nav-link::after { font-size:11px; }
+    .nav-projects,.nav-sections { gap:14px; }
+    .hero-content { padding:80px 16px 60px; }
+    .hero-subtitle { font-size:10px; letter-spacing:2px; }
+    .about { padding:80px 6vw; }
+    .stats { grid-template-columns:1fr; gap:60px; }
+    .photo-track img { height:240px; }
+    .photo-marquee { margin-left:-6vw; margin-right:-6vw; }
+    .projects-grid { grid-template-columns:1fr; grid-template-rows:auto; }
+    .project-card,.project-card:first-child { grid-column:span 1; aspect-ratio:4/3; }
+    .project-name { font-size:48px; }
+    .contact { padding:80px 6vw; }
+    .contact-grid { grid-template-columns:1fr; }
+    .contact-related-grid { grid-template-columns:1fr; }
+    .contact-jobs { padding:32px; }
+    .photo-gallery { padding:80px 4vw; }
+    .masonry { column-count:2; column-gap:8px; }
+    .masonry-item { margin-bottom:8px; }
+    .photo-counter { flex-direction:column; gap:12px; padding:40px 4vw; }
+    .reels { padding:80px 6vw; }
+    .reels-grid { grid-template-columns:repeat(2,1fr); gap:8px; }
+    .reels-footer { flex-direction:column; align-items:flex-start; }
+  }
+  @media (max-width:1100px) and (min-width:769px) {
+    .masonry { column-count:3; }
+    .reels-grid { grid-template-columns:repeat(2,1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ЗАГРУЗКА -->
+<div id="loader"><div id="glitch-text">·</div></div>
+
+<!-- КУРСОР -->
+<div class="cursor-dot"></div>
+<div class="cursor-ring"></div>
+
+<!-- УГЛОВЫЕ НАДПИСИ -->
+<div class="corner corner-tl">THE END<br>EST. 2022</div>
+<div class="corner corner-tr"><span class="pink-dot"></span>RECORDING<br>BY LYKBOOK</div>
+<div class="corner corner-bl"><span id="section-name">INTRO</span><br>PREMIUM LINE</div>
+<div class="corner corner-br">BY LYKBOOK</div>
+
+<!-- JOKE TICKER -->
+<div id="hero-joke">loading vibes... 🩷</div>
+
+<!-- ГЛАВНЫЙ ЭКРАН -->
+<section class="hero" id="hero">
+  <!-- ФОТО ФОН -->
+  <div class="hero-photo-bg"></div>
+  <div class="hero-photo-overlay"></div>
+  <div class="hero-pink-tint"></div>
+
+  <!-- 3D CANVAS -->
+  <canvas id="morph-canvas" class="hero-morph"></canvas>
+
+  <div class="hero-grain"></div>
+
+  <div class="hero-content">
+    <nav class="nav-projects">
+      <a class="nav-link" href="https://theend.school/lime"><span class="arrow">↗</span> LIME</a>
+      <a class="nav-link" href="https://theend.school/indevelopment"><span class="arrow">↗</span> ECHO</a>
+      <a class="nav-link" href="https://theend.school/red"><span class="arrow">↗</span> RED</a>
+      <a class="nav-link" href="https://theend.school/ember"><span class="arrow">↗</span> DUO</a>
+      <a class="nav-link" href="https://theend.school/indevelopment"><span class="arrow">↗</span> VGRD</a>
+    </nav>
+
+    <div class="hero-center">
+      <h1 class="hero-title" id="hero-title">THE END</h1>
+      <div class="hero-subtitle">— ПРЕМИАЛЬНЫЕ ВЫПУСКНЫЕ АЛЬБОМЫ —</div>
+    </div>
+
+    <nav class="nav-sections">
+      <button class="nav-link" data-overlay="works"><span class="arrow">↓</span> WORKS</button>
+      <button class="nav-link" data-overlay="reels"><span class="arrow">↓</span> REELS</button>
+      <button class="nav-link" data-overlay="about"><span class="arrow">↓</span> ABOUT</button>
+      <button class="nav-link" data-overlay="photo"><span class="arrow">↓</span> PHOTO</button>
+      <button class="nav-link" data-overlay="contact"><span class="arrow">↓</span> CONTACT</button>
+    </nav>
+  </div>
+</section>
+
+<button class="overlay-close" id="overlay-close" aria-label="Закрыть">×</button>
+
+<!-- ABOUT -->
+<div class="overlay" id="overlay-about" data-name="ABOUT">
+  <section class="about">
+    <div class="about-label reveal">[ ABOUT / 03 ]</div>
+    <h2 class="about-title glitch-title reveal">КОГДА ХОЧЕТСЯ<br><span class="red">БОЛЬШЕГО.</span></h2>
+    <div class="about-manifest reveal">
+      <p>Мы делаем альбомы, которые <strong>не хочется убирать на полку.</strong> Которые листаешь сам, показываешь гостям, достаёшь через десять лет и думаешь — вот это да.</p>
+      <p>Нас называют по-разному. Одни говорят — лучшая студия в Москве. Другие — слишком дорого и непонятно зачем так заморачиваться. Третьи молча копируют наши решения — и это, наверное, <strong>самый честный комплимент.</strong></p>
+      <p>Обе реакции нас устраивают. Мы давно перестали делать альбомы для всех.</p>
+    </div>
+    <div class="stats reveal">
+      <div class="stat">
+        <div class="stat-number" data-target="604">0</div>
+        <div class="stat-label">классов в год<br>с нами работают</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number"><span data-target="50">0</span><span class="suffix">+</span></div>
+        <div class="stat-label">проектов<br>под линейкой THE END</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number" data-target="15">0</div>
+        <div class="stat-label">лет<br>в индустрии</div>
+      </div>
+    </div>
+    <div class="quote-block reveal">
+      <div class="q">Каждый проект начинается с нуля. Иногда мы переделываем разворот три раза — не потому что клиент просит, а потому что<span class="q-red">сами не можем остановиться.</span></div>
+    </div>
+    <div class="photo-marquee">
+      <div class="photo-track">
+        <img src="https://i.ibb.co/6cFzHCdZ/1-4.jpg" alt="">
+        <img src="https://i.ibb.co/3mWH90nD/1-5.jpg" alt="">
+        <img src="https://i.ibb.co/fzBgv3Bh/1-12.jpg" alt="">
+        <img src="https://i.ibb.co/XfPBVJ0Z/1-25.jpg" alt="">
+        <img src="https://i.ibb.co/BDNNxGZ/1-29.jpg" alt="">
+        <img src="https://i.ibb.co/bg9FM3BB/1-42.jpg" alt="">
+        <img src="https://i.ibb.co/YTXTW2t1/1-37.jpg" alt="">
+        <img src="https://i.ibb.co/pjCmNv86/1-35.jpg" alt="">
+        <img src="https://i.ibb.co/TBLpBHsf/1-32.jpg" alt="">
+        <img src="https://i.ibb.co/6cFzHCdZ/1-4.jpg" alt="">
+        <img src="https://i.ibb.co/3mWH90nD/1-5.jpg" alt="">
+        <img src="https://i.ibb.co/fzBgv3Bh/1-12.jpg" alt="">
+        <img src="https://i.ibb.co/XfPBVJ0Z/1-25.jpg" alt="">
+        <img src="https://i.ibb.co/BDNNxGZ/1-29.jpg" alt="">
+        <img src="https://i.ibb.co/bg9FM3BB/1-42.jpg" alt="">
+        <img src="https://i.ibb.co/YTXTW2t1/1-37.jpg" alt="">
+        <img src="https://i.ibb.co/pjCmNv86/1-35.jpg" alt="">
+        <img src="https://i.ibb.co/TBLpBHsf/1-32.jpg" alt="">
+      </div>
+    </div>
+    <div class="quote-block reveal">
+      <div class="q">Это болезнь.<br><span class="q-red">Но красивая.</span></div>
+    </div>
+    <div class="about-manifest reveal">
+      <p>В команде нет случайных людей. Каждый прошёл через проекты, после которых понимаешь — либо ты горишь этим, либо нет. <strong>Середины не бывает.</strong></p>
+    </div>
+  </section>
+</div>
+
+<!-- WORKS -->
+<div class="overlay" id="overlay-works" data-name="WORKS">
+  <section class="projects">
+    <div class="projects-header">
+      <h2 class="projects-title glitch-title reveal">ПЯТЬ <span class="red">ЛИНЕЕК.</span><br>ПЯТЬ ИСТОРИЙ.</h2>
+      <div class="projects-sub reveal">[ WORKS / 01 ]<br><br>Под зонтиком THE END работают пять самостоятельных линеек. У каждой — свой характер.</div>
+    </div>
+    <div class="projects-grid">
+      <a class="project-card reveal" data-project="duo" href="https://theend.school/ember">
+        <div class="project-cover"></div><div class="project-deco">01</div>
+        <div class="project-badge">DUO / 01</div>
+        <div class="project-info"><div class="project-name">DUO</div></div>
+        <div class="project-cta">ENTER →</div>
+      </a>
+      <a class="project-card reveal" data-project="red" href="https://theend.school/red">
+        <div class="project-cover"></div><div class="project-deco">02</div>
+        <div class="project-badge">RED / 02</div>
+        <div class="project-info"><div class="project-name">RED</div></div>
+        <div class="project-cta">ENTER →</div>
+      </a>
+      <a class="project-card reveal" data-project="lime" href="https://theend.school/lime">
+        <div class="project-cover"></div><div class="project-deco">03</div>
+        <div class="project-badge">LIME / 03</div>
+        <div class="project-info"><div class="project-name">LIME</div></div>
+        <div class="project-cta">ENTER →</div>
+      </a>
+      <a class="project-card reveal" data-project="vgrd" href="https://theend.school/indevelopment">
+        <div class="project-cover"></div><div class="project-deco">04</div>
+        <div class="project-badge">VGRD / 04</div>
+        <div class="project-info"><div class="project-name">VGRD</div></div>
+        <div class="project-cta">ENTER →</div>
+      </a>
+      <a class="project-card reveal" data-project="echo" href="https://theend.school/indevelopment">
+        <div class="project-cover"></div><div class="project-deco">05</div>
+        <div class="project-badge">ECHO / 05</div>
+        <div class="project-info"><div class="project-name">ECHO</div></div>
+        <div class="project-cta">ENTER →</div>
+      </a>
+    </div>
+  </section>
+</div>
+
+<!-- REELS -->
+<div class="overlay" id="overlay-reels" data-name="REELS">
+  <section class="reels">
+    <div class="reels-label reveal">[ REELS / 02 ]</div>
+    <h2 class="reels-title glitch-title reveal">ДВИГАЕТСЯ?<br><span class="red">ЗНАЧИТ ЖИВОЕ.</span></h2>
+    <div class="reels-sub reveal">Альбом — это статика. <strong>Рилсы — это пульс студии.</strong> Бэкстейдж со съёмок, тизеры готовых проектов и моменты, которые в книгу не помещаются.</div>
+    <div class="reels-grid">
+      <div class="reel-card reveal" data-vimeo="1187386215">
+        <div class="reel-frame"><iframe src="https://player.vimeo.com/video/1187386215?background=1&autoplay=1&loop=1&muted=1&autopause=0&controls=0&badge=0" frameborder="0" allow="autoplay; fullscreen" title="Reel 01"></iframe></div>
+        <div class="reel-meta"><span class="reel-num">01</span><span class="reel-action">PLAY →</span></div>
+      </div>
+      <div class="reel-card reveal" data-vimeo="1187386717">
+        <div class="reel-frame"><iframe src="https://player.vimeo.com/video/1187386717?background=1&autoplay=1&loop=1&muted=1&autopause=0&controls=0&badge=0" frameborder="0" allow="autoplay; fullscreen" title="Reel 02"></iframe></div>
+        <div class="reel-meta"><span class="reel-num">02</span><span class="reel-action">PLAY →</span></div>
+      </div>
+      <div class="reel-card reveal" data-vimeo="1187387046">
+        <div class="reel-frame"><iframe src="https://player.vimeo.com/video/1187387046?background=1&autoplay=1&loop=1&muted=1&autopause=0&controls=0&badge=0" frameborder="0" allow="autoplay; fullscreen" title="Reel 03"></iframe></div>
+        <div class="reel-meta"><span class="reel-num">03</span><span class="reel-action">PLAY →</span></div>
+      </div>
+      <div class="reel-card reveal" data-vimeo="1187389446">
+        <div class="reel-frame"><iframe src="https://player.vimeo.com/video/1187389446?background=1&autoplay=1&loop=1&muted=1&autopause=0&controls=0&badge=0" frameborder="0" allow="autoplay; fullscreen" title="Reel 04"></iframe></div>
+        <div class="reel-meta"><span class="reel-num">04</span><span class="reel-action">PLAY →</span></div>
+      </div>
+    </div>
+    <div class="reels-footer reveal">
+      <p>Хочешь видеть больше? Свежие рилсы выходят каждую неделю.</p>
+      <a href="https://t.me/lykbook" target="_blank" class="reels-link">@LYKBOOK В TELEGRAM →</a>
+    </div>
+  </section>
+</div>
+
+<!-- FULLSCREEN ПЛЕЕР -->
+<div class="reel-player" id="reel-player">
+  <button class="reel-player-close" id="reel-player-close" aria-label="Закрыть">×</button>
+  <button class="reel-player-nav reel-player-prev" id="reel-player-prev" aria-label="Предыдущее">‹</button>
+  <button class="reel-player-nav reel-player-next" id="reel-player-next" aria-label="Следующее">›</button>
+  <div class="reel-player-counter" id="reel-player-counter">01 / 04</div>
+  <div class="reel-player-frame" id="reel-player-frame"></div>
+</div>
+
+<!-- PHOTO -->
+<div class="overlay" id="overlay-photo" data-name="PHOTO">
+  <section class="photo-gallery">
+    <div class="photo-label reveal">[ PHOTO / 04 ]</div>
+    <h2 class="photo-title glitch-title reveal">АРХИВ <span class="red">КАДРОВ.</span></h2>
+    <div class="photo-sub reveal">Фрагменты из съёмок, бэкстейдж, портреты, детали готовых проектов.</div>
+    <div class="masonry">
+      <div class="masonry-item"><img src="https://i.ibb.co/67kTJdV7/IMAGE-2026-04-23-19-16-35.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/XZdBPzJw/2026-04-15-17-29-49.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/r2BPT0tW/2026-04-21-20-42-40.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/HD07gPMS/2026-04-21-20-43-07.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/TxrMCFsf/2026-04-21-20-43-17.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/4nckckdd/2026-04-21-20-55-32.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/wNh26BSx/2026-04-21-20-43-41.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/LXS3Cp1n/IMAGE-2026-03-24-19-17-28.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/KjWTDzrX/IMAGE-2026-03-24-19-16-54.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/tT5fj8ss/IMAGE-2026-03-24-19-17-02.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/p6CxSXNM/2026-04-28-17-25-44.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/B5ngqR15/2026-04-28-17-26-01.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/wZPFCDtn/2026-04-28-17-26-07.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/1fsWyPDF/2026-04-28-17-26-19.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/k2tXGgNn/2026-04-28-17-26-22.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/rRm7z0kR/2026-04-28-17-26-36.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/zVQfypch/2026-04-28-17-26-46.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/HLQBWpnP/2026-04-28-17-27-07.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/V0LNyqs5/2026-04-28-17-27-15.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/SDTJ2ckt/2026-04-28-17-27-22.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/gb91jcsy/2026-04-28-17-28-12.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/MD6WDLmJ/2026-04-28-17-28-21.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/Vcb9z63W/2026-04-28-17-28-25.jpg" alt="" loading="lazy"></div>
+      <div class="masonry-item"><img src="https://i.ibb.co/DDL5Xy9B/2026-04-28-17-28-28.jpg" alt="" loading="lazy"></div>
+    </div>
+    <div class="photo-counter reveal">
+      <span class="photo-counter-num">24</span>
+      <span class="photo-counter-label">кадра в архиве</span>
+    </div>
+  </section>
+</div>
+
+<!-- CONTACT -->
+<div class="overlay" id="overlay-contact" data-name="CONTACT">
+  <section class="contact">
+    <div class="contact-label reveal">[ CONTACT / 05 ]</div>
+    <h2 class="contact-title glitch-title reveal">ПОГОВОРИМ?<br><span class="red">МЫ ЗДЕСЬ.</span></h2>
+    <div class="contact-grid">
+      <a href="https://wa.me/79581002777" class="contact-card reveal" target="_blank">
+        <div class="contact-card-label">WHATSAPP</div>
+        <div class="contact-card-value">+7 (958) 100-27-77</div>
+        <div class="contact-card-cta">написать →</div>
+      </a>
+      <a href="https://t.me/msklykbook_bot" class="contact-card reveal" target="_blank">
+        <div class="contact-card-label">TELEGRAM</div>
+        <div class="contact-card-value">@msklykbook_bot</div>
+        <div class="contact-card-cta">записаться →</div>
+      </a>
+      <a href="mailto:gomel.lookbook@gmail.com" class="contact-card reveal">
+        <div class="contact-card-label">EMAIL</div>
+        <div class="contact-card-value">gomel.lookbook<br>@gmail.com</div>
+        <div class="contact-card-cta">написать →</div>
+      </a>
+      <a href="https://t.me/lykbook" class="contact-card reveal" target="_blank">
+        <div class="contact-card-label">TELEGRAM КАНАЛ</div>
+        <div class="contact-card-value">t.me/lykbook</div>
+        <div class="contact-card-cta">подписаться →</div>
+      </a>
+      <a href="https://vk.com/lykbook" class="contact-card reveal" target="_blank">
+        <div class="contact-card-label">ВКОНТАКТЕ</div>
+        <div class="contact-card-value">vk.com/lykbook</div>
+        <div class="contact-card-cta">открыть →</div>
+      </a>
+      <a href="tel:+79581002777" class="contact-card reveal">
+        <div class="contact-card-label">ТЕЛЕФОН</div>
+        <div class="contact-card-value">+7 (958)<br>100-27-77</div>
+        <div class="contact-card-cta">позвонить →</div>
+      </a>
+    </div>
+    <div class="contact-jobs reveal">
+      <div class="contact-jobs-label">[ JOBS ]</div>
+      <p class="contact-jobs-text">Мы всегда ищем молодые таланты. Если ты <strong>фотограф, дизайнер, ретушёр</strong>, умеешь работать с рекламой или контентом — напиши нам в личку.</p>
+      <a href="https://t.me/rubanik_andrey" class="contact-jobs-link" target="_blank">@rubanik_andrey →</a>
+    </div>
+    <div class="contact-related reveal">
+      <div class="contact-related-label">[ RELATED ]</div>
+      <div class="contact-related-grid">
+        <a href="https://lykbook.com" target="_blank" class="related-link"><span class="related-name">LYKBOOK.COM</span><span class="related-desc">основной сайт</span></a>
+        <a href="https://kidsbook.ru" target="_blank" class="related-link"><span class="related-name">KIDSBOOK.RU</span><span class="related-desc">начальная школа</span></a>
+        <a href="https://maket.school" target="_blank" class="related-link"><span class="related-name">MAKET.SCHOOL</span><span class="related-desc">продажа макетов</span></a>
+      </div>
+    </div>
+    <div class="contact-footer reveal">
+      <p>THE END — ПРЕМИАЛЬНАЯ ЛИНЕЙКА ПРОЕКТНЫХ АЛЬБОМОВ ОТ СТУДИИ LYKBOOK</p>
+      <p>© LYKBOOK 2022 — 2026 / Не является публичной офертой</p>
+    </div>
+  </section>
+</div>
+
+<script>
+/* ============ 1. ЗАГРУЗКА ============ */
+(function() {
+  const glitchEl = document.getElementById('glitch-text');
+  const loader = document.getElementById('loader');
+  const hero = document.getElementById('hero');
+  const chars = '的一是不了人我在有他这为之大来以个中上们到说国和地也子时道出而要于就下得可你年生自会那后能对着事其里所去行过家十用发天如然作方成者多';
+  const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const digits = '0123456789';
+  const symbols = '!@#$%&*+=?<>/\\|';
+  const allChars = chars + latin + digits + symbols;
+  const finalText = 'THE END';
+  const totalDuration = 2500;
+  const startTime = performance.now();
+  function getRandomString(length) {
+    let s = '';
+    for (let i = 0; i < length; i++) s += allChars[Math.floor(Math.random() * allChars.length)];
+    return s;
+  }
+  let lastUpdate = 0;
+  function animate(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / totalDuration, 1);
+    const interval = 40 + progress * 80;
+    if (now - lastUpdate >= interval) {
+      lastUpdate = now;
+      const len = Math.max(1, Math.round(1 + progress * 6));
+      if (progress < 0.85) {
+        glitchEl.textContent = getRandomString(len);
+      } else if (progress < 1) {
+        const revealProgress = (progress - 0.85) / 0.15;
+        let result = '';
+        for (let i = 0; i < finalText.length; i++) {
+          if (Math.random() < revealProgress) result += finalText[i];
+          else result += finalText[i] === ' ' ? ' ' : allChars[Math.floor(Math.random() * allChars.length)];
+        }
+        glitchEl.textContent = result;
+      }
+    }
+    if (progress < 1) requestAnimationFrame(animate);
+    else finishLoader();
+  }
+  function finishLoader() {
+    glitchEl.textContent = finalText;
+    setTimeout(() => { glitchEl.classList.add('flash'); setTimeout(() => glitchEl.classList.remove('flash'), 150); }, 250);
+    setTimeout(() => {
+      glitchEl.style.transition = 'opacity 0.3s ease';
+      glitchEl.style.opacity = '0';
+      loader.style.transition = 'opacity 1.2s ease';
+      loader.style.opacity = '0';
+      setTimeout(() => loader.classList.add('hidden'), 1300);
+      hero.classList.add('visible');
+      hero.classList.add('intro-done');
+    }, 500);
+  }
+  requestAnimationFrame(animate);
+})();
+
+/* ============ 2. КУРСОР ============ */
+(function() {
+  const dot = document.querySelector('.cursor-dot');
+  const ring = document.querySelector('.cursor-ring');
+  if (!dot || !ring) return;
+  let mouseX = window.innerWidth/2, mouseY = window.innerHeight/2;
+  let dotX = mouseX, dotY = mouseY, ringX = mouseX, ringY = mouseY;
+  document.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
+  function loop() {
+    dotX += (mouseX - dotX) * 0.9; dotY += (mouseY - dotY) * 0.9;
+    ringX += (mouseX - ringX) * 0.15; ringY += (mouseY - ringY) * 0.15;
+    dot.style.transform = `translate(${dotX}px, ${dotY}px) translate(-50%, -50%)`;
+    ring.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
+    requestAnimationFrame(loop);
+  }
+  loop();
+  const hoverables = 'a, button, .nav-link, [data-magnet]';
+  document.addEventListener('mouseover', e => { if (e.target.closest(hoverables)) ring.classList.add('hover'); });
+  document.addEventListener('mouseout',  e => { if (e.target.closest(hoverables)) ring.classList.remove('hover'); });
+  document.addEventListener('mouseleave', () => { dot.style.opacity='0'; ring.style.opacity='0'; });
+  document.addEventListener('mouseenter', () => { dot.style.opacity='1'; ring.style.opacity='1'; });
+})();
+
+/* ============ 3. ОВЕРЛЕИ ============ */
+(function() {
+  const closeBtn = document.getElementById('overlay-close');
+  const sectionLabel = document.getElementById('section-name');
+  let activeOverlay = null;
+  function openOverlay(name) {
+    const overlay = document.getElementById('overlay-' + name);
+    if (!overlay) return;
+    if (activeOverlay) closeOverlay();
+    overlay.classList.add('open');
+    overlay.scrollTop = 0;
+    document.body.classList.add('overlay-open');
+    activeOverlay = overlay;
+    closeBtn.classList.add('visible');
+    if (sectionLabel) sectionLabel.textContent = overlay.dataset.name || name.toUpperCase();
+    setTimeout(() => triggerReveals(overlay), 400);
+    setTimeout(() => triggerCounters(overlay), 600);
+    setTimeout(() => triggerGlitchTitles(overlay), 500);
+  }
+  function closeOverlay() {
+    if (!activeOverlay) return;
+    activeOverlay.querySelectorAll('.glitch-title').forEach(el => delete el.dataset.glitched);
+    activeOverlay.querySelectorAll('[data-target]').forEach(el => { delete el.dataset.counted; el.textContent = '0'; });
+    activeOverlay.querySelectorAll('.reveal').forEach(el => el.classList.remove('visible'));
+    activeOverlay.classList.remove('open');
+    document.body.classList.remove('overlay-open');
+    closeBtn.classList.remove('visible');
+    activeOverlay = null;
+    if (sectionLabel) sectionLabel.textContent = 'INTRO';
+  }
+  document.querySelectorAll('[data-overlay]').forEach(btn => {
+    btn.addEventListener('click', e => { e.preventDefault(); openOverlay(btn.dataset.overlay); });
+  });
+  closeBtn.addEventListener('click', closeOverlay);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeOverlay(); });
+  function triggerReveals(container) {
+    container.querySelectorAll('.reveal').forEach((el, i) => setTimeout(() => el.classList.add('visible'), i * 100));
+  }
+  function triggerCounters(container) {
+    container.querySelectorAll('[data-target]').forEach(el => animateCount(el));
+  }
+  function animateCount(el) {
+    if (el.dataset.counted) return;
+    el.dataset.counted = '1';
+    const target = parseInt(el.dataset.target, 10);
+    const duration = 2000;
+    const startTime = performance.now();
+    function tick(now) {
+      const p = Math.min((now - startTime) / duration, 1);
+      el.textContent = Math.round(target * (1 - Math.pow(1-p, 3)));
+      if (p < 1) requestAnimationFrame(tick); else el.textContent = target;
+    }
+    requestAnimationFrame(tick);
+  }
+  function triggerGlitchTitles(container) {
+    container.querySelectorAll('.glitch-title').forEach((el, idx) => setTimeout(() => glitchTitle(el), idx * 200));
+  }
+  function glitchTitle(titleEl) {
+    if (!titleEl || titleEl.dataset.glitched) return;
+    titleEl.dataset.glitched = '1';
+    const originalHTML = titleEl.innerHTML;
+    const originalText = titleEl.textContent.trim();
+    const ac = '的一是不了人我在有他这为之大来以个中上们到说国ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%&*+=?<>/\\|';
+    const duration = 1000;
+    const startT = performance.now();
+    let lastT = 0;
+    function tick(now) {
+      const p = Math.min((now - startT) / duration, 1);
+      if (now - lastT >= 50) {
+        lastT = now;
+        let result = '';
+        for (let i = 0; i < originalText.length; i++) {
+          const ch = originalText[i];
+          if (ch === ' ' || ch === '\n') result += ch;
+          else if (Math.random() < p) result += ch;
+          else result += ac[Math.floor(Math.random() * ac.length)];
+        }
+        titleEl.textContent = result;
+      }
+      if (p < 1) requestAnimationFrame(tick);
+      else titleEl.innerHTML = originalHTML;
+    }
+    titleEl.textContent = originalText;
+    requestAnimationFrame(tick);
+  }
+})();
+
+/* ============ 4. JOKE TICKER ============ */
+(function() {
+  const jokeEl = document.getElementById('hero-joke');
+  if (!jokeEl) return;
+  const jokes = [
+    'loading vibes... 🩷',
+    'шрифт подобран с любовью',
+    'дизайнер не спал 3 ночи',
+    'альбом будет огонь (но розовый)',
+    'клиент: а можно чуть другое?',
+    'правки приняты. ещё раз.',
+    '404: компромисс not found',
+    'вёрстка: идеально 💅',
+    'пантон 219 — это не просто цвет',
+    'THE END — но красиво',
+    'кто не успел — тот не выпускник',
+    'дедлайн: вчера',
+  ];
+  let ji = 0;
+  jokeEl.style.transition = 'opacity 0.4s ease';
+  setInterval(() => {
+    ji = (ji + 1) % jokes.length;
+    jokeEl.style.opacity = '0';
+    setTimeout(() => { jokeEl.textContent = jokes[ji]; jokeEl.style.opacity = '1'; }, 400);
+  }, 3200);
+})();
+
+/* ============ 5. РОЗОВАЯ 3D ГРАФИКА ============ */
+(function() {
+  const canvas = document.getElementById('morph-canvas');
+  if (!canvas) return;
+  if (typeof THREE === 'undefined') return;
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  let W = window.innerWidth, H = window.innerHeight;
+  renderer.setSize(W, H);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setClearColor(0x000000, 0);
+
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x1a0010, 0.016);
+  const camera = new THREE.PerspectiveCamera(60, W/H, 0.1, 1000);
+  camera.position.set(0, 0, 18);
+
+  /* ТОРЫ */
+  const tori = [];
+  for (let i = 0; i < 5; i++) {
+    const geo = new THREE.TorusGeometry(1.6 + i * 0.75, 0.07 + i * 0.035, 16, 90);
+    const mat = new THREE.MeshBasicMaterial({
+      color: new THREE.Color().setHSL(0.87 + i * 0.025, 1, 0.68),
+      wireframe: true, transparent: true, opacity: 0.28 - i * 0.02
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.rotation.x = Math.random() * Math.PI;
+    mesh.rotation.y = Math.random() * Math.PI;
+    mesh.userData = { rx:(Math.random()-0.5)*0.009, ry:(Math.random()-0.5)*0.013, rz:(Math.random()-0.5)*0.007 };
+    scene.add(mesh); tori.push(mesh);
+  }
+
+  /* ШАР */
+  const sphere = new THREE.Mesh(
+    new THREE.IcosahedronGeometry(3, 4),
+    new THREE.MeshBasicMaterial({ color: 0xff1493, wireframe: true, transparent: true, opacity: 0.13 })
+  );
+  scene.add(sphere);
+
+  /* СЕРДЕЧКИ */
+  const hCount = 700;
+  const hPos = new Float32Array(hCount * 3);
+  for (let i = 0; i < hCount; i++) {
+    const t2 = (i / hCount) * Math.PI * 2;
+    const sc = 1.5 + Math.random() * 9;
+    const hx = 16 * Math.pow(Math.sin(t2), 3);
+    const hy = 13*Math.cos(t2) - 5*Math.cos(2*t2) - 2*Math.cos(3*t2) - Math.cos(4*t2);
+    hPos[i*3]   = (hx/16) * sc * (Math.random()<0.5?1:-1);
+    hPos[i*3+1] = (hy/16) * sc * 0.5 + (Math.random()-0.5)*7;
+    hPos[i*3+2] = (Math.random()-0.5)*28;
+  }
+  const hGeo = new THREE.BufferGeometry();
+  hGeo.setAttribute('position', new THREE.BufferAttribute(hPos, 3));
+  const hearts = new THREE.Points(hGeo, new THREE.PointsMaterial({ color:0xff69b4, size:0.07, transparent:true, opacity:0.55 }));
+  scene.add(hearts);
+
+  /* ЗВЁЗДЫ */
+  const sPos = new Float32Array(1400 * 3);
+  for (let i = 0; i < 1400; i++) {
+    sPos[i*3]=(Math.random()-0.5)*90; sPos[i*3+1]=(Math.random()-0.5)*90; sPos[i*3+2]=(Math.random()-0.5)*90;
+  }
+  const sGeo = new THREE.BufferGeometry();
+  sGeo.setAttribute('position', new THREE.BufferAttribute(sPos, 3));
+  const stars = new THREE.Points(sGeo, new THREE.PointsMaterial({ color:0xffb6c1, size:0.045, transparent:true, opacity:0.45 }));
+  scene.add(stars);
+
+  /* КОЛЬЦА */
+  const rings = [];
+  for (let k = 0; k < 10; k++) {
+    const geo = new THREE.TorusGeometry(0.35 + Math.random()*0.9, 0.018, 8, 40);
+    const mat = new THREE.MeshBasicMaterial({
+      color: new THREE.Color().setHSL(0.86 + Math.random()*0.08, 1, 0.72),
+      transparent: true, opacity: 0.35 + Math.random()*0.3
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set((Math.random()-0.5)*18, (Math.random()-0.5)*11, (Math.random()-0.5)*7);
+    mesh.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
+    mesh.userData = { vx:(Math.random()-0.5)*0.012, vy:(Math.random()-0.5)*0.009, rx:(Math.random()-0.5)*0.02, ry:(Math.random()-0.5)*0.015 };
+    scene.add(mesh); rings.push(mesh);
+  }
+
+  /* СВЕТ */
+  scene.add(new THREE.AmbientLight(0xff69b4, 0.5));
+  const pinkL = new THREE.PointLight(0xff1493, 3, 22);
+  pinkL.position.set(3, 3, 6); scene.add(pinkL);
+  const purpleL = new THREE.PointLight(0xcc44ff, 2, 16);
+  purpleL.position.set(-5, -2, 4); scene.add(purpleL);
+
+  /* МЫШЬ */
+  const isMobile = window.innerWidth < 768;
+  let mx = 0, my = 0;
+  window.addEventListener('mousemove', e => {
+    mx = (e.clientX/window.innerWidth - 0.5)*2;
+    my = -(e.clientY/window.innerHeight - 0.5)*2;
+  });
+
+  /* АНИМАЦИЯ */
+  let t = 0;
+  function animate() {
+    requestAnimationFrame(animate);
+    t += 0.008;
+    tori.forEach((m, i) => {
+      m.rotation.x += m.userData.rx; m.rotation.y += m.userData.ry; m.rotation.z += m.userData.rz;
+      m.scale.setScalar(1 + Math.sin(t + i * 1.3) * 0.045);
+    });
+    sphere.rotation.y += 0.004; sphere.rotation.x += 0.0015;
+    sphere.scale.setScalar(1 + Math.sin(t * 1.2) * 0.07);
+    hearts.rotation.y += 0.001; hearts.rotation.z += 0.0004;
+    stars.rotation.y += 0.0002;
+    rings.forEach(r => {
+      r.position.x += r.userData.vx; r.position.y += r.userData.vy;
+      r.rotation.x += r.userData.rx; r.rotation.y += r.userData.ry;
+      if (Math.abs(r.position.x) > 10) r.userData.vx *= -1;
+      if (Math.abs(r.position.y) > 7)  r.userData.vy *= -1;
+    });
+    pinkL.intensity = 2.5 + Math.sin(t*1.7)*0.6;
+    pinkL.position.x = Math.sin(t*0.5)*5; pinkL.position.y = Math.cos(t*0.35)*4;
+    purpleL.intensity = 1.5 + Math.cos(t*2.1)*0.4;
+    if (!isMobile) {
+      camera.position.x += (mx*2.5 - camera.position.x)*0.04;
+      camera.position.y += (my*1.5 - camera.position.y)*0.04;
+    }
+    camera.lookAt(0, 0, 0);
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize', () => {
+    W = window.innerWidth; H = window.innerHeight;
+    camera.aspect = W/H; camera.updateProjectionMatrix(); renderer.setSize(W, H);
+  });
+})();
+
+/* ============ 6. FULLSCREEN ПЛЕЕР ============ */
+(function() {
+  const player = document.getElementById('reel-player');
+  const playerFrame = document.getElementById('reel-player-frame');
+  const playerClose = document.getElementById('reel-player-close');
+  const playerPrev = document.getElementById('reel-player-prev');
+  const playerNext = document.getElementById('reel-player-next');
+  const playerCounter = document.getElementById('reel-player-counter');
+  if (!player || !playerFrame) return;
+  const reelCards = Array.from(document.querySelectorAll('.reel-card'));
+  const reelIds = reelCards.map(c => c.dataset.vimeo).filter(Boolean);
+  let currentIndex = 0;
+  function pad2(n) { return n.toString().padStart(2, '0'); }
+  function updateCounter() {
+    if (playerCounter) playerCounter.textContent = pad2(currentIndex+1) + ' / ' + pad2(reelIds.length);
+  }
+  function loadReel(index) {
+    const total = reelIds.length;
+    if (!total) return;
+    currentIndex = ((index % total) + total) % total;
+    playerFrame.classList.add('switching');
+    setTimeout(() => {
+      playerFrame.innerHTML = `<iframe src="https://player.vimeo.com/video/${reelIds[currentIndex]}?autoplay=1&loop=1&muted=0&autopause=0&controls=1&badge=0" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+      playerFrame.classList.remove('switching');
+      updateCounter();
+    }, 250);
+  }
+  function openReel(vimeoId) {
+    const idx = reelIds.indexOf(vimeoId);
+    currentIndex = idx >= 0 ? idx : 0;
+    playerFrame.innerHTML = `<iframe src="https://player.vimeo.com/video/${reelIds[currentIndex]}?autoplay=1&loop=1&muted=0&autopause=0&controls=1&badge=0" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+    updateCounter();
+    player.classList.add('active');
+    document.body.classList.add('overlay-open');
+  }
+  function closeReel() {
+    player.classList.remove('active');
+    setTimeout(() => { playerFrame.innerHTML = ''; }, 300);
+  }
+  reelCards.forEach(card => { card.addEventListener('click', () => { if (card.dataset.vimeo) openReel(card.dataset.vimeo); }); });
+  playerClose.addEventListener('click', closeReel);
+  if (playerPrev) playerPrev.addEventListener('click', () => loadReel(currentIndex - 1));
+  if (playerNext) playerNext.addEventListener('click', () => loadReel(currentIndex + 1));
+  document.addEventListener('keydown', e => {
+    if (!player.classList.contains('active')) return;
+    if (e.key === 'Escape') { closeReel(); e.stopPropagation(); }
+    else if (e.key === 'ArrowLeft') loadReel(currentIndex - 1);
+    else if (e.key === 'ArrowRight') loadReel(currentIndex + 1);
+  });
+  player.addEventListener('click', e => { if (e.target === player) closeReel(); });
+  let touchStartX = 0;
+  player.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
+  player.addEventListener('touchend', e => {
+    const diff = e.changedTouches[0].screenX - touchStartX;
+    if (Math.abs(diff) > 50) { if (diff < 0) loadReel(currentIndex+1); else loadReel(currentIndex-1); }
+  }, { passive: true });
+})();
+</script>
+
+</body>
+</html>
