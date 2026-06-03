@@ -56,6 +56,57 @@
     .cursor-dot, .cursor-ring { display: none; }
   }
 
+  /* === NEGATIVE CURSOR EFFECT — cyan под курсором === */
+  /* Применяется к заголовкам с классом .negative-fx */
+  .negative-fx {
+    position: relative;
+    isolation: isolate;
+    display: inline-block;
+  }
+
+  /* Базовый слой — обычный чёрный текст */
+  .negative-fx .negative-base {
+    position: relative;
+    display: inline-block;
+  }
+
+  /* Цветной слой — поверх базового, обрезан кругом курсора */
+  .negative-fx .negative-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    color: #00d4ff;  /* cyan-негатив */
+    pointer-events: none;
+    /* По умолчанию ничего не видно — клип в центре с нулевым радиусом */
+    -webkit-clip-path: circle(0px at -100px -100px);
+    clip-path: circle(0px at -100px -100px);
+    will-change: clip-path;
+    /* italic em должен сохранить стиль */
+  }
+
+  .negative-fx .negative-layer em {
+    font-style: italic;
+    font-weight: 400;
+  }
+
+  /* Если заголовок block-level — обёртка тоже block */
+  h1.negative-fx, h2.negative-fx, h3.negative-fx {
+    display: block;
+  }
+
+  /* Курсор-кольцо/точка на больших заголовках */
+  .cursor-ring.on-negative {
+    border-color: #00d4ff;
+    width: 80px;
+    height: 80px;
+  }
+
+  .cursor-dot.on-negative {
+    background: #00d4ff;
+  }
+
   /* === ОБЩИЕ КЛАССЫ === */
   .smallcaps {
     font-family: 'Inter', sans-serif;
@@ -161,22 +212,30 @@
     margin-right: 6px;
   }
 
-  /* === ОГРОМНЫЙ ЛОГОТИП ВОГАДЕН === */
+  /* === ОГРОМНЫЙ ЛОГОТИП ВОГАДЕН — одна строка === */
   .hero-logo {
     font-family: 'Cormorant Garamond', serif;
     font-weight: 500;
-    font-size: clamp(80px, 16vw, 280px);
-    line-height: 0.85;
+    font-size: clamp(60px, 13vw, 240px);
+    line-height: 0.9;
     letter-spacing: -0.02em;
     text-transform: uppercase;
     color: var(--ink);
     user-select: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: clip;
   }
 
-  /* Разрыв между группами букв как у L'OISEAU */
-  .hero-logo .gap {
+  /* Маленькие точки между буквами как у L'OISEAU */
+  .hero-logo .dot {
     display: inline-block;
-    width: 0.3em;
+    width: 0.12em;
+    height: 0.12em;
+    background: var(--ink);
+    border-radius: 50%;
+    vertical-align: 0.42em;
+    margin: 0 0.08em;
   }
 
   .hero-logo em {
@@ -233,47 +292,6 @@
   @keyframes scrollPulse {
     0%, 100% { opacity: 0.4; }
     50% { opacity: 1; }
-  }
-
-  /* Маленькая обложка-картинка в hero */
-  .hero-cover {
-    position: absolute;
-    top: 50%;
-    right: 60px;
-    transform: translateY(-50%);
-    width: 220px;
-    aspect-ratio: 3 / 4;
-    background: var(--light-gray);
-    overflow: hidden;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.15);
-    z-index: 1;
-  }
-
-  .hero-cover img {
-    width: 100%; height: 100%;
-    object-fit: cover;
-  }
-
-  .hero-cover-tag {
-    position: absolute;
-    bottom: 12px; left: 12px;
-    background: var(--paper);
-    color: var(--ink);
-    padding: 6px 10px;
-    font-family: 'Inter', sans-serif;
-    font-size: 9px;
-    letter-spacing: 0.2em;
-    font-weight: 500;
-    text-transform: uppercase;
-  }
-
-  @media (max-width: 1100px) {
-    .hero-cover {
-      position: static;
-      transform: none;
-      margin: 40px auto;
-      width: 200px;
-    }
   }
 
   @media (max-width: 768px) {
@@ -393,18 +411,19 @@
   @media (max-width: 600px)  { .spreads-grid { grid-template-columns: repeat(3, 1fr); } }
 
   .spread-cell {
-    aspect-ratio: 4 / 3;  /* как разворот журнала (две страницы) */
+    aspect-ratio: 4 / 3;
     background: var(--light-gray);
     overflow: hidden;
     position: relative;
-    transition: z-index 0s linear 0.4s;  /* z-index возвращается с задержкой */
+    cursor: pointer !important;
   }
 
   .spread-cell img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.3s ease;
   }
 
   /* Тэг номера разворота на каждой миниатюре */
@@ -430,31 +449,61 @@
     opacity: 1;
   }
 
-  /* === HOVER — увеличение === */
-  .spread-cell:hover {
-    z-index: 50;
-    transition: z-index 0s linear 0s;
+  /* === ОВЕРЛЕЙ ДЛЯ УВЕЛИЧЕННОЙ КАРТИНКИ === */
+  .spread-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(253, 253, 253, 0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    z-index: 5000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 24px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .spread-cell:hover img {
-    transform: scale(2.4);
-    box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+  .spread-overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
   }
 
-  /* Затемнение остальных при hover любой ячейки сетки */
-  .spreads-grid:hover .spread-cell:not(:hover) img {
-    filter: brightness(0.5) blur(1px);
-    transition: filter 0.4s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  .spread-overlay-img {
+    max-width: 75vw;
+    max-height: 75vh;
+    object-fit: contain;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.25);
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: scale(0.95);
+  }
+
+  .spread-overlay.visible .spread-overlay-img {
+    transform: scale(1);
+  }
+
+  .spread-overlay-caption {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+
+  .spread-overlay-caption .red {
+    color: var(--red);
+    margin-right: 12px;
   }
 
   /* Mobile — без hover (тач) */
   @media (hover: none) or (pointer: coarse) {
-    .spread-cell:hover img {
-      transform: none;
-    }
-    .spreads-grid:hover .spread-cell:not(:hover) img {
-      filter: none;
-    }
+    .spread-overlay { display: none; }
   }
 
   @media (max-width: 768px) {
@@ -822,6 +871,15 @@
 <div class="cursor-dot" id="cursor-dot"></div>
 <div class="cursor-ring" id="cursor-ring"></div>
 
+<!-- ОВЕРЛЕЙ ДЛЯ УВЕЛИЧЕННОГО РАЗВОРОТА -->
+<div class="spread-overlay" id="spread-overlay">
+  <img class="spread-overlay-img" id="spread-overlay-img" src="" alt="">
+  <div class="spread-overlay-caption" id="spread-overlay-caption">
+    <span class="red">№01 GARDEN</span>
+    <span>стр 04-05</span>
+  </div>
+</div>
+
 <!-- TOPBAR -->
 <nav class="topbar">
   <div class="topbar-left">
@@ -843,17 +901,15 @@
     <div class="hero-categories">
       <span class="hero-category active"><span class="num">№01</span>GARDEN</span>
       <span class="hero-category"><span class="num">№02</span>CHINA</span>
-      <span class="hero-category"><span class="num">№03</span>YOURS?</span>
+      <span class="hero-category"><span class="num">№03</span>NEXT ISSUE</span>
     </div>
     <span class="smallcaps" style="color: var(--gray);">MAGAZINE / EST. 2024</span>
   </div>
 
-  <h1 class="hero-logo">VO<span class="gap"></span>GAR<span class="gap"></span>DEN</h1>
-
-  <div class="hero-cover">
-    <img src="https://i.ibb.co/hJNgjxzd/3.jpg" alt="VOGARDEN cover">
-    <div class="hero-cover-tag">№01 GARDEN</div>
-  </div>
+  <h1 class="hero-logo negative-fx" data-text="VO·GARDEN">
+    <span class="negative-base">VO<span class="dot"></span>GARDEN</span>
+    <span class="negative-layer" aria-hidden="true">VO<span class="dot"></span>GARDEN</span>
+  </h1>
 
   <div class="hero-bottom">
     <p class="hero-tagline">
@@ -863,7 +919,7 @@
     <div class="hero-meta">
       <b>VOGARDEN</b> — журнал выпускного альбома.<br>
       Одна вёрстка, разные концепции под класс.<br>
-      Сад, Китай — или ваша вселенная.
+      Райский сад, восток — или ваша вселенная.
     </div>
     <div class="hero-scroll">↓ Каталог разворотов</div>
   </div>
@@ -873,7 +929,10 @@
 <!-- 2. CATALOG TITLE                              -->
 <!-- ============================================ -->
 <div class="section-title-block" id="issues">
-  <h2 class="section-title">Issues <em>2024</em></h2>
+  <h2 class="section-title negative-fx">
+    <span class="negative-base">Issues <em>2024</em></span>
+    <span class="negative-layer" aria-hidden="true">Issues <em>2024</em></span>
+  </h2>
   <div class="section-meta">
     Выпусков: <b>02 + ваш</b><br>
     Разворотов всего: <b>20</b><br>
@@ -886,7 +945,10 @@
 <!-- ============================================ -->
 <section class="issue-block fade-in">
   <div class="issue-header">
-    <h3 class="issue-name">№01 <em>Garden</em></h3>
+    <h3 class="issue-name negative-fx">
+      <span class="negative-base">№01 <em>Garden</em></span>
+      <span class="negative-layer" aria-hidden="true">№01 <em>Garden</em></span>
+    </h3>
     <p class="issue-tagline">fresh, blooming, light</p>
     <div class="issue-count">Разворотов<b>10</b></div>
   </div>
@@ -940,7 +1002,10 @@
 <!-- ============================================ -->
 <section class="issue-block fade-in">
   <div class="issue-header">
-    <h3 class="issue-name">№02 <em>China</em></h3>
+    <h3 class="issue-name negative-fx">
+      <span class="negative-base">№02 <em>China</em></span>
+      <span class="negative-layer" aria-hidden="true">№02 <em>China</em></span>
+    </h3>
     <p class="issue-tagline">red, eastern, bold</p>
     <div class="issue-count">Разворотов<b>10</b></div>
   </div>
@@ -990,12 +1055,15 @@
 </section>
 
 <!-- ============================================ -->
-<!-- 5. MANIFESTO — Ваша тема                      -->
+<!-- 5. MANIFESTO — NEXT ISSUE                     -->
 <!-- ============================================ -->
 <section class="manifesto" id="concept">
   <div>
     <div class="manifesto-eyebrow">— Выпуск №03 —</div>
-    <h2 class="manifesto-title">Your <em>theme</em></h2>
+    <h2 class="manifesto-title negative-fx">
+      <span class="negative-base"><em>Next</em><br>Issue</span>
+      <span class="negative-layer" aria-hidden="true"><em>Next</em><br>Issue</span>
+    </h2>
   </div>
   <div>
     <p class="manifesto-text">
@@ -1026,7 +1094,10 @@
 <!-- ============================================ -->
 <section class="video-section">
   <div class="video-section-header">
-    <h2>Watch <em>how it lives</em></h2>
+    <h2 class="negative-fx">
+      <span class="negative-base">Watch <em>how it lives</em></span>
+      <span class="negative-layer" aria-hidden="true">Watch <em>how it lives</em></span>
+    </h2>
     <div class="video-section-meta">Тизер · 2024</div>
   </div>
   <div class="video-wrap">
@@ -1048,7 +1119,10 @@
   </div>
   <div class="specs-text fade-in">
     <div class="specs-text-eyebrow">— VOGARDEN · спецификация —</div>
-    <h2 class="specs-text-title">Book <em>as</em> magazine</h2>
+    <h2 class="specs-text-title negative-fx">
+      <span class="negative-base">Book <em>as</em> magazine</span>
+      <span class="negative-layer" aria-hidden="true">Book <em>as</em> magazine</span>
+    </h2>
     <p class="specs-desc">
       Журнальная вёрстка с засечковой типографикой.
       Гипер-портреты на цветных фонах. Один дизайн —
@@ -1106,7 +1180,7 @@
 </footer>
 
 <script>
-/* ============ 1. КУРСОР ============ */
+/* ============ 1. КУРСОР + NEGATIVE-FX НА ЗАГОЛОВКАХ ============ */
 (function() {
   if (window.matchMedia('(hover: none)').matches) return;
   const dot = document.getElementById('cursor-dot');
@@ -1114,7 +1188,46 @@
   let mx = window.innerWidth / 2, my = window.innerHeight / 2;
   let dx = mx, dy = my, rx = mx, ry = my;
 
-  window.addEventListener('mousemove', (e) => { mx = e.clientX; my = e.clientY; });
+  const negativeEls = document.querySelectorAll('.negative-fx');
+  const NEGATIVE_RADIUS = 80;  // радиус круга-маски
+
+  window.addEventListener('mousemove', (e) => {
+    mx = e.clientX;
+    my = e.clientY;
+
+    // Обновляем clip-path у всех негативных заголовков относительно их собственных координат
+    let isOverNegative = false;
+    negativeEls.forEach(el => {
+      const rect = el.getBoundingClientRect();
+      // Координаты курсора относительно элемента
+      const localX = mx - rect.left;
+      const localY = my - rect.top;
+
+      // Проверяем — попадает ли курсор в зону элемента (с небольшим запасом)
+      const margin = NEGATIVE_RADIUS;
+      const inside = localX > -margin && localX < rect.width + margin &&
+                     localY > -margin && localY < rect.height + margin;
+
+      const layer = el.querySelector('.negative-layer');
+      if (layer) {
+        if (inside) {
+          layer.style.clipPath = `circle(${NEGATIVE_RADIUS}px at ${localX}px ${localY}px)`;
+          layer.style.webkitClipPath = `circle(${NEGATIVE_RADIUS}px at ${localX}px ${localY}px)`;
+          // Проверка — действительно ли курсор над текстом (узкое попадание)
+          if (localX > 0 && localX < rect.width && localY > 0 && localY < rect.height) {
+            isOverNegative = true;
+          }
+        } else {
+          layer.style.clipPath = `circle(0px at -100px -100px)`;
+          layer.style.webkitClipPath = `circle(0px at -100px -100px)`;
+        }
+      }
+    });
+
+    // Подсветка самого курсора в cyan когда он над негативным заголовком
+    dot.classList.toggle('on-negative', isOverNegative);
+    ring.classList.toggle('on-negative', isOverNegative);
+  });
 
   function loop() {
     dx += (mx - dx) * 0.9;
@@ -1134,7 +1247,45 @@
 })();
 
 
-/* ============ 2. FADE-IN ============ */
+/* ============ 2. SPREAD HOVER OVERLAY ============ */
+(function() {
+  if (window.matchMedia('(hover: none)').matches) return;
+
+  const overlay = document.getElementById('spread-overlay');
+  const overlayImg = document.getElementById('spread-overlay-img');
+  const overlayCaption = document.getElementById('spread-overlay-caption');
+
+  document.querySelectorAll('.spread-cell').forEach(cell => {
+    const img = cell.querySelector('img');
+    const tag = cell.querySelector('.spread-tag');
+
+    cell.addEventListener('mouseenter', () => {
+      if (!img) return;
+      overlayImg.src = img.src;
+      // Парсим тэг: "№01 · стр 04-05"
+      const tagText = tag ? tag.textContent.trim() : '';
+      const parts = tagText.split('·').map(s => s.trim());
+      if (parts.length === 2) {
+        overlayCaption.innerHTML = `<span class="red">${parts[0]}</span><span>${parts[1]}</span>`;
+      } else {
+        overlayCaption.innerHTML = `<span class="red">${tagText}</span>`;
+      }
+      overlay.classList.add('visible');
+    });
+
+    cell.addEventListener('mouseleave', () => {
+      overlay.classList.remove('visible');
+    });
+  });
+
+  // По клику на оверлей — закрыть (вдруг hover слетит)
+  overlay.addEventListener('click', () => {
+    overlay.classList.remove('visible');
+  });
+})();
+
+
+/* ============ 3. FADE-IN ============ */
 const fadeObserver = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     if (entry.isIntersecting) entry.target.classList.add('visible');
