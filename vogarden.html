@@ -131,48 +131,11 @@
   }
 
   /* ============================================ */
-  /* HEADER NAV (мини бар сверху)                 */
-  /* ============================================ */
-  .topbar {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    z-index: 90;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 24px 40px;
-    background: rgba(253, 253, 253, 0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--hairline);
-  }
-
-  .topbar-left, .topbar-right {
-    display: flex;
-    gap: 32px;
-    align-items: center;
-  }
-
-  .topbar a {
-    color: var(--ink);
-    text-decoration: none;
-    transition: color 0.2s ease;
-  }
-  .topbar a:hover { color: var(--red); }
-
-  .topbar-logo {
-    font-family: 'Cormorant Garamond', serif;
-    font-weight: 500;
-    font-size: 18px;
-    letter-spacing: 0.05em;
-  }
-
-  /* ============================================ */
   /* 1. HERO                                       */
   /* ============================================ */
   .hero {
     min-height: 100vh;
-    padding: 140px 60px 80px;
+    padding: 60px 60px 80px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -296,7 +259,7 @@
 
   @media (max-width: 768px) {
     .hero {
-      padding: 100px 24px 60px;
+      padding: 40px 24px 60px;
     }
     .hero-bottom {
       grid-template-columns: 1fr;
@@ -817,73 +780,6 @@
     .specs { grid-template-columns: 1fr; gap: 40px; padding: 60px 24px; }
   }
 
-  /* ============================================ */
-  /* 7. FOOTER                                     */
-  /* ============================================ */
-  .footer {
-    padding: 80px 60px 40px;
-    border-top: 1px solid var(--hairline);
-    background: var(--paper);
-  }
-
-  .footer-grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
-    gap: 40px;
-    margin-bottom: 60px;
-  }
-
-  .footer-tagline {
-    font-family: 'Cormorant Garamond', serif;
-    font-style: italic;
-    font-weight: 400;
-    font-size: 22px;
-    line-height: 1.4;
-    color: var(--ink);
-    max-width: 380px;
-  }
-
-  .footer-col h4 {
-    font-family: 'Inter', sans-serif;
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 0.28em;
-    color: var(--gray);
-    text-transform: uppercase;
-    margin-bottom: 14px;
-  }
-
-  .footer-col p,
-  .footer-col a {
-    font-family: 'Inter', sans-serif;
-    font-size: 14px;
-    color: var(--ink);
-    text-decoration: none;
-    line-height: 1.6;
-  }
-
-  .footer-col a:hover { color: var(--red); }
-
-  .footer-bottom {
-    border-top: 1px solid var(--hairline);
-    padding-top: 24px;
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 20px;
-    font-family: 'Inter', sans-serif;
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 0.25em;
-    color: var(--gray);
-    text-transform: uppercase;
-  }
-
-  @media (max-width: 768px) {
-    .footer { padding: 60px 24px 30px; }
-    .footer-grid { grid-template-columns: 1fr; gap: 30px; }
-  }
-
   /* === FADE-IN === */
   .fade-in {
     opacity: 0;
@@ -912,19 +808,6 @@
   </div>
   <div class="spread-overlay-hint">КЛИК ИЛИ ESC — ЗАКРЫТЬ</div>
 </div>
-
-<!-- TOPBAR -->
-<nav class="topbar">
-  <div class="topbar-left">
-    <a href="/" class="topbar-logo">THE END</a>
-    <a href="/" class="smallcaps" style="color: var(--gray);">← все проекты</a>
-  </div>
-  <div class="topbar-right">
-    <a href="#issues" class="smallcaps">Выпуски</a>
-    <a href="#concept" class="smallcaps">Концепция</a>
-    <a href="#order" class="smallcaps smallcaps-red">Заказать</a>
-  </div>
-</nav>
 
 <!-- ============================================ -->
 <!-- 1. HERO                                      -->
@@ -1179,38 +1062,8 @@
 </section>
 
 <!-- ============================================ -->
-<!-- 8. FOOTER                                     -->
+<!-- ↑ КОНЕЦ КОНТЕНТА                              -->
 <!-- ============================================ -->
-<footer class="footer">
-  <div class="footer-grid">
-    <div>
-      <p class="footer-tagline">
-        VOGARDEN — журнал, который рождается из вашей идеи.
-      </p>
-    </div>
-    <div class="footer-col">
-      <h4>Студия</h4>
-      <p>THE END · LYKBOOK</p>
-      <p>Москва, 2024</p>
-    </div>
-    <div class="footer-col">
-      <h4>Связаться</h4>
-      <a href="https://wa.me/79581002777">WhatsApp</a><br>
-      <a href="https://t.me/lykbook">Telegram</a><br>
-      <a href="mailto:gomel.lookbook@gmail.com">Email</a>
-    </div>
-    <div class="footer-col">
-      <h4>Линейка</h4>
-      <a href="/">Все проекты</a><br>
-      <a href="/echo.html">ECHO</a><br>
-      <a href="/red.html">RED</a>
-    </div>
-  </div>
-  <div class="footer-bottom">
-    <span>THE END / VOGARDEN · 2024</span>
-    <span>BY LYKBOOK</span>
-  </div>
-</footer>
 
 <script>
 /* ============ 1. КУРСОР + NEGATIVE-FX НА ЗАГОЛОВКАХ ============ */
