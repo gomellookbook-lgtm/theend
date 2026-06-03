@@ -66,15 +66,16 @@
   }
 
   /* ============================================ */
-  /* 1. ИНТРО — белый разворот с гипер-ECHO       */
+  /* 1. ИНТРО — ECHO вертикально + контактная плёнка */
   /* ============================================ */
   .intro {
     min-height: 100vh;
     width: 100%;
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 60px;
+    grid-template-columns: 100px 1fr 1fr;
+    padding: 60px 60px 60px 0;
     position: relative;
+    gap: 40px;
   }
 
   /* Служебные подписи в углах */
@@ -89,6 +90,7 @@
     text-transform: uppercase;
     color: var(--ink);
     line-height: 1.5;
+    z-index: 5;
   }
   .intro-top-left  { top: 30px; left: 30px; }
   .intro-top-right { top: 30px; right: 30px; text-align: right; }
@@ -100,18 +102,19 @@
     font-weight: 500;
   }
 
-  /* Левая колонка — гигантский вертикальный ECHO */
-  .intro-left {
+  /* Колонка 1 — ECHO вертикально по краю */
+  .intro-echo-col {
     display: flex;
     align-items: center;
-    justify-content: center;
-    position: relative;
+    justify-content: flex-start;
+    padding-left: 20px;
+    overflow: hidden;
   }
 
   .echo-vertical {
     font-family: 'Inter', sans-serif;
     font-weight: 900;
-    font-size: clamp(140px, 22vw, 320px);
+    font-size: clamp(80px, 14vw, 200px);
     line-height: 0.78;
     letter-spacing: -0.05em;
     color: var(--ink);
@@ -121,12 +124,50 @@
     user-select: none;
   }
 
-  /* Правая колонка — манифест */
+  /* Колонка 2 — контактная плёнка из портретов */
+  .intro-grid-col {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .intro-mini-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    width: 100%;
+    max-width: 480px;
+  }
+
+  .intro-mini-grid .mini-cell {
+    aspect-ratio: 1 / 1;
+    background: var(--light-gray);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .intro-mini-grid .mini-cell img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(1) contrast(0.95);
+  }
+
+  .intro-mini-grid .mini-cell .mini-num {
+    position: absolute;
+    top: 5px; left: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    color: var(--paper);
+    mix-blend-mode: difference;
+  }
+
+  /* Колонка 3 — манифест */
   .intro-right {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 80px 40px;
+    padding: 80px 0;
     position: relative;
   }
 
@@ -145,7 +186,7 @@
   }
 
   .intro-manifesto {
-    font-size: clamp(20px, 2.4vw, 32px);
+    font-size: clamp(20px, 2.2vw, 30px);
     line-height: 1.35;
     font-weight: 400;
     max-width: 540px;
@@ -180,17 +221,23 @@
     .intro {
       grid-template-columns: 1fr;
       padding: 80px 30px 60px;
+      gap: 50px;
     }
-    .intro-left {
-      min-height: 50vh;
-      padding: 40px 0;
+    .intro-echo-col {
+      padding-left: 0;
+      min-height: 30vh;
+      justify-content: center;
     }
     .echo-vertical {
       transform: none;
-      font-size: clamp(80px, 30vw, 180px);
+      font-size: clamp(80px, 30vw, 160px);
+    }
+    .intro-mini-grid {
+      grid-template-columns: repeat(4, 1fr);
+      max-width: 100%;
     }
     .intro-right {
-      padding: 40px 0;
+      padding: 0;
     }
   }
 
@@ -761,19 +808,26 @@
   }
 
   /* ============================================ */
-  /* 7. ФИНАЛ — чёрный экран                       */
+  /* 7. ФИНАЛ — светлый, в стиле разворота         */
   /* ============================================ */
   .final {
-    background: var(--ink);
-    color: var(--paper);
+    background: var(--paper);
+    color: var(--ink);
     min-height: 100vh;
     padding: 60px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 80px;
+    position: relative;
+    border-top: 1px solid var(--light-gray);
+  }
+
+  .final-left {
     display: flex;
     flex-direction: column;
-    align-items: center;
     justify-content: center;
-    text-align: center;
-    position: relative;
+    padding-left: 20px;
   }
 
   .final-label {
@@ -782,45 +836,48 @@
     letter-spacing: 4px;
     color: var(--red);
     text-transform: uppercase;
-    margin-bottom: 40px;
+    margin-bottom: 32px;
   }
 
   .final-title {
     font-family: 'Inter', sans-serif;
     font-weight: 900;
-    font-size: clamp(48px, 9vw, 160px);
+    font-size: clamp(48px, 7vw, 120px);
     line-height: 0.9;
     letter-spacing: -0.05em;
     text-transform: uppercase;
-    max-width: 1200px;
-    margin: 0 auto 40px;
+    color: var(--ink);
+    margin-bottom: 40px;
   }
+
+  .final-title b { color: var(--red); }
 
   .final-text {
-    max-width: 600px;
-    margin: 0 auto 60px;
-    color: rgba(250,250,250,0.7);
+    color: var(--ink);
     font-size: 17px;
     line-height: 1.6;
+    margin-bottom: 48px;
+    max-width: 480px;
   }
 
-  .final .btn {
-    background: transparent;
-    color: var(--paper);
-    border-color: var(--paper);
+  .final-right {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
   }
-  .final .btn:hover {
-    background: var(--paper);
-    color: var(--ink);
+
+  .final-right .mini-cell {
+    aspect-ratio: 1 / 1;
+    background: var(--light-gray);
+    overflow: hidden;
+    position: relative;
   }
-  .final .btn-dark {
-    background: var(--red);
-    border-color: var(--red);
-    color: var(--paper);
-  }
-  .final .btn-dark:hover {
-    background: var(--paper);
-    color: var(--red);
+
+  .final-right .mini-cell img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(1) contrast(0.95);
   }
 
   .final-footer {
@@ -831,8 +888,18 @@
     font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
     letter-spacing: 2px;
-    color: rgba(250,250,250,0.4);
+    color: var(--gray);
     text-transform: uppercase;
+  }
+
+  @media (max-width: 900px) {
+    .final {
+      grid-template-columns: 1fr;
+      padding: 80px 30px;
+      gap: 50px;
+    }
+    .final-left { padding-left: 0; }
+    .final-right { grid-template-columns: repeat(4, 1fr); }
   }
 
   /* Анимации появления при скролле */
@@ -873,8 +940,12 @@
     ECHO LINE
   </div>
 
-  <div class="intro-left">
+  <div class="intro-echo-col">
     <div class="echo-vertical">ECHO</div>
+  </div>
+
+  <div class="intro-grid-col">
+    <div class="intro-mini-grid" id="intro-mini-grid"></div>
   </div>
 
   <div class="intro-right">
@@ -892,26 +963,6 @@
       </p>
     </div>
     <div class="intro-scroll-hint">↓ ЛИСТАТЬ</div>
-  </div>
-</section>
-
-<!-- ============================================ -->
-<!-- 2. ОБЛОЖКА                                    -->
-<!-- ============================================ -->
-<section class="cover" data-bg="dark">
-  <div class="cover-title">ECHO</div>
-  <div class="cover-side">
-    <div class="cover-side-label">— ШКОЛЬНЫЙ ВЫПУСКНОЙ —</div>
-    <p class="cover-side-text">
-      Государственное бюджетное общеобразовательное учреждение.
-      <b>Класс 11Б</b>, год выпуска <b>2024</b>. 24 личности,
-      24 анкеты, 1 книга. Сохранено навсегда.
-    </p>
-    <div class="cover-side-meta">
-      ФОРМАТ 23×30 СМ<br>
-      ТЕКСТИЛЬНЫЙ КОРЕШОК<br>
-      ЛАМИНАЦИЯ КАРТОНКАМИ
-    </div>
   </div>
 </section>
 
@@ -1009,16 +1060,20 @@
 <!-- ============================================ -->
 <!-- 7. ФИНАЛ                                      -->
 <!-- ============================================ -->
-<section class="final" data-bg="dark">
-  <div class="final-label">— ECHO —</div>
-  <h2 class="final-title">КАЖДЫЙ.<br>СОХРАНЁН.<br>КАК ГЕРОЙ.</h2>
-  <p class="final-text">
-    Через 20 лет ты откроешь эту книгу и вспомнишь не просто класс —
-    а каждого. Что слушала Алиса. Что писал Артём. Кого ждала Вика.
-  </p>
-  <div class="btn-row">
-    <a href="https://wa.me/79581002777" class="btn btn-dark">НАПИСАТЬ В WHATSAPP →</a>
+<section class="final" data-bg="light">
+  <div class="final-left">
+    <div class="final-label">— ECHO —</div>
+    <h2 class="final-title">КАЖДЫЙ.<br>СОХРАНЁН.<br>КАК <b>ГЕРОЙ.</b></h2>
+    <p class="final-text">
+      Через 20 лет ты откроешь эту книгу и вспомнишь не просто класс —
+      а каждого. Что слушала Алиса. Что писал Артём. Кого ждала Вика.
+    </p>
+    <div class="btn-row">
+      <a href="https://wa.me/79581002777" class="btn btn-dark">НАПИСАТЬ В WHATSAPP →</a>
+      <a href="/" class="btn">↶ К ПРОЕКТАМ</a>
+    </div>
   </div>
+  <div class="final-right" id="final-grid"></div>
   <div class="final-footer">
     <span>THE END / ECHO · LYKBOOK</span>
     <span>EST. 2024</span>
@@ -1139,6 +1194,32 @@ PORTRAITS.forEach((url, i) => {
   grid.appendChild(div);
 });
 
+// Мини-сетка на интро — берём первые 9 портретов
+const introMiniGrid = document.getElementById('intro-mini-grid');
+if (introMiniGrid) {
+  PORTRAITS.slice(0, 9).forEach((url, i) => {
+    const div = document.createElement('div');
+    div.className = 'mini-cell';
+    const num = (i + 1).toString().padStart(2, '0');
+    div.innerHTML = `
+      <span class="mini-num">${num}</span>
+      <img src="${url}" alt="" loading="lazy">
+    `;
+    introMiniGrid.appendChild(div);
+  });
+}
+
+// Финальная мини-сетка — последние 8 портретов
+const finalGrid = document.getElementById('final-grid');
+if (finalGrid) {
+  PORTRAITS.slice(-8).forEach((url) => {
+    const div = document.createElement('div');
+    div.className = 'mini-cell';
+    div.innerHTML = `<img src="${url}" alt="" loading="lazy">`;
+    finalGrid.appendChild(div);
+  });
+}
+
 
 /* ============ 4. ПАНЕЛЬ АНКЕТЫ ============ */
 const panel = document.getElementById('anketa-panel');
@@ -1231,9 +1312,10 @@ let autoTimer = null;
 let autoIdleTimer = null;
 let autoActive = false;
 let autoCurrentIdx = 0;
+let galleryInView = false;  // видна ли секция галереи
 
 function autoModeStep() {
-  if (!autoActive) return;
+  if (!autoActive || !galleryInView) return;
   let next;
   do { next = Math.floor(Math.random() * PORTRAITS.length); } while (next === autoCurrentIdx);
   autoCurrentIdx = next;
@@ -1242,7 +1324,7 @@ function autoModeStep() {
 }
 
 function autoModeStart() {
-  if (autoActive) return;
+  if (autoActive || !galleryInView) return;
   autoActive = true;
   autoHint.classList.add('visible');
   autoModeStep();
@@ -1256,8 +1338,9 @@ function autoModeStop() {
 
 function autoModeReset() {
   if (autoIdleTimer) clearTimeout(autoIdleTimer);
+  if (!galleryInView) return;  // если не в зоне галереи — не запускаем
   autoIdleTimer = setTimeout(() => {
-    if (!panel.classList.contains('open')) autoModeStart();
+    if (!panel.classList.contains('open') && galleryInView) autoModeStart();
   }, 6000);
 }
 
@@ -1268,7 +1351,26 @@ window.addEventListener('mousemove', () => {
   autoModeReset();
 });
 
-setTimeout(autoModeReset, 2000);
+// Отслеживаем видимость секции галереи
+const gallerySection = document.querySelector('.gallery');
+if (gallerySection) {
+  const galleryObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      galleryInView = entry.isIntersecting && entry.intersectionRatio > 0.3;
+      if (!galleryInView) {
+        // Если ушли с галереи — останавливаем демо и закрываем панель
+        autoModeStop();
+        if (panel.classList.contains('open') && !panel.matches(':hover')) {
+          // не закрываем автоматически если пользователь сам открыл
+        }
+      } else {
+        // Вошли в галерею — взводим таймер демо
+        autoModeReset();
+      }
+    });
+  }, { threshold: [0, 0.3, 0.5, 1] });
+  galleryObserver.observe(gallerySection);
+}
 
 
 /* ============ 6. FADE-IN ПРИ СКРОЛЛЕ ============ */
