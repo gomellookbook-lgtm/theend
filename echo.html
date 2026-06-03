@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECHO — THE END / LYKBOOK</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --black: #0a0a0a;
+    --white: #fff;
+    --red: #e8312a;
+  }
+
+  html, body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* Скрываем системный курсор на десктопе */
+  @media (hover: hover) and (pointer: fine) {
+    html, body, * { cursor: none !important; }
+  }
+
+  /* === КАСТОМНЫЙ КУРСОР === */
+  .cursor-dot, .cursor-ring {
+    position: fixed; top: 0; left: 0;
+    pointer-events: none; z-index: 10000;
+    transform: translate(-50%, -50%); will-change: transform;
+  }
+  .cursor-dot {
+    width: 6px; height: 6px;
+    background: var(--red); border-radius: 50%;
+  }
+  .cursor-ring {
+    width: 36px; height: 36px;
+    border: 1.5px solid var(--red); border-radius: 50%;
+    transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                height 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                background 0.3s ease;
+  }
+  .cursor-ring.hover {
+    width: 70px; height: 70px;
+    background: rgba(232, 49, 42, 0.1);
+  }
+  @media (hover: none) or (pointer: coarse) {
+    .cursor-dot, .cursor-ring { display: none; }
+  }
+
+  /* === FIXED УГЛОВЫЕ НАДПИСИ === */
+  .corner {
+    position: fixed; z-index: 50;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.5;
+    mix-blend-mode: difference;
+    pointer-events: none;
+  }
+  .corner-tl { top: 24px; left: 24px; }
+  .corner-tr { top: 24px; right: 24px; text-align: right; }
+  .corner-bl { bottom: 24px; left: 24px; }
+  .corner-br { bottom: 24px; right: 24px; text-align: right; }
+  .corner .red-dot {
+    display: inline-block; width: 6px; height: 6px;
+    background: var(--red); border-radius: 50%;
+    margin-right: 6px; vertical-align: middle;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.3); }
+  }
+
+  /* === ИНТРО (первый экран) === */
+  .intro {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 120px 40px 80px;
+  }
+
+  .intro-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--red);
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.3s forwards;
+  }
+
+  .intro-title {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(80px, 18vw, 280px);
+    letter-spacing: -0.06em;
+    line-height: 0.85;
+    color: var(--white);
+    text-transform: uppercase;
+    user-select: none;
+    margin: 0;
+    opacity: 0;
+    animation: fadeUp 1.2s ease 0.5s forwards;
+  }
+
+  .intro-subtitle {
+    margin-top: 32px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 4px;
+    color: rgba(255,255,255,0.6);
+    text-transform: uppercase;
+    text-align: center;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 1.2s forwards;
+  }
+
+  .intro-manifesto {
+    margin-top: 100px;
+    max-width: 700px;
+    text-align: center;
+    font-size: 18px;
+    line-height: 1.7;
+    color: rgba(255,255,255,0.75);
+    opacity: 0;
+    animation: fadeUp 0.8s ease 1.6s forwards;
+  }
+
+  .intro-manifesto b {
+    color: var(--white);
+    font-weight: 700;
+  }
+
+  .intro-counter {
+    margin-top: 60px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.35);
+    opacity: 0;
+    animation: fadeUp 0.8s ease 2s forwards;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* === СЕКЦИЯ С СЕТКОЙ ПОРТРЕТОВ === */
+  .grid-section {
+    position: relative;
+    width: 100%;
+    padding: 120px 40px;
+    background: var(--black);
+  }
+
+  .grid-header {
+    max-width: 1400px;
+    margin: 0 auto 60px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+
+  .grid-title {
+    font-size: clamp(32px, 5vw, 64px);
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    max-width: 700px;
+  }
+
+  .grid-title b { color: var(--red); }
+
+  .grid-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    text-align: right;
+    line-height: 1.7;
+  }
+
+  .grid-meta b {
+    color: var(--red);
+    font-weight: 500;
+  }
+
+  /* Сетка 6 столбцов на десктопе, 4 на планшете, 3 на мобилках */
+  .grid-portraits {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+    position: relative;
+  }
+
+  @media (max-width: 900px) {
+    .grid-portraits { grid-template-columns: repeat(4, 1fr); }
+  }
+  @media (max-width: 600px) {
+    .grid-portraits { grid-template-columns: repeat(3, 1fr); gap: 2px; }
+  }
+
+  .portrait {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    background: #1a1a1a;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform;
+  }
+
+  .portrait img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(1) brightness(0.55) contrast(1.05);
+    transition: filter 0.4s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: filter, transform;
+  }
+
+  .portrait .num {
+    position: absolute;
+    top: 8px; left: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.45);
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .portrait .pname {
+    position: absolute;
+    bottom: 8px; left: 8px; right: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.6);
+    z-index: 2;
+    pointer-events: none;
+    text-transform: uppercase;
+    opacity: 0;
+    transform: translateY(5px);
+    transition: opacity 0.3s, transform 0.3s;
+  }
+
+  /* HOVER на отдельный портрет */
+  .portrait:hover img {
+    filter: grayscale(0) brightness(1.05) contrast(1);
+    transform: scale(1.06);
+  }
+  .portrait:hover .pname {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Класс "dimmed" — когда другой портрет hover'нут */
+  .grid-portraits.has-active .portrait:not(.active) img {
+    filter: grayscale(1) brightness(0.18) contrast(1);
+  }
+
+  /* === КАРТОЧКА АНКЕТЫ — выезжает при hover === */
+  .anketa-card {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 380px;
+    max-width: calc(100vw - 40px);
+    background: rgba(15, 15, 15, 0.97);
+    border: 1px solid rgba(232, 49, 42, 0.4);
+    padding: 24px 28px;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+  }
+
+  .anketa-card.visible {
+    opacity: 1;
+  }
+
+  .anketa-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .anketa-name {
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  .anketa-class {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--red);
+    text-transform: uppercase;
+  }
+
+  .anketa-rows {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 10px 16px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .anketa-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    padding-top: 2px;
+  }
+
+  .anketa-value {
+    color: rgba(255,255,255,0.92);
+    font-weight: 400;
+    min-height: 19px;
+  }
+
+  .anketa-value.quote {
+    font-style: italic;
+    color: var(--red);
+  }
+
+  .anketa-footer {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+  }
+
+  /* === АВТО-РЕЖИМ HINT === */
+  .auto-hint {
+    position: fixed;
+    bottom: 80px; left: 50%;
+    transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    z-index: 60;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  .auto-hint.visible { opacity: 1; }
+
+  /* === ВИДЕО СЕКЦИЯ === */
+  .video-section {
+    padding: 120px 40px;
+    text-align: center;
+    background: var(--black);
+  }
+
+  .video-section h2 {
+    font-size: clamp(28px, 4vw, 52px);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    line-height: 1;
+  }
+
+  .video-section .video-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--red);
+    text-transform: uppercase;
+    margin-bottom: 48px;
+  }
+
+  .video-wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    aspect-ratio: 16 / 9;
+    border: 1px solid rgba(232, 49, 42, 0.4);
+    box-shadow: 0 30px 80px rgba(232, 49, 42, 0.15);
+    background: #000;
+  }
+
+  .video-wrap iframe {
+    width: 100%; height: 100%;
+    border: 0;
+    display: block;
+  }
+
+  /* === КОРЕШОК / СПЕЦИФИКАЦИЯ === */
+  .specs-section {
+    padding: 140px 40px;
+    background: var(--black);
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .specs-grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 80px;
+    align-items: center;
+  }
+
+  @media (max-width: 900px) {
+    .specs-grid { grid-template-columns: 1fr; gap: 50px; }
+  }
+
+  .specs-image {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    background: #1a1a1a;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .specs-image .placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    color: rgba(255,255,255,0.3);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 1.8;
+    padding: 20px;
+  }
+
+  .specs-image .placeholder b {
+    color: var(--red);
+    display: block;
+    margin-bottom: 12px;
+    font-size: 13px;
+    letter-spacing: 3px;
+  }
+
+  .specs-image .placeholder small {
+    display: block;
+    margin-top: 14px;
+    color: rgba(255,255,255,0.2);
+    font-size: 9px;
+  }
+
+  .specs-text-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--red);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  .specs-text h2 {
+    font-size: clamp(32px, 4.5vw, 56px);
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  .specs-text h2 b { color: var(--red); }
+
+  .specs-text p {
+    color: rgba(255,255,255,0.75);
+    font-size: 16px;
+    line-height: 1.7;
+    margin-bottom: 40px;
+  }
+
+  .specs-list {
+    list-style: none;
+    margin-bottom: 40px;
+  }
+
+  .specs-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  .specs-list li span:first-child {
+    color: rgba(255,255,255,0.4);
+  }
+
+  .specs-list li span:last-child {
+    color: var(--white);
+    font-weight: 500;
+  }
+
+  .specs-price {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: 48px;
+    letter-spacing: -0.02em;
+    margin-bottom: 32px;
+    line-height: 1;
+  }
+
+  .specs-price small {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.4);
+    margin-top: 8px;
+    font-weight: 400;
+    text-transform: uppercase;
+  }
+
+  /* === КНОПКИ CTA === */
+  .cta-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 28px;
+    border: 1px solid rgba(255,255,255,0.25);
+    color: var(--white);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-weight: 500;
+  }
+
+  .btn:hover {
+    background: var(--white);
+    color: var(--black);
+    border-color: var(--white);
+  }
+
+  .btn-red {
+    background: var(--red);
+    border-color: var(--red);
+  }
+
+  .btn-red:hover {
+    background: var(--white);
+    color: var(--red);
+    border-color: var(--white);
+  }
+
+  /* === ФИНАЛЬНЫЙ БЛОК === */
+  .final-section {
+    padding: 140px 40px 80px;
+    text-align: center;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .final-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--red);
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+
+  .final-title {
+    font-size: clamp(36px, 6vw, 92px);
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    text-transform: uppercase;
+    max-width: 1100px;
+    margin: 0 auto 32px;
+  }
+
+  .final-title b { color: var(--red); }
+
+  .final-text {
+    max-width: 600px;
+    margin: 0 auto 60px;
+    color: rgba(255,255,255,0.7);
+    font-size: 16px;
+    line-height: 1.7;
+  }
+
+  /* Аудио-тогглер (для звука печати) */
+  .audio-toggle {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    z-index: 90;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.6);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 10px 16px;
+    cursor: pointer !important;
+    transition: all 0.3s;
+  }
+
+  .audio-toggle:hover {
+    background: rgba(232, 49, 42, 0.1);
+    color: var(--red);
+    border-color: var(--red);
+  }
+
+  .audio-toggle.active {
+    background: var(--red);
+    color: var(--white);
+    border-color: var(--red);
+  }
+
+  /* === МОБИЛЬНАЯ АДАПТАЦИЯ === */
+  @media (max-width: 768px) {
+    .intro { padding: 100px 24px 60px; }
+    .intro-manifesto { font-size: 16px; }
+    .grid-section { padding: 80px 20px; }
+    .video-section, .specs-section, .final-section { padding: 80px 24px; }
+    .anketa-card { width: calc(100% - 40px); }
+    .corner { font-size: 9px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- КАСТОМНЫЙ КУРСОР -->
+<div class="cursor-dot" id="cursor-dot"></div>
+<div class="cursor-ring" id="cursor-ring"></div>
+
+<!-- УГЛОВЫЕ НАДПИСИ -->
+<div class="corner corner-tl">
+  THE END / ECHO<br>
+  EST. 2024
+</div>
+<div class="corner corner-tr">
+  <span class="red-dot"></span>RECORDING<br>
+  BY LYKBOOK
+</div>
+<div class="corner corner-bl">
+  PROJECT<br>
+  04 / 05
+</div>
+<div class="corner corner-br">
+  ECHO LINE<br>
+  BY LYKBOOK
+</div>
+
+<!-- ============ ИНТРО ============ -->
+<section class="intro">
+  <div class="intro-eyebrow">— АРХИВ ЛИЧНОСТЕЙ —</div>
+  <h1 class="intro-title">ECHO</h1>
+  <div class="intro-subtitle">КАЖДЫЙ · СОХРАНЁН · КАК ГЕРОЙ</div>
+  <p class="intro-manifesto">
+    Класс — это не строка в школьном журнале. Это <b>люди</b>. Со своими любимыми
+    фильмами, песнями, страхами и мечтами. <b>ECHO</b> — альбом-анкета, где у каждого
+    есть своя страница. Свой голос. Свой след.
+  </p>
+  <div class="intro-counter">↓ НАВЕДИ НА ЛИЦО ↓</div>
+</section>
+
+<!-- ============ СЕТКА ПОРТРЕТОВ ============ -->
+<section class="grid-section">
+  <div class="grid-header">
+    <h2 class="grid-title">24 ЧЕЛОВЕКА.<br>24 <b>АНКЕТЫ.</b></h2>
+    <div class="grid-meta">
+      ВСЕГО АНКЕТ: <b>24</b><br>
+      КЛАСС: <b>11Б · 2024</b><br>
+      ЛЮБИМЫЙ ФИЛЬМ: <b>INCEPTION (4)</b><br>
+      ЛЮБИМАЯ МУЗЫКА: <b>RADIOHEAD (3)</b>
+    </div>
+  </div>
+
+  <!-- Сетка портретов — генерируется JS -->
+  <div class="grid-portraits" id="portraits-grid"></div>
+</section>
+
+<!-- Карточка анкеты — выезжает при hover -->
+<div class="anketa-card" id="anketa-card">
+  <div class="anketa-header">
+    <div>
+      <div class="anketa-name" id="ank-name">АЛИСА К.</div>
+    </div>
+    <div class="anketa-class" id="ank-class">11Б · 2024</div>
+  </div>
+  <div class="anketa-rows" id="ank-rows">
+    <!-- генерируется JS с typewriter-эффектом -->
+  </div>
+  <div class="anketa-footer">
+    <span id="ank-num">01 / 24</span>
+    <span>ECHO · LYKBOOK</span>
+  </div>
+</div>
+
+<!-- ============ ВИДЕО ============ -->
+<section class="video-section">
+  <h2>ЛИСТАЕМ <b style="color: var(--red);">КНИГУ</b></h2>
+  <div class="video-sub">— ТАК ВЫГЛЯДИТ ECHO В РУКАХ —</div>
+  <div class="video-wrap">
+    <iframe
+      src="https://vk.com/video_ext.php?oid=-9271079&id=456239261&hd=2"
+      frameborder="0"
+      allow="autoplay; encrypted-media; fullscreen; picture-in-picture;"
+      allowfullscreen>
+    </iframe>
+  </div>
+</section>
+
+<!-- ============ СПЕЦИФИКАЦИЯ + КОРЕШОК ============ -->
+<section class="specs-section">
+  <div class="specs-grid">
+    <div class="specs-image">
+      <div class="placeholder">
+        <b>ТКАНЕВЫЙ КОРЕШОК</b>
+        МАКРО-ФОТО ФАКТУРЫ<br>
+        БУДЕТ ЗДЕСЬ
+        <small>заменим на реальное фото<br>дизайнерской бумаги и текстиля</small>
+      </div>
+    </div>
+    <div class="specs-text">
+      <div class="specs-text-eyebrow">— ECHO LINE / СПЕЦИФИКАЦИЯ —</div>
+      <h2>ТО, ЧЕГО НЕ <b>ПОВТОРИТ</b><br>НИКТО.</h2>
+      <p>
+        Текстильный корешок ручной работы. Ламинация дизайнерской бумагой
+        с фактурными картонками сверху. Внутри — индивидуальные анкеты
+        каждого выпускника: фильмы, музыка, цитаты, мечты.
+      </p>
+      <ul class="specs-list">
+        <li><span>ФОРМАТ</span><span>23 × 30 СМ</span></li>
+        <li><span>СТРАНИЦ</span><span>ДО 100</span></li>
+        <li><span>КОРЕШОК</span><span>ТЕКСТИЛЬ</span></li>
+        <li><span>ОБЛОЖКА</span><span>ЛАМИНАЦИЯ + КАРТОНКИ</span></li>
+        <li><span>ПЕРЕПЛЁТ</span><span>НИТКА-ШОВ</span></li>
+        <li><span>ТИРАЖ</span><span>ОТ 20 ШТ</span></li>
+      </ul>
+      <div class="specs-price">
+        11 000 ₽
+        <small>ЗА ОДИН ЭКЗЕМПЛЯР</small>
+      </div>
+      <div class="cta-row">
+        <a href="https://wa.me/79581002777" class="btn btn-red">
+          ЗАБРОНИРОВАТЬ →
+        </a>
+        <a href="/" class="btn">↶ К ПРОЕКТАМ</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ФИНАЛ ============ -->
+<section class="final-section">
+  <div class="final-eyebrow">— ECHO —</div>
+  <h2 class="final-title">
+    КОГДА ВЫПУСКНОЙ<br>СТАНОВИТСЯ <b>ЛИЧНЫМ</b>
+  </h2>
+  <p class="final-text">
+    Через 20 лет ты откроешь эту книгу и вспомнишь не просто класс —
+    а каждого. Что слушала Алиса. Что писал Артём. Кого ждала Вика.
+  </p>
+  <div class="cta-row" style="justify-content: center;">
+    <a href="https://wa.me/79581002777" class="btn btn-red">
+      НАПИСАТЬ В WHATSAPP →
+    </a>
+  </div>
+</section>
+
+<!-- Аудио-тогглер -->
+<button class="audio-toggle" id="audio-toggle">♪ ЗВУК ВЫКЛ</button>
+
+<!-- Подсказка о демо-режиме -->
+<div class="auto-hint" id="auto-hint">АВТО-РЕЖИМ ↑</div>
+
+<script>
+/* ============ 1. КУРСОР ============ */
+(function() {
+  if (window.matchMedia('(hover: none)').matches) return;
+  const dot = document.getElementById('cursor-dot');
+  const ring = document.getElementById('cursor-ring');
+  let mx = window.innerWidth / 2, my = window.innerHeight / 2;
+  let dx = mx, dy = my, rx = mx, ry = my;
+
+  window.addEventListener('mousemove', (e) => { mx = e.clientX; my = e.clientY; });
+
+  function loop() {
+    dx += (mx - dx) * 0.9;
+    dy += (my - dy) * 0.9;
+    rx += (mx - rx) * 0.15;
+    ry += (my - ry) * 0.15;
+    dot.style.transform = `translate(${dx}px, ${dy}px) translate(-50%, -50%)`;
+    ring.style.transform = `translate(${rx}px, ${ry}px) translate(-50%, -50%)`;
+    requestAnimationFrame(loop);
+  }
+  loop();
+
+  // Hover на интерактивные элементы — кольцо увеличивается
+  document.querySelectorAll('a, button, .portrait').forEach(el => {
+    el.addEventListener('mouseenter', () => ring.classList.add('hover'));
+    el.addEventListener('mouseleave', () => ring.classList.remove('hover'));
+  });
+})();
+
+
+/* ============ 2. ДАННЫЕ — ПОРТРЕТЫ И АНКЕТЫ (ПЛЕЙСХОЛДЕРЫ) ============ */
+// 24 портрета — пока ссылки из PHOTO оверлея, потом заменишь реальными портретами
+const PORTRAITS = [
+  'https://i.ibb.co/67kTJdV7/1.jpg',
+  'https://i.ibb.co/XZdBPzJw/2.jpg',
+  'https://i.ibb.co/r2BPT0tW/3.jpg',
+  'https://i.ibb.co/HD07gPMS/4.jpg',
+  'https://i.ibb.co/TxrMCFsf/5.jpg',
+  'https://i.ibb.co/4nckckdd/6.jpg',
+  'https://i.ibb.co/wNh26BSx/7.jpg',
+  'https://i.ibb.co/LXS3Cp1n/8.jpg',
+  'https://i.ibb.co/KjWTDzrX/9.jpg',
+  'https://i.ibb.co/tT5fj8ss/10.jpg',
+  'https://i.ibb.co/p6CxSXNM/11.jpg',
+  'https://i.ibb.co/B5ngqR15/12.jpg',
+  'https://i.ibb.co/wZPFCDtn/13.jpg',
+  'https://i.ibb.co/1fsWyPDF/14.jpg',
+  'https://i.ibb.co/k2tXGgNn/15.jpg',
+  'https://i.ibb.co/rRm7z0kR/16.jpg',
+  'https://i.ibb.co/zVQfypch/17.jpg',
+  'https://i.ibb.co/HLQBWpnP/18.jpg',
+  'https://i.ibb.co/V0LNyqs5/19.jpg',
+  'https://i.ibb.co/SDTJ2ckt/20.jpg',
+  'https://i.ibb.co/gb91jcsy/21.jpg',
+  'https://i.ibb.co/MD6WDLmJ/22.jpg',
+  'https://i.ibb.co/Vcb9z63W/23.jpg',
+  'https://i.ibb.co/DDL5Xy9B/24.jpg'
+];
+
+// 24 анкеты-плейсхолдера (потом заменишь на реальные)
+const ANKETAS = [
+  { name: 'АЛИСА К.', cls: '11Б · 2024', f: 'Inception', b: 'Мастер и Маргарита', m: 'Radiohead', s: 'Twin Peaks', q: '«и шум, и тишь»', want: 'стать врачом', fear: 'остаться одна', remember: '31 декабря' },
+  { name: 'АРТЁМ В.', cls: '11Б · 2024', f: 'Donnie Darko', b: '1984', m: 'Arctic Monkeys', s: 'Mr. Robot', q: '«будь что будет»', want: 'писать код', fear: 'застрять', remember: 'последний звонок' },
+  { name: 'ВИКА Р.', cls: '11Б · 2024', f: 'Amélie', b: 'Над пропастью во ржи', m: 'The Strokes', s: 'Skins', q: '«увидимся в новой жизни»', want: 'уехать в Питер', fear: 'забыть всех', remember: 'школьный двор' },
+  { name: 'МАКСИМ Т.', cls: '11Б · 2024', f: 'Pulp Fiction', b: 'Бойцовский клуб', m: 'Кино', s: 'Breaking Bad', q: '«никто не виноват»', want: 'снимать фильмы', fear: 'опоздать', remember: 'класс 9-го' },
+  { name: 'ПОЛИНА Н.', cls: '11Б · 2024', f: 'La La Land', b: 'Цветы для Элджернона', m: 'Lana Del Rey', s: 'Friends', q: '«я не сдамся»', want: 'танцевать', fear: 'неудачи', remember: 'свой первый день' },
+  { name: 'ИЛЬЯ Б.', cls: '11Б · 2024', f: 'Бойцовский клуб', b: 'Преступление и наказание', m: 'Linkin Park', s: 'Sherlock', q: '«всё имеет смысл»', want: 'путешествовать', fear: 'скучно жить', remember: 'выпускной' },
+  { name: 'АНАСТАСИЯ В.', cls: '11Б · 2024', f: 'Interstellar', b: 'Маленький принц', m: 'Coldplay', s: 'Stranger Things', q: '«не прощай»', want: 'учить детей', fear: 'разлуки', remember: 'класс хоровое пение' },
+  { name: 'ДАНИИЛ С.', cls: '11Б · 2024', f: 'The Dark Knight', b: 'Игра в бисер', m: 'Pink Floyd', s: 'Westworld', q: '«молчание громче»', want: 'быть архитектором', fear: 'пустоты', remember: 'дождь в апреле' },
+  { name: 'СОФИЯ М.', cls: '11Б · 2024', f: 'Lost in Translation', b: 'Норвежский лес', m: 'Lorde', s: 'Sex and the City', q: '«помни меня»', want: 'жить у моря', fear: 'забвения', remember: 'утренние линейки' },
+  { name: 'ЕГОР Л.', cls: '11Б · 2024', f: 'Trainspotting', b: 'Generation П', m: 'The Cure', s: 'Peaky Blinders', q: '«всё это уже было»', want: 'журналистом', fear: 'тупика', remember: 'класс 7-го' },
+  { name: 'КСЕНИЯ Р.', cls: '11Б · 2024', f: 'Submarine', b: 'Капитанская дочка', m: 'Tame Impala', s: 'Euphoria', q: '«каждый день думала»', want: 'писать книги', fear: 'остановиться', remember: 'Новый год 2023' },
+  { name: 'РОМАН К.', cls: '11Б · 2024', f: 'Big Lebowski', b: 'Капитан Очевидность', m: 'Daft Punk', s: 'Black Mirror', q: '«не торопись»', want: 'играть в группе', fear: 'тишины', remember: 'свой первый концерт' },
+  { name: 'МИЛАНА Д.', cls: '11Б · 2024', f: 'Юная', b: 'Анна Каренина', m: 'Florence + The Machine', s: 'The Crown', q: '«я была здесь»', want: 'стать дизайнером', fear: 'обыденности', remember: 'наш кабинет' },
+  { name: 'НИКИТА Ш.', cls: '11Б · 2024', f: 'Memento', b: 'Шантарам', m: 'Massive Attack', s: 'True Detective', q: '«поверь себе»', want: 'программистом', fear: 'не понять', remember: 'класс физики' },
+  { name: 'ЛИЛИЯ О.', cls: '11Б · 2024', f: 'Eternal Sunshine', b: 'Кафка на пляже', m: 'Phoebe Bridgers', s: 'Fleabag', q: '«всё пройдёт»', want: 'фотограф', fear: 'неправильности', remember: 'осень 11-го' },
+  { name: 'ТИМУР Ч.', cls: '11Б · 2024', f: '500 Days of Summer', b: 'Гарри Поттер', m: 'Tyler the Creator', s: 'Atypical', q: '«люблю всё это»', want: 'юристом', fear: 'давления', remember: 'ту нашу шутку' },
+  { name: 'АНЯ Б.', cls: '11Б · 2024', f: 'Whiplash', b: '451 по Фаренгейту', m: 'Beach House', s: 'BoJack Horseman', q: '«будь сильнее»', want: 'дирижёром', fear: 'фальши', remember: 'школьный хор' },
+  { name: 'ГЛЕБ Я.', cls: '11Б · 2024', f: 'Snatch', b: 'Чапаев и Пустота', m: 'Eminem', s: 'Vikings', q: '«я ещё вернусь»', want: 'киберспортом', fear: 'остаться', remember: 'выпускной' },
+  { name: 'ДАРЬЯ К.', cls: '11Б · 2024', f: 'Marie Antoinette', b: 'Маленькие женщины', m: 'Mitski', s: 'Bridgerton', q: '«цени момент»', want: 'модельером', fear: 'старения', remember: 'наши вечеринки' },
+  { name: 'СЕРГЕЙ П.', cls: '11Б · 2024', f: 'Reservoir Dogs', b: 'Generation Икс', m: 'Joy Division', s: 'Mindhunter', q: '«мы тут были»', want: 'историком', fear: 'забвения', remember: 'класс истории' },
+  { name: 'ВЕРОНИКА Д.', cls: '11Б · 2024', f: 'Moonlight', b: 'Цвет волшебства', m: 'FKA twigs', s: 'Twin Peaks', q: '«мы были не правильными»', want: 'актрисой', fear: 'непонимания', remember: 'школьный театр' },
+  { name: 'АРСЕНИЙ К.', cls: '11Б · 2024', f: 'Goodfellas', b: 'Шерлок Холмс', m: 'Run the Jewels', s: 'The Wire', q: '«школа — это люди»', want: 'предпринимателем', fear: 'застоя', remember: 'класс 5-го' },
+  { name: 'ЕЛИЗАВЕТА М.', cls: '11Б · 2024', f: 'Black Swan', b: 'Лолита', m: 'Sufjan Stevens', s: 'Killing Eve', q: '«если боишься — делай»', want: 'танцовщицей', fear: 'рутины', remember: 'утренние репетиции' },
+  { name: 'МАРК О.', cls: '11Б · 2024', f: 'Drive', b: 'Над пропастью во ржи', m: 'Tame Impala', s: 'Better Call Saul', q: '«всё свои»', want: 'дизайнером', fear: 'мечтать впустую', remember: 'наш последний звонок' }
+];
+
+
+/* ============ 3. ГЕНЕРАЦИЯ СЕТКИ ============ */
+const grid = document.getElementById('portraits-grid');
+
+PORTRAITS.forEach((url, i) => {
+  const div = document.createElement('div');
+  div.className = 'portrait';
+  div.dataset.idx = i;
+  const num = (i + 1).toString().padStart(2, '0');
+  div.innerHTML = `
+    <span class="num">${num}</span>
+    <img src="${url}" alt="Portrait ${num}" loading="lazy">
+    <span class="pname">${ANKETAS[i].name}</span>
+  `;
+  grid.appendChild(div);
+});
+
+
+/* ============ 4. HOVER + КАРТОЧКА АНКЕТЫ С TYPEWRITER ============ */
+const card = document.getElementById('anketa-card');
+const ankRows = document.getElementById('ank-rows');
+const ankName = document.getElementById('ank-name');
+const ankClass = document.getElementById('ank-class');
+const ankNum = document.getElementById('ank-num');
+
+let typewriterTimer = null;
+let isHovering = false;
+let lastIdx = -1;
+
+function showAnketa(idx) {
+  if (idx === lastIdx && card.classList.contains('visible')) return;
+  lastIdx = idx;
+  const a = ANKETAS[idx];
+
+  ankName.textContent = a.name;
+  ankClass.textContent = a.cls;
+  ankNum.textContent = `${(idx + 1).toString().padStart(2, '0')} / 24`;
+
+  // Подготавливаем строки
+  const rows = [
+    { label: 'ФИЛЬМ',   value: a.f,        cls: '' },
+    { label: 'КНИГА',   value: a.b,        cls: '' },
+    { label: 'МУЗЫКА',  value: a.m,        cls: '' },
+    { label: 'СЕРИАЛ',  value: a.s,        cls: '' },
+    { label: 'ЦИТАТА',  value: a.q,        cls: 'quote' },
+    { label: 'ХОЧЕТ',   value: a.want,     cls: '' },
+    { label: 'БОИТСЯ',  value: a.fear,     cls: '' },
+    { label: 'ПОМНИТ',  value: a.remember, cls: '' },
+  ];
+
+  // Создаём HTML структуру
+  ankRows.innerHTML = '';
+  rows.forEach((row, i) => {
+    const labelEl = document.createElement('div');
+    labelEl.className = 'anketa-label';
+    labelEl.textContent = row.label;
+    const valueEl = document.createElement('div');
+    valueEl.className = 'anketa-value ' + row.cls;
+    valueEl.dataset.target = row.value;
+    valueEl.dataset.order = i;
+    valueEl.textContent = '';
+    ankRows.appendChild(labelEl);
+    ankRows.appendChild(valueEl);
+  });
+
+  card.classList.add('visible');
+
+  // Подсветка активного портрета + диммирование остальных
+  grid.classList.add('has-active');
+  document.querySelectorAll('.portrait').forEach(p => p.classList.remove('active'));
+  document.querySelector(`.portrait[data-idx="${idx}"]`)?.classList.add('active');
+
+  // Запускаем typewriter
+  if (typewriterTimer) clearInterval(typewriterTimer);
+  let row = 0, col = 0;
+  const valueEls = ankRows.querySelectorAll('.anketa-value');
+  typewriterTimer = setInterval(() => {
+    if (row >= valueEls.length) { clearInterval(typewriterTimer); return; }
+    const target = valueEls[row].dataset.target;
+    if (col < target.length) {
+      valueEls[row].textContent = target.substring(0, col + 1);
+      col++;
+      // Звук печати (если активирован)
+      if (audioEnabled && col % 2 === 0) playTypeSound();
+    } else {
+      row++;
+      col = 0;
+    }
+  }, 24);
+}
+
+function hideAnketa() {
+  card.classList.remove('visible');
+  grid.classList.remove('has-active');
+  document.querySelectorAll('.portrait').forEach(p => p.classList.remove('active'));
+  if (typewriterTimer) clearInterval(typewriterTimer);
+  lastIdx = -1;
+}
+
+document.querySelectorAll('.portrait').forEach(p => {
+  p.addEventListener('mouseenter', () => {
+    isHovering = true;
+    autoModeStop();
+    showAnketa(parseInt(p.dataset.idx));
+  });
+  p.addEventListener('mouseleave', () => {
+    isHovering = false;
+    hideAnketa();
+    autoModeReset();
+  });
+});
+
+
+/* ============ 5. ДЕМО-РЕЖИМ (авто-наведение) ============ */
+const autoHint = document.getElementById('auto-hint');
+let autoTimer = null;
+let autoCurrentIdx = 0;
+let autoIdleTimer = null;
+let autoActive = false;
+
+function autoModeStep() {
+  if (!autoActive) return;
+  // Случайный индекс не равный текущему
+  let next;
+  do { next = Math.floor(Math.random() * PORTRAITS.length); } while (next === autoCurrentIdx);
+  autoCurrentIdx = next;
+  showAnketa(next);
+  autoTimer = setTimeout(autoModeStep, 3500);
+}
+
+function autoModeStart() {
+  if (autoActive) return;
+  autoActive = true;
+  autoHint.classList.add('visible');
+  autoModeStep();
+}
+
+function autoModeStop() {
+  if (autoTimer) clearTimeout(autoTimer);
+  autoActive = false;
+  autoHint.classList.remove('visible');
+}
+
+function autoModeReset() {
+  if (autoIdleTimer) clearTimeout(autoIdleTimer);
+  autoIdleTimer = setTimeout(() => {
+    if (!isHovering) autoModeStart();
+  }, 4000);
+}
+
+// Стартуем демо-режим через 6 сек после загрузки
+setTimeout(autoModeReset, 2000);
+
+// Любое движение мыши останавливает демо и взводит таймер заново
+window.addEventListener('mousemove', () => {
+  if (autoActive) {
+    autoModeStop();
+    hideAnketa();
+  }
+  autoModeReset();
+});
+
+
+/* ============ 6. ЗВУК ПЕЧАТНОЙ МАШИНКИ ============ */
+let audioEnabled = false;
+let audioCtx = null;
+const audioToggle = document.getElementById('audio-toggle');
+
+audioToggle.addEventListener('click', () => {
+  audioEnabled = !audioEnabled;
+  audioToggle.classList.toggle('active', audioEnabled);
+  audioToggle.textContent = audioEnabled ? '♪ ЗВУК ВКЛ' : '♪ ЗВУК ВЫКЛ';
+  if (audioEnabled && !audioCtx) {
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch (e) { audioEnabled = false; }
+  }
+});
+
+function playTypeSound() {
+  if (!audioEnabled || !audioCtx) return;
+  try {
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'square';
+    o.frequency.setValueAtTime(800 + Math.random() * 400, audioCtx.currentTime);
+    g.gain.setValueAtTime(0.015, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.025);
+    o.connect(g);
+    g.connect(audioCtx.destination);
+    o.start();
+    o.stop(audioCtx.currentTime + 0.03);
+  } catch (e) {}
+}
+
+</script>
+</body>
+</html>
