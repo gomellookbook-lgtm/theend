@@ -6,19 +6,21 @@
 <title>VOGARDEN — THE END / LYKBOOK</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+SC:wght@900&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+SC:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   :root {
     --paper: #fafafa;
+    --paper-warm: #f8f4ec;       /* тёплый фон для GARDEN */
+    --garden: #5a8a3a;            /* зелёный акцент GARDEN */
+    --garden-soft: #9ab27a;
     --ink: #0a0a0a;
     --gray: #b8b8b8;
     --light-gray: #e8e8e8;
     --red: #e8312a;
-    --garden: #5a8a3a;
     --china: #b81812;
+    --china-dark: #5a0808;
   }
 
   html, body {
@@ -38,14 +40,15 @@
     position: fixed; top: 0; left: 0;
     pointer-events: none; z-index: 10000;
     transform: translate(-50%, -50%); will-change: transform;
+    mix-blend-mode: difference;
   }
   .cursor-dot {
     width: 5px; height: 5px;
-    background: var(--red); border-radius: 50%;
+    background: var(--paper); border-radius: 50%;
   }
   .cursor-ring {
     width: 30px; height: 30px;
-    border: 1px solid var(--red); border-radius: 50%;
+    border: 1px solid var(--paper); border-radius: 50%;
     transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1),
                 height 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
@@ -83,322 +86,483 @@
   }
 
   /* ============================================ */
-  /* 1. PAVILION — 3D-сцена с тремя студиями       */
+  /* 1. ОБЛОЖКА VOGARDEN                          */
   /* ============================================ */
-  .pavilion {
+  .magazine-cover {
+    min-height: 100vh;
+    background: var(--ink);
+    color: var(--paper);
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 60px;
+    padding: 100px 60px;
+    align-items: center;
     position: relative;
-    width: 100%;
-    height: 300vh; /* длинная скролл-зона для пролёта камеры */
-    background: #000;
   }
 
-  #pavilion-canvas {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100vh;
-    z-index: 1;
+  .cover-left {
+    position: relative;
   }
 
-  /* Поверх 3D — текстовые слои привязанные к скроллу */
-  .pavilion-overlay {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100vh;
-    z-index: 2;
-    pointer-events: none;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 80px 60px;
-  }
-
-  .pavilion-top {
-    text-align: center;
-    opacity: 0;
-    transition: opacity 0.6s ease;
-  }
-  .pavilion-top.visible { opacity: 1; }
-
-  .pavilion-eyebrow {
+  .cover-eyebrow {
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
     letter-spacing: 4px;
     color: var(--red);
     text-transform: uppercase;
-    margin-bottom: 20px;
+    margin-bottom: 32px;
   }
 
-  .pavilion-title {
+  .cover-title {
     font-family: 'Playfair Display', serif;
     font-weight: 900;
-    font-size: clamp(48px, 9vw, 160px);
-    line-height: 0.9;
-    letter-spacing: -0.02em;
-    color: var(--paper);
-    text-transform: uppercase;
+    font-size: clamp(80px, 14vw, 240px);
+    line-height: 0.82;
+    letter-spacing: -0.04em;
+    margin-bottom: 32px;
   }
 
-  .pavilion-title em {
+  .cover-title em {
     font-style: italic;
     font-weight: 400;
+    color: var(--red);
   }
 
-  .pavilion-subtitle {
-    margin-top: 20px;
-    font-family: 'Inter', sans-serif;
-    font-size: 15px;
-    letter-spacing: 3px;
-    color: rgba(255,255,255,0.6);
-    text-transform: uppercase;
+  .cover-manifesto {
+    font-family: 'Playfair Display', serif;
+    font-weight: 400;
+    font-style: italic;
+    font-size: clamp(20px, 2.4vw, 32px);
+    line-height: 1.35;
+    color: rgba(250,250,250,0.85);
+    max-width: 540px;
+    margin-bottom: 32px;
   }
 
-  .pavilion-bottom {
-    text-align: center;
+  .cover-manifesto b {
+    font-style: normal;
+    font-weight: 700;
+    color: var(--paper);
+  }
+
+  .cover-meta {
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
-    letter-spacing: 3px;
-    color: rgba(255,255,255,0.5);
-    text-transform: uppercase;
-    opacity: 0;
-    transition: opacity 0.6s ease;
-  }
-  .pavilion-bottom.visible { opacity: 1; }
-
-  /* Лейбл текущей студии (привязан к камере) */
-  .studio-label {
-    position: fixed;
-    top: 50%; left: 50%;
-    transform: translate(-50%, 200px);
-    z-index: 3;
-    pointer-events: none;
-    text-align: center;
-    opacity: 0;
-    transition: opacity 0.6s ease;
-  }
-  .studio-label.visible { opacity: 1; }
-
-  .studio-label-num {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    letter-spacing: 4px;
-    color: var(--red);
-    text-transform: uppercase;
-    margin-bottom: 12px;
-  }
-
-  .studio-label-name {
-    font-family: 'Playfair Display', serif;
-    font-weight: 900;
-    font-size: clamp(36px, 5vw, 72px);
-    color: var(--paper);
-    line-height: 1;
-    text-transform: uppercase;
-    letter-spacing: -0.02em;
-  }
-
-  .studio-label-desc {
-    font-family: 'Inter', sans-serif;
-    font-size: 13px;
     letter-spacing: 2px;
-    color: rgba(255,255,255,0.5);
+    color: rgba(250,250,250,0.4);
     text-transform: uppercase;
-    margin-top: 8px;
+    line-height: 1.8;
   }
 
-  /* ============================================ */
-  /* 2. ЖУРНАЛ — общие стили обоих выпусков         */
-  /* ============================================ */
-  .magazine {
+  .cover-right {
+    aspect-ratio: 3 / 4;
+    background: var(--light-gray);
+    overflow: hidden;
     position: relative;
-    width: 100%;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+  }
+
+  .cover-right img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform 8s ease;
+  }
+
+  .cover-right:hover img {
+    transform: scale(1.05);
+  }
+
+  .cover-issue-tag {
+    position: absolute;
+    bottom: 24px; left: 24px;
     background: var(--paper);
     color: var(--ink);
-    z-index: 5;
+    padding: 8px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 500;
   }
 
-  /* Шапка выпуска */
-  .issue-cover {
+  .scroll-hint {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: rgba(250,250,250,0.5);
+    text-transform: uppercase;
+    text-align: center;
+    animation: scrollBounce 2s ease-in-out infinite;
+  }
+  @keyframes scrollBounce {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(10px); }
+  }
+
+  @media (max-width: 900px) {
+    .magazine-cover {
+      grid-template-columns: 1fr;
+      padding: 80px 24px 60px;
+      gap: 40px;
+    }
+  }
+
+  /* ============================================ */
+  /* 2. РАЗДЕЛИТЕЛЬ ВЫПУСКА                       */
+  /* ============================================ */
+  .issue-divider {
     min-height: 100vh;
-    padding: 60px;
-    display: grid;
-    grid-template-columns: 1fr 1.5fr;
-    gap: 60px;
+    display: flex;
+    flex-direction: column;
     align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 80px 60px;
+    position: relative;
   }
 
-  .issue-cover.china {
+  .issue-divider.divider-garden {
+    background: var(--paper-warm);
+    color: var(--ink);
+  }
+
+  .issue-divider.divider-china {
     background: var(--china);
     color: var(--paper);
   }
 
-  .issue-cover-left {
+  .issue-divider.divider-empty {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .divider-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    opacity: 0.6;
+  }
+
+  .divider-name {
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+    font-size: clamp(80px, 16vw, 280px);
+    line-height: 0.85;
+    letter-spacing: -0.05em;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+
+  .divider-name em {
+    font-style: italic;
+    font-weight: 400;
+  }
+
+  .divider-desc {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: clamp(18px, 2vw, 26px);
+    color: currentColor;
+    opacity: 0.7;
+    max-width: 540px;
+    line-height: 1.4;
+  }
+
+  .divider-china .divider-num,
+  .divider-empty .divider-num {
+    color: rgba(250,250,250,0.6);
+  }
+
+  /* Иероглиф / символ выпуска */
+  .divider-symbol {
+    position: absolute;
+    font-family: 'Noto Serif SC', serif;
+    font-weight: 700;
+    font-size: clamp(180px, 30vw, 480px);
+    opacity: 0.06;
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .divider-garden .divider-symbol {
+    color: var(--garden);
+    opacity: 0.12;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .divider-china .divider-symbol {
+    color: var(--paper);
+    opacity: 0.1;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  /* ============================================ */
+  /* 3. ОБЛОЖКА ВЫПУСКА (внутри журнала)          */
+  /* ============================================ */
+  .issue-cover-page {
+    min-height: 100vh;
+    padding: 60px;
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 60px;
+    align-items: stretch;
+  }
+
+  .issue-cover-page.garden {
+    background: var(--paper-warm);
+    color: var(--ink);
+  }
+
+  .issue-cover-page.china {
+    background: var(--china);
+    color: var(--paper);
+  }
+
+  .issue-cover-text {
     display: flex;
     flex-direction: column;
     justify-content: center;
   }
 
-  .issue-num {
+  .issue-cover-num {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
+    font-size: 12px;
     letter-spacing: 4px;
-    color: var(--red);
     text-transform: uppercase;
-    margin-bottom: 24px;
+    margin-bottom: 32px;
+    opacity: 0.6;
   }
 
-  .issue-cover.china .issue-num {
-    color: var(--paper);
-  }
-
-  .issue-title {
+  .issue-cover-name {
     font-family: 'Playfair Display', serif;
     font-weight: 900;
-    font-size: clamp(72px, 12vw, 200px);
+    font-size: clamp(60px, 10vw, 160px);
     line-height: 0.85;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.04em;
     text-transform: uppercase;
+    margin-bottom: 40px;
   }
 
-  .issue-title em {
+  .issue-cover-name em {
     font-style: italic;
     font-weight: 400;
   }
 
-  .issue-subtitle {
-    font-family: 'Inter', sans-serif;
-    font-size: 14px;
-    letter-spacing: 3px;
-    color: rgba(0,0,0,0.5);
-    text-transform: uppercase;
-    margin-top: 32px;
-    max-width: 380px;
-    line-height: 1.6;
+  .issue-cover-text p {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(18px, 1.8vw, 24px);
+    line-height: 1.5;
+    max-width: 480px;
+    margin-bottom: 32px;
+    opacity: 0.8;
   }
 
-  .issue-cover.china .issue-subtitle {
-    color: rgba(255,255,255,0.7);
-  }
-
-  .issue-cover-right {
-    aspect-ratio: 3 / 4;
+  .issue-cover-img {
     background: var(--light-gray);
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.2);
+  }
+
+  .issue-cover-img img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+
+  @media (max-width: 900px) {
+    .issue-cover-page {
+      grid-template-columns: 1fr;
+      padding: 60px 24px;
+      gap: 40px;
+    }
+    .issue-cover-img {
+      aspect-ratio: 3 / 4;
+    }
+  }
+
+  /* ============================================ */
+  /* 4. РАЗВОРОТ — sticky на полный экран         */
+  /* ============================================ */
+  .spread-container {
+    position: relative;
+    background: var(--ink);
+  }
+
+  .spread-container.garden { background: var(--paper-warm); }
+  .spread-container.china { background: var(--china-dark); }
+
+  .spread-page {
+    min-height: 100vh;
+    padding: 60px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: center;
+  }
+
+  /* Полноэкранный разворот */
+  .spread-fullwidth {
+    width: 100%;
+    height: 100vh;
     overflow: hidden;
     position: relative;
   }
 
-  .issue-cover-right img {
+  .spread-fullwidth img {
     width: 100%; height: 100%;
-    object-fit: cover;
+    object-fit: contain;
+    object-position: center;
+    background: var(--ink);
   }
 
-  /* Spread (разворот) — full-bleed картинка */
-  .spread {
-    width: 100%;
-    padding: 0;
-    display: block;
+  .spread-fullwidth.garden { background: var(--paper-warm); }
+  .spread-fullwidth.garden img { background: var(--paper-warm); }
+
+  .spread-fullwidth.china { background: var(--china-dark); }
+  .spread-fullwidth.china img { background: var(--china-dark); }
+
+  /* Подпись разворота */
+  .spread-caption {
+    position: absolute;
+    bottom: 30px; left: 60px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(250,250,250,0.6);
+    text-transform: uppercase;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(8px);
+    padding: 10px 14px;
   }
 
-  .spread img {
-    width: 100%;
-    height: auto;
-    display: block;
+  /* Разворот с текстом сбоку (журнальная вёрстка) */
+  .spread-text {
+    padding: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
 
-  /* Разворот с цитатой (split-страница) */
-  .spread-quote {
-    min-height: 100vh;
-    padding: 80px 60px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 60px;
-    align-items: center;
+  .spread-text.garden { color: var(--ink); }
+  .spread-text.china { color: var(--paper); }
+
+  .spread-text-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    opacity: 0.5;
   }
 
-  .spread-quote.china-split {
-    background: linear-gradient(to right, var(--china) 0%, var(--china) 50%, var(--paper) 50%, var(--paper) 100%);
-  }
-
-  .spread-quote.garden-split {
-    background: linear-gradient(to right, #fbfaf5 0%, #fbfaf5 50%, var(--paper) 50%, var(--paper) 100%);
-  }
-
-  .quote-text {
+  .spread-headline {
     font-family: 'Playfair Display', serif;
-    font-weight: 400;
+    font-weight: 900;
     font-style: italic;
-    font-size: clamp(28px, 3.5vw, 52px);
-    line-height: 1.2;
-    color: var(--ink);
+    font-size: clamp(40px, 5vw, 84px);
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    margin-bottom: 32px;
+  }
+
+  .spread-quote-text {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: clamp(20px, 2vw, 28px);
+    line-height: 1.4;
+    margin-bottom: 24px;
     max-width: 480px;
   }
 
-  .china-split .quote-text { color: var(--paper); }
-
-  .quote-meta {
-    margin-top: 32px;
+  .spread-quote-meta {
     font-family: 'Inter', sans-serif;
-    font-size: 12px;
-    letter-spacing: 2px;
-    color: rgba(0,0,0,0.5);
-    text-transform: uppercase;
-    line-height: 1.7;
-    max-width: 320px;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
   }
 
-  .china-split .quote-meta { color: rgba(255,255,255,0.7); }
+  .spread-quote-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: 0.5;
+  }
 
-  .spread-quote-img {
+  .spread-img-box {
     aspect-ratio: 3 / 4;
     overflow: hidden;
     background: var(--light-gray);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
   }
 
-  .spread-quote-img img {
+  .spread-img-box img {
     width: 100%; height: 100%;
     object-fit: cover;
+    transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  /* Оглавление выпуска */
+  .spread-img-box:hover img {
+    transform: scale(1.03);
+  }
+
+  @media (max-width: 900px) {
+    .spread-page { grid-template-columns: 1fr; padding: 60px 24px; gap: 30px; }
+    .spread-text { padding: 0; }
+    .spread-fullwidth img { object-fit: contain; }
+  }
+
+  /* ============================================ */
+  /* 5. ОГЛАВЛЕНИЕ                                */
+  /* ============================================ */
   .toc {
-    padding: 120px 60px;
-    background: var(--paper);
+    min-height: 100vh;
+    padding: 100px 60px;
   }
 
-  .toc.china {
-    background: var(--ink);
-    color: var(--paper);
-  }
+  .toc.garden { background: var(--paper-warm); color: var(--ink); }
+  .toc.china { background: var(--ink); color: var(--paper); }
 
   .toc-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
     max-width: 1400px;
-    margin: 0 auto 60px;
-    border-bottom: 1px solid rgba(0,0,0,0.15);
+    margin: 0 auto 80px;
     padding-bottom: 30px;
-  }
-
-  .toc.china .toc-header {
-    border-bottom-color: rgba(255,255,255,0.2);
+    border-bottom: 1px solid currentColor;
   }
 
   .toc-title {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Playfair Display', serif;
     font-weight: 900;
-    font-size: clamp(36px, 5vw, 64px);
-    letter-spacing: -0.03em;
+    font-style: italic;
+    font-size: clamp(56px, 8vw, 120px);
+    letter-spacing: -0.04em;
     text-transform: uppercase;
+    line-height: 0.9;
   }
 
   .toc-meta {
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
     letter-spacing: 2px;
-    color: var(--gray);
     text-transform: uppercase;
     text-align: right;
-    line-height: 1.7;
+    line-height: 1.8;
+    opacity: 0.6;
   }
 
   .toc-list {
@@ -406,129 +570,46 @@
     margin: 0 auto;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 30px 60px;
+    gap: 24px 60px;
   }
 
   .toc-item {
-    display: flex;
-    align-items: baseline;
+    display: grid;
+    grid-template-columns: 80px 1fr;
     gap: 20px;
+    align-items: baseline;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+  }
+
+  .toc.china .toc-item {
+    border-bottom-color: rgba(255,255,255,0.15);
   }
 
   .toc-num {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Playfair Display', serif;
     font-weight: 900;
     font-size: 24px;
-    color: var(--ink);
-    min-width: 60px;
+    letter-spacing: -0.02em;
   }
-
-  .toc.china .toc-num { color: var(--paper); }
 
   .toc-name {
     font-family: 'Inter', sans-serif;
-    font-size: 15px;
-    color: rgba(0,0,0,0.7);
-  }
-
-  .toc.china .toc-name { color: rgba(255,255,255,0.7); }
-
-  @media (max-width: 900px) {
-    .toc-list { grid-template-columns: repeat(2, 1fr); gap: 24px 30px; }
-  }
-  @media (max-width: 600px) {
-    .toc-list { grid-template-columns: 1fr; gap: 20px; }
-  }
-
-  /* Сетка-плёнка с разворотами */
-  .gallery-grid-mag {
-    padding: 80px 60px;
-  }
-
-  .gallery-grid-mag.china {
-    background: var(--ink);
-  }
-
-  .gallery-grid-inner {
-    max-width: 1400px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-  }
-
-  .gallery-grid-inner .cell {
-    aspect-ratio: 3 / 4;
-    overflow: hidden;
-    background: var(--light-gray);
-  }
-
-  .gallery-grid-inner .cell img {
-    width: 100%; height: 100%;
-    object-fit: cover;
-    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  .gallery-grid-inner .cell:hover img {
-    transform: scale(1.05);
-  }
-
-  @media (max-width: 900px) {
-    .gallery-grid-inner { grid-template-columns: repeat(3, 1fr); }
-  }
-  @media (max-width: 600px) {
-    .gallery-grid-inner { grid-template-columns: repeat(2, 1fr); gap: 4px; }
-  }
-
-  /* Переходный экран между выпусками */
-  .issue-divider {
-    background: var(--ink);
-    color: var(--paper);
-    min-height: 80vh;
-    padding: 80px 60px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    position: relative;
-  }
-
-  .divider-num {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    letter-spacing: 4px;
-    color: var(--red);
-    text-transform: uppercase;
-    margin-bottom: 32px;
-  }
-
-  .divider-title {
-    font-family: 'Playfair Display', serif;
-    font-weight: 900;
-    font-size: clamp(56px, 9vw, 140px);
-    line-height: 0.9;
-    letter-spacing: -0.03em;
-    text-transform: uppercase;
-    margin-bottom: 32px;
-  }
-
-  .divider-title em {
-    font-style: italic;
     font-weight: 400;
+    font-size: 16px;
+    opacity: 0.75;
   }
 
-  .divider-arrow {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 4px;
-    color: rgba(255,255,255,0.6);
-    text-transform: uppercase;
-    margin-top: 60px;
+  @media (max-width: 900px) {
+    .toc { padding: 60px 24px; }
+    .toc-list { grid-template-columns: repeat(2, 1fr); gap: 16px 30px; }
+  }
+  @media (max-width: 600px) {
+    .toc-list { grid-template-columns: 1fr; gap: 12px; }
   }
 
   /* ============================================ */
-  /* 3. ВИДЕО                                      */
+  /* 6. ВИДЕО                                      */
   /* ============================================ */
   .video-section {
     background: var(--ink);
@@ -571,33 +652,18 @@
   }
 
   /* ============================================ */
-  /* 4. CTA — пустая студия №03                    */
+  /* 7. CTA — ВАША ТЕМА                            */
   /* ============================================ */
   .next-cta {
-    position: relative;
-    min-height: 100vh;
     background: var(--ink);
     color: var(--paper);
-    overflow: hidden;
+    min-height: 100vh;
+    padding: 120px 60px;
+    text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 100px 60px;
-    text-align: center;
-  }
-
-  #next-canvas {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    z-index: 1;
-  }
-
-  .next-content {
-    position: relative;
-    z-index: 2;
-    max-width: 900px;
   }
 
   .next-num {
@@ -612,9 +678,9 @@
   .next-title {
     font-family: 'Playfair Display', serif;
     font-weight: 900;
-    font-size: clamp(48px, 8vw, 140px);
-    line-height: 0.9;
-    letter-spacing: -0.03em;
+    font-size: clamp(56px, 11vw, 200px);
+    line-height: 0.85;
+    letter-spacing: -0.04em;
     text-transform: uppercase;
     margin-bottom: 40px;
   }
@@ -626,13 +692,13 @@
   }
 
   .next-text {
-    font-size: 18px;
-    line-height: 1.6;
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: clamp(18px, 2vw, 28px);
+    line-height: 1.5;
     color: rgba(255,255,255,0.75);
     margin-bottom: 50px;
-    max-width: 640px;
-    margin-left: auto;
-    margin-right: auto;
+    max-width: 700px;
   }
 
   .next-themes {
@@ -641,6 +707,7 @@
     justify-content: center;
     gap: 12px;
     margin-bottom: 60px;
+    max-width: 800px;
   }
 
   .theme-chip {
@@ -661,7 +728,7 @@
   }
 
   /* ============================================ */
-  /* 5. СПЕЦИФИКАЦИЯ                              */
+  /* 8. СПЕЦИФИКАЦИЯ                              */
   /* ============================================ */
   .specs {
     background: var(--paper);
@@ -679,6 +746,7 @@
   }
 
   @media (max-width: 900px) {
+    .specs { padding: 60px 24px; }
     .specs-grid { grid-template-columns: 1fr; gap: 50px; }
   }
 
@@ -715,7 +783,7 @@
 
   .specs-title em { font-style: italic; font-weight: 400; }
 
-  .specs-text {
+  .specs-desc {
     color: rgba(0,0,0,0.75);
     font-size: 16px;
     line-height: 1.7;
@@ -801,7 +869,6 @@
     border-color: var(--paper);
   }
 
-  /* На светлых секциях кнопки чёрные */
   .specs .btn {
     border-color: var(--ink);
     color: var(--ink);
@@ -820,20 +887,19 @@
     border-color: var(--red);
   }
 
-  /* === МОБИЛЬНАЯ АДАПТАЦИЯ === */
+  /* === FADE-IN ПРИ СКРОЛЛЕ === */
+  .fade-in {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 1.2s ease, transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
   @media (max-width: 768px) {
     .corner { font-size: 9px; }
-    .issue-cover { grid-template-columns: 1fr; padding: 80px 24px; gap: 40px; }
-    .spread-quote { grid-template-columns: 1fr; padding: 60px 24px; gap: 40px; }
-    .spread-quote.china-split,
-    .spread-quote.garden-split {
-      background: var(--ink);
-      color: var(--paper);
-    }
-    .spread-quote.china-split { background: var(--china); }
-    .spread-quote.garden-split .quote-text { color: var(--paper); }
-    .gallery-grid-mag, .toc, .video-section, .specs { padding: 60px 24px; }
-    .pavilion-overlay { padding: 80px 24px; }
   }
 </style>
 </head>
@@ -862,221 +928,238 @@
 </div>
 
 <!-- ============================================ -->
-<!-- 1. PAVILION — 3D-сцена                       -->
+<!-- 1. ОБЛОЖКА VOGARDEN                          -->
 <!-- ============================================ -->
-<section class="pavilion">
-  <canvas id="pavilion-canvas"></canvas>
-
-  <div class="pavilion-overlay">
-    <div class="pavilion-top" id="pavilion-top">
-      <div class="pavilion-eyebrow">— ЖУРНАЛ ВЫПУСКНОГО АЛЬБОМА —</div>
-      <h1 class="pavilion-title">VO<em>garden</em></h1>
-      <div class="pavilion-subtitle">ОДНА ВЁРСТКА · РАЗНЫЕ МИРЫ</div>
-    </div>
-
-    <div class="pavilion-bottom" id="pavilion-bottom">
-      ↓ ЛИСТАЙ ЧЕРЕЗ ПАВИЛЬОН
+<section class="magazine-cover">
+  <div class="cover-left">
+    <div class="cover-eyebrow">— ЖУРНАЛ ВЫПУСКНОГО АЛЬБОМА —</div>
+    <h1 class="cover-title">VO<em>garden</em></h1>
+    <p class="cover-manifesto">
+      Один <b>журнал</b>. Бесконечные <b>миры</b>.
+      Каждый выпуск — новая концепция под класс.
+      Сад, Китай — или ваша вселенная.
+    </p>
+    <div class="cover-meta">
+      ВЫПУСКОВ В КОЛЛЕКЦИИ: 02<br>
+      ФОРМАТ: 21 × 30 СМ<br>
+      ОТ 30 ЭКЗЕМПЛЯРОВ
     </div>
   </div>
-
-  <!-- Лейбл текущей студии -->
-  <div class="studio-label" id="studio-label">
-    <div class="studio-label-num" id="studio-num">№01 / GARDEN</div>
-    <div class="studio-label-name" id="studio-name">САД</div>
-    <div class="studio-label-desc" id="studio-desc">— ВЫПУСК О ЦВЕТЕНИИ —</div>
+  <div class="cover-right">
+    <img src="https://i.ibb.co/hJNgjxzd/3.jpg" alt="VOGARDEN cover">
+    <div class="cover-issue-tag">VOGARDEN · 2024</div>
   </div>
+  <div class="scroll-hint">↓ ЛИСТАЙ ЖУРНАЛ</div>
 </section>
 
 <!-- ============================================ -->
-<!-- 2. ЖУРНАЛ #01 — GARDEN                       -->
+<!-- 2. РАЗДЕЛИТЕЛЬ — GARDEN                       -->
 <!-- ============================================ -->
-<section class="magazine">
-
-  <!-- Обложка выпуска -->
-  <div class="issue-cover">
-    <div class="issue-cover-left">
-      <div class="issue-num">VOGARDEN · ВЫПУСК №01</div>
-      <h2 class="issue-title">VO<em>garden</em><br>GARDEN</h2>
-      <p class="issue-subtitle">
-        Райский сад как метафора выпуска. Цветение,
-        пышность, fashion-портреты в духе Vogue.
-      </p>
-    </div>
-    <div class="issue-cover-right">
-      <img src="https://i.ibb.co/hJNgjxzd/3.jpg" alt="Garden cover">
-    </div>
-  </div>
-
-  <!-- Полноразмерный разворот -->
-  <div class="spread">
-    <img src="https://i.ibb.co/HfRxJ8TV/10.jpg" alt="Garden spread 1">
-  </div>
-
-  <!-- Цитата + портрет (split garden-tinted) -->
-  <div class="spread-quote garden-split">
-    <div>
-      <p class="quote-text">
-        «Время цветения — самое короткое.
-        Поэтому самое настоящее.»
-      </p>
-      <div class="quote-meta">
-        — НАСТЯ К.<br>
-        11А · 2024 · VOGARDEN №01
-      </div>
-    </div>
-    <div class="spread-quote-img">
-      <img src="https://i.ibb.co/prhV74Kk/11.jpg" alt="Portrait garden">
-    </div>
-  </div>
-
-  <!-- Разворот -->
-  <div class="spread">
-    <img src="https://i.ibb.co/nsqfXQJn/19.jpg" alt="Garden spread 2">
-  </div>
-
-  <!-- Сетка-плёнка — все развороты сада -->
-  <div class="gallery-grid-mag">
-    <div class="gallery-grid-inner">
-      <div class="cell"><img src="https://i.ibb.co/hxq0QC3j/8.jpg" alt=""></div>
-      <div class="cell"><img src="https://i.ibb.co/zVTs082h/27.jpg" alt=""></div>
-      <div class="cell"><img src="https://i.ibb.co/93cwpJvT/14.jpg" alt=""></div>
-      <div class="cell"><img src="https://i.ibb.co/4LXN1Lh/5.jpg" alt=""></div>
-      <div class="cell"><img src="https://i.ibb.co/21ZYmZmH/16.jpg" alt=""></div>
-      <div class="cell"><img src="https://i.ibb.co/s9nBW9H9/17.jpg" alt=""></div>
-      <div class="cell"><img src="https://i.ibb.co/hJNgjxzd/3.jpg" alt=""></div>
-      <div class="cell"><img src="https://i.ibb.co/HfRxJ8TV/10.jpg" alt=""></div>
-    </div>
-  </div>
-
-  <!-- Оглавление -->
-  <div class="toc">
-    <div class="toc-header">
-      <h3 class="toc-title">СОДЕРЖАНИЕ</h3>
-      <div class="toc-meta">
-        VOGARDEN №01<br>
-        GARDEN · 2024
-      </div>
-    </div>
-    <div class="toc-list">
-      <div class="toc-item"><span class="toc-num">04-05</span><span class="toc-name">Общая фотография</span></div>
-      <div class="toc-item"><span class="toc-num">06-07</span><span class="toc-name">Голикова Анна</span></div>
-      <div class="toc-item"><span class="toc-num">08-09</span><span class="toc-name">Ковалёв Илья</span></div>
-      <div class="toc-item"><span class="toc-num">10-11</span><span class="toc-name">Петрова Мария</span></div>
-      <div class="toc-item"><span class="toc-num">12-13</span><span class="toc-name">Сидоров Тимур</span></div>
-      <div class="toc-item"><span class="toc-num">14-15</span><span class="toc-name">Романова Алиса</span></div>
-      <div class="toc-item"><span class="toc-num">16-17</span><span class="toc-name">Андреев Лев</span></div>
-      <div class="toc-item"><span class="toc-num">18-19</span><span class="toc-name">Кузнецова Дарья</span></div>
-      <div class="toc-item"><span class="toc-num">20-21</span><span class="toc-name">Морозов Артём</span></div>
-      <div class="toc-item"><span class="toc-num">42-43</span><span class="toc-name">Класс 11А</span></div>
-      <div class="toc-item"><span class="toc-num">88-89</span><span class="toc-name">Учителя</span></div>
-      <div class="toc-item"><span class="toc-num">92-93</span><span class="toc-name">Бэкстейдж</span></div>
-    </div>
-  </div>
+<section class="issue-divider divider-garden">
+  <div class="divider-symbol">花</div>
+  <div class="divider-num fade-in">— ВЫПУСК №01 —</div>
+  <h2 class="divider-name fade-in">VO<em>garden</em><br>GARDEN</h2>
+  <p class="divider-desc fade-in">
+    «Сад как метафора выпуска: цветение, расцвет, лёгкость.»
+  </p>
 </section>
 
 <!-- ============================================ -->
-<!-- Переходный экран — между выпусками            -->
+<!-- 3. ОБЛОЖКА ВЫПУСКА GARDEN                    -->
 <!-- ============================================ -->
-<section class="issue-divider">
-  <div class="divider-num">→ СЛЕДУЮЩИЙ ВЫПУСК</div>
-  <h2 class="divider-title">VO<em>garden</em><br>CHINA</h2>
-  <div class="divider-arrow">№02 · КИТАЙСКАЯ ТЕМА ↓</div>
-</section>
-
-<!-- ============================================ -->
-<!-- 2. ЖУРНАЛ #02 — CHINA                         -->
-<!-- ============================================ -->
-<section class="magazine">
-
-  <!-- Обложка выпуска -->
-  <div class="issue-cover china">
-    <div class="issue-cover-left">
-      <div class="issue-num">VOGARDEN · ВЫПУСК №02</div>
-      <h2 class="issue-title">VO<em>garden</em><br>CHINA</h2>
-      <p class="issue-subtitle">
-        Та же вёрстка, другой мир. Иероглифы, красный шёлк,
-        восточная эстетика. Один журнал — новая концепция.
-      </p>
-    </div>
-    <div class="issue-cover-right">
-      <img src="https://static.tildacdn.com/tild3133-3437-4332-a330-373035623835/15.jpg" alt="China cover">
+<section class="issue-cover-page garden">
+  <div class="issue-cover-text fade-in">
+    <div class="issue-cover-num">VOGARDEN · ВЫПУСК №01</div>
+    <h2 class="issue-cover-name">G<em>arden</em></h2>
+    <p>
+      Райский сад, цветение, fashion-портреты в духе Vogue.
+      Один разворот — одна выпускница, как героиня обложки.
+    </p>
+    <div class="cover-meta" style="color: rgba(0,0,0,0.5);">
+      ОБЛОЖКА · ОГЛАВЛЕНИЕ<br>
+      24 ГЕРОЯ · 96 СТРАНИЦ
     </div>
   </div>
-
-  <!-- Полноразмерный разворот -->
-  <div class="spread">
-    <img src="https://static.tildacdn.com/tild6235-3034-4136-b937-633463353464/25.jpg" alt="China spread 1">
-  </div>
-
-  <!-- Цитата + портрет (split) -->
-  <div class="spread-quote china-split">
-    <div>
-      <p class="quote-text">
-        «Если хочешь жизни райской —<br>
-        изучай язык китайской.»
-      </p>
-      <div class="quote-meta">
-        — ВАСИЛИЙ ИВАНОВИЧ<br>
-        VOGARDEN №02 · CHINA
-      </div>
-    </div>
-    <div class="spread-quote-img">
-      <img src="https://static.tildacdn.com/tild3962-3837-4665-a430-393363643133/17.jpg" alt="Portrait china">
-    </div>
-  </div>
-
-  <!-- Разворот -->
-  <div class="spread">
-    <img src="https://static.tildacdn.com/tild3631-3035-4938-b031-393664346433/28.jpg" alt="China spread 2">
-  </div>
-
-  <!-- Сетка-плёнка с разворотами -->
-  <div class="gallery-grid-mag china">
-    <div class="gallery-grid-inner">
-      <div class="cell"><img src="https://static.tildacdn.com/tild6166-3137-4438-b262-643832386666/24.jpg" alt=""></div>
-      <div class="cell"><img src="https://static.tildacdn.com/tild3935-3535-4933-b231-396534633934/29.jpg" alt=""></div>
-      <div class="cell"><img src="https://static.tildacdn.com/tild3964-3266-4135-b562-323462616132/46.jpg" alt=""></div>
-      <div class="cell"><img src="https://static.tildacdn.com/tild3636-3666-4035-a230-633638386633/45.jpg" alt=""></div>
-      <div class="cell"><img src="https://static.tildacdn.com/tild6230-3935-4663-a630-633266636133/02.jpg" alt=""></div>
-      <div class="cell"><img src="https://static.tildacdn.com/tild3539-6636-4339-b736-393166363836/04.jpg" alt=""></div>
-      <div class="cell"><img src="https://static.tildacdn.com/tild3133-3437-4332-a330-373035623835/15.jpg" alt=""></div>
-      <div class="cell"><img src="https://static.tildacdn.com/tild3962-3837-4665-a430-393363643133/17.jpg" alt=""></div>
-    </div>
-  </div>
-
-  <!-- Оглавление китайского -->
-  <div class="toc china">
-    <div class="toc-header">
-      <h3 class="toc-title">СОДЕРЖАНИЕ</h3>
-      <div class="toc-meta">
-        VOGARDEN №02<br>
-        CHINA · 2024
-      </div>
-    </div>
-    <div class="toc-list">
-      <div class="toc-item"><span class="toc-num">04-05</span><span class="toc-name">Общая фотография</span></div>
-      <div class="toc-item"><span class="toc-num">06-07</span><span class="toc-name">Амелякина Софья</span></div>
-      <div class="toc-item"><span class="toc-num">08-09</span><span class="toc-name">Гоева Анастасия</span></div>
-      <div class="toc-item"><span class="toc-num">10-11</span><span class="toc-name">Кашина Таисия</span></div>
-      <div class="toc-item"><span class="toc-num">16-17</span><span class="toc-name">Бухтоярова Ольга</span></div>
-      <div class="toc-item"><span class="toc-num">18-19</span><span class="toc-name">Зудилин Леонид</span></div>
-      <div class="toc-item"><span class="toc-num">20-21</span><span class="toc-name">Часовских Софья</span></div>
-      <div class="toc-item"><span class="toc-num">26-27</span><span class="toc-name">Гринько Тимофей</span></div>
-      <div class="toc-item"><span class="toc-num">28-29</span><span class="toc-name">Комаровский Арсений</span></div>
-      <div class="toc-item"><span class="toc-num">36-37</span><span class="toc-name">Сергиенко Карина</span></div>
-      <div class="toc-item"><span class="toc-num">84-85</span><span class="toc-name">Наши учителя</span></div>
-      <div class="toc-item"><span class="toc-num">92-93</span><span class="toc-name">Бэкстейдж</span></div>
-    </div>
+  <div class="issue-cover-img fade-in">
+    <img src="https://i.ibb.co/hJNgjxzd/3.jpg" alt="Garden cover">
   </div>
 </section>
 
+<!-- ОГЛАВЛЕНИЕ GARDEN -->
+<section class="toc garden">
+  <div class="toc-header fade-in">
+    <h3 class="toc-title">Содер<em>жание</em></h3>
+    <div class="toc-meta">
+      VOGARDEN №01<br>
+      GARDEN · 2024
+    </div>
+  </div>
+  <div class="toc-list fade-in">
+    <div class="toc-item"><span class="toc-num">04-05</span><span class="toc-name">Общая фотография</span></div>
+    <div class="toc-item"><span class="toc-num">06-07</span><span class="toc-name">Голикова Анна</span></div>
+    <div class="toc-item"><span class="toc-num">08-09</span><span class="toc-name">Ковалёв Илья</span></div>
+    <div class="toc-item"><span class="toc-num">10-11</span><span class="toc-name">Петрова Мария</span></div>
+    <div class="toc-item"><span class="toc-num">12-13</span><span class="toc-name">Сидоров Тимур</span></div>
+    <div class="toc-item"><span class="toc-num">14-15</span><span class="toc-name">Романова Алиса</span></div>
+    <div class="toc-item"><span class="toc-num">16-17</span><span class="toc-name">Андреев Лев</span></div>
+    <div class="toc-item"><span class="toc-num">18-19</span><span class="toc-name">Кузнецова Дарья</span></div>
+    <div class="toc-item"><span class="toc-num">20-21</span><span class="toc-name">Морозов Артём</span></div>
+    <div class="toc-item"><span class="toc-num">22-23</span><span class="toc-name">Соколова Полина</span></div>
+    <div class="toc-item"><span class="toc-num">42-43</span><span class="toc-name">Класс 11А</span></div>
+    <div class="toc-item"><span class="toc-num">88-89</span><span class="toc-name">Учителя</span></div>
+    <div class="toc-item"><span class="toc-num">92-93</span><span class="toc-name">Бэкстейдж</span></div>
+    <div class="toc-item"><span class="toc-num">94-95</span><span class="toc-name">Пожелания</span></div>
+  </div>
+</section>
+
+<!-- РАЗВОРОТ 1 GARDEN — полный экран -->
+<div class="spread-fullwidth garden fade-in">
+  <img src="https://i.ibb.co/HfRxJ8TV/10.jpg" alt="Garden spread 1">
+  <div class="spread-caption">VOGARDEN №01 · РАЗВОРОТ 06-07</div>
+</div>
+
+<!-- РАЗВОРОТ 2 GARDEN — журнальная вёрстка (картинка + текст) -->
+<section class="spread-page spread-container garden">
+  <div class="spread-img-box fade-in">
+    <img src="https://i.ibb.co/prhV74Kk/11.jpg" alt="Garden portrait">
+  </div>
+  <div class="spread-text garden fade-in">
+    <div class="spread-text-eyebrow">— СТРАНИЦА 08-09 —</div>
+    <h3 class="spread-headline">время<br>цветения</h3>
+    <p class="spread-quote-text">
+      «Самое короткое — поэтому самое настоящее.
+      Школа закончилась, но цвет остался.»
+    </p>
+    <div class="spread-quote-meta">ПЕТРОВА МАРИЯ</div>
+    <div class="spread-quote-sub">11А · 2024 · VOGARDEN №01</div>
+  </div>
+</section>
+
+<!-- РАЗВОРОТ 3 GARDEN — полный экран -->
+<div class="spread-fullwidth garden fade-in">
+  <img src="https://i.ibb.co/nsqfXQJn/19.jpg" alt="Garden spread 3">
+  <div class="spread-caption">VOGARDEN №01 · РАЗВОРОТ 14-15</div>
+</div>
+
+<!-- РАЗВОРОТ 4 GARDEN — полный экран -->
+<div class="spread-fullwidth garden fade-in">
+  <img src="https://i.ibb.co/zVTs082h/27.jpg" alt="Garden spread 4">
+  <div class="spread-caption">VOGARDEN №01 · РАЗВОРОТ 20-21</div>
+</div>
+
 <!-- ============================================ -->
-<!-- 3. ВИДЕО                                      -->
+<!-- 4. РАЗДЕЛИТЕЛЬ — CHINA                       -->
+<!-- ============================================ -->
+<section class="issue-divider divider-china">
+  <div class="divider-symbol">高明美</div>
+  <div class="divider-num fade-in">— ВЫПУСК №02 —</div>
+  <h2 class="divider-name fade-in">VO<em>garden</em><br>CHINA</h2>
+  <p class="divider-desc fade-in">
+    «Та же вёрстка. Совсем другой мир.»
+  </p>
+</section>
+
+<!-- ============================================ -->
+<!-- 5. ОБЛОЖКА ВЫПУСКА CHINA                     -->
+<!-- ============================================ -->
+<section class="issue-cover-page china">
+  <div class="issue-cover-text fade-in">
+    <div class="issue-cover-num">VOGARDEN · ВЫПУСК №02</div>
+    <h2 class="issue-cover-name">C<em>hina</em></h2>
+    <p>
+      Иероглифы, красный шёлк, восточная эстетика.
+      Тот же дизайн вёрстки — совсем другая вселенная.
+    </p>
+    <div class="cover-meta" style="color: rgba(255,255,255,0.6);">
+      ОБЛОЖКА · ОГЛАВЛЕНИЕ<br>
+      24 ГЕРОЯ · 96 СТРАНИЦ
+    </div>
+  </div>
+  <div class="issue-cover-img fade-in">
+    <img src="https://static.tildacdn.com/tild3133-3437-4332-a330-373035623835/15.jpg" alt="China cover">
+  </div>
+</section>
+
+<!-- ОГЛАВЛЕНИЕ CHINA -->
+<section class="toc china">
+  <div class="toc-header fade-in">
+    <h3 class="toc-title">Содер<em>жание</em></h3>
+    <div class="toc-meta">
+      VOGARDEN №02<br>
+      CHINA · 2024
+    </div>
+  </div>
+  <div class="toc-list fade-in">
+    <div class="toc-item"><span class="toc-num">04-05</span><span class="toc-name">Общая фотография</span></div>
+    <div class="toc-item"><span class="toc-num">06-07</span><span class="toc-name">Амелякина Софья</span></div>
+    <div class="toc-item"><span class="toc-num">08-09</span><span class="toc-name">Гоева Анастасия</span></div>
+    <div class="toc-item"><span class="toc-num">10-11</span><span class="toc-name">Кашина Таисия</span></div>
+    <div class="toc-item"><span class="toc-num">16-17</span><span class="toc-name">Бухтоярова Ольга</span></div>
+    <div class="toc-item"><span class="toc-num">18-19</span><span class="toc-name">Зудилин Леонид</span></div>
+    <div class="toc-item"><span class="toc-num">20-21</span><span class="toc-name">Часовских Софья</span></div>
+    <div class="toc-item"><span class="toc-num">26-27</span><span class="toc-name">Гринько Тимофей</span></div>
+    <div class="toc-item"><span class="toc-num">28-29</span><span class="toc-name">Комаровский Арсений</span></div>
+    <div class="toc-item"><span class="toc-num">34-35</span><span class="toc-name">Куракин Кирилл</span></div>
+    <div class="toc-item"><span class="toc-num">36-37</span><span class="toc-name">Сергиенко Карина</span></div>
+    <div class="toc-item"><span class="toc-num">84-85</span><span class="toc-name">Наши учителя</span></div>
+    <div class="toc-item"><span class="toc-num">92-93</span><span class="toc-name">Бэкстейдж</span></div>
+    <div class="toc-item"><span class="toc-num">94-95</span><span class="toc-name">Пожелания</span></div>
+  </div>
+</section>
+
+<!-- РАЗВОРОТ 1 CHINA — полный экран -->
+<div class="spread-fullwidth china fade-in">
+  <img src="https://static.tildacdn.com/tild6235-3034-4136-b937-633463353464/25.jpg" alt="China spread 1">
+  <div class="spread-caption">VOGARDEN №02 · РАЗВОРОТ 06-07</div>
+</div>
+
+<!-- РАЗВОРОТ 2 CHINA — журнальная вёрстка -->
+<section class="spread-page spread-container china">
+  <div class="spread-text china fade-in">
+    <div class="spread-text-eyebrow">— СТРАНИЦА 06-07 —</div>
+    <h3 class="spread-headline">райская<br>жизнь</h3>
+    <p class="spread-quote-text">
+      «Если хочешь жизни райской — изучай язык китайской.»
+    </p>
+    <div class="spread-quote-meta">— ВАСИЛИЙ ИВАНОВИЧ</div>
+    <div class="spread-quote-sub">VOGARDEN №02 · CHINA</div>
+  </div>
+  <div class="spread-img-box fade-in">
+    <img src="https://static.tildacdn.com/tild3962-3837-4665-a430-393363643133/17.jpg" alt="China portrait">
+  </div>
+</section>
+
+<!-- РАЗВОРОТ 3 CHINA — полный экран -->
+<div class="spread-fullwidth china fade-in">
+  <img src="https://static.tildacdn.com/tild3631-3035-4938-b031-393664346433/28.jpg" alt="China spread 3">
+  <div class="spread-caption">VOGARDEN №02 · РАЗВОРОТ 14-15</div>
+</div>
+
+<!-- РАЗВОРОТ 4 CHINA — полный экран -->
+<div class="spread-fullwidth china fade-in">
+  <img src="https://static.tildacdn.com/tild6166-3137-4438-b262-643832386666/24.jpg" alt="China spread 4">
+  <div class="spread-caption">VOGARDEN №02 · РАЗВОРОТ 24-25</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 6. РАЗДЕЛИТЕЛЬ — ВАША ТЕМА                   -->
+<!-- ============================================ -->
+<section class="issue-divider divider-empty">
+  <div class="divider-num fade-in" style="color: var(--red);">— ВЫПУСК №03 —</div>
+  <h2 class="divider-name fade-in">ВАША<br><em>тема</em></h2>
+  <p class="divider-desc fade-in">
+    «Следующий номер — за вами.<br>
+    Один журнал. Бесконечные миры.»
+  </p>
+</section>
+
+<!-- ============================================ -->
+<!-- 7. ВИДЕО                                      -->
 <!-- ============================================ -->
 <section class="video-section">
-  <div class="video-eyebrow">— ВИДЕО-ТИЗЕР —</div>
-  <h2 class="video-title">СМОТРИ КАК <em>живёт</em><br>VOGARDEN</h2>
-  <div class="video-wrap">
+  <div class="video-eyebrow fade-in">— ВИДЕО-ТИЗЕР —</div>
+  <h2 class="video-title fade-in">Смотри как <em>живёт</em><br>VOGARDEN</h2>
+  <div class="video-wrap fade-in">
     <iframe
       src="https://player.vimeo.com/video/1187985473?autoplay=0&loop=1&muted=0&controls=1"
       frameborder="0"
@@ -1087,47 +1170,44 @@
 </section>
 
 <!-- ============================================ -->
-<!-- 4. CTA — ВАША ТЕМА                            -->
+<!-- 8. CTA — ВАША ТЕМА                            -->
 <!-- ============================================ -->
 <section class="next-cta">
-  <canvas id="next-canvas"></canvas>
-  <div class="next-content">
-    <div class="next-num">VOGARDEN · ВЫПУСК №03</div>
-    <h2 class="next-title">ВАША <em>тема</em></h2>
-    <p class="next-text">
-      У нас уже два мира: Garden и China. Следующий — за вами.
-      Музыка, кино, литература, спорт, мода, киберпанк, винтаж.
-      Один журнал — бесконечные вселенные. Принесите идею, мы превратим её в книгу.
-    </p>
-    <div class="next-themes">
-      <span class="theme-chip">МУЗЫКА</span>
-      <span class="theme-chip">КИНО</span>
-      <span class="theme-chip">ЛИТЕРАТУРА</span>
-      <span class="theme-chip">СПОРТ</span>
-      <span class="theme-chip">МОДА</span>
-      <span class="theme-chip">КИБЕРПАНК</span>
-      <span class="theme-chip">ВИНТАЖ</span>
-      <span class="theme-chip">АРХИТЕКТУРА</span>
-      <span class="theme-chip">ВАША ИДЕЯ?</span>
-    </div>
-    <div class="btn-row">
-      <a href="https://wa.me/79581002777" class="btn btn-red">ПРИДУМАТЬ ВЫПУСК →</a>
-    </div>
+  <div class="next-num fade-in">VOGARDEN · ВЫПУСК №03</div>
+  <h2 class="next-title fade-in">ВАША <em>тема</em></h2>
+  <p class="next-text fade-in">
+    Garden и China — это только два из бесконечности.<br>
+    Музыка, кино, литература, спорт, мода, киберпанк.<br>
+    Принесите идею — превратим в журнал.
+  </p>
+  <div class="next-themes fade-in">
+    <span class="theme-chip">МУЗЫКА</span>
+    <span class="theme-chip">КИНО</span>
+    <span class="theme-chip">ЛИТЕРАТУРА</span>
+    <span class="theme-chip">СПОРТ</span>
+    <span class="theme-chip">МОДА</span>
+    <span class="theme-chip">КИБЕРПАНК</span>
+    <span class="theme-chip">ВИНТАЖ</span>
+    <span class="theme-chip">АРХИТЕКТУРА</span>
+    <span class="theme-chip">ВАША ИДЕЯ?</span>
+  </div>
+  <div class="btn-row fade-in">
+    <a href="https://wa.me/79581002777" class="btn btn-red">ПРИДУМАТЬ ВЫПУСК →</a>
   </div>
 </section>
 
 <!-- ============================================ -->
-<!-- 5. СПЕЦИФИКАЦИЯ                              -->
+<!-- 9. СПЕЦИФИКАЦИЯ                              -->
 <!-- ============================================ -->
 <section class="specs">
   <div class="specs-grid">
-    <div class="specs-image">
+    <div class="specs-image fade-in">
       <img src="https://i.ibb.co/zVTs082h/27.jpg" alt="VOGARDEN album">
     </div>
-    <div class="specs-text">
+    <div class="specs-text fade-in">
       <div class="specs-eyebrow">— VOGARDEN · СПЕЦИФИКАЦИЯ —</div>
-      <h2 class="specs-title">КНИГА — <em>как</em><br>журнал</h2>
-      <p class="specs-text">
+      <h2 class="specs-title">Книга — <em>как</em><br>журнал</h2>
+      <p class="specs-desc">
         Журнальная вёрстка с засечковой типографикой. Гипер-портреты на цветных фонах.
         Один дизайн — бесконечные концепции под выпуск каждого класса.
       </p>
@@ -1171,446 +1251,23 @@
   }
   loop();
 
-  document.querySelectorAll('a, button, .cell, .theme-chip').forEach(el => {
+  document.querySelectorAll('a, button, .theme-chip, .spread-img-box, .issue-cover-img, .cover-right').forEach(el => {
     el.addEventListener('mouseenter', () => ring.classList.add('hover'));
     el.addEventListener('mouseleave', () => ring.classList.remove('hover'));
   });
 })();
 
 
-
-/* ============ 2. 3D-ГАЛЕРЕЯ ПАРЯЩИХ РАЗВОРОТОВ ============ */
-(function() {
-  if (typeof THREE === 'undefined') return;
-
-  const canvas = document.getElementById('pavilion-canvas');
-  if (!canvas) return;
-
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-  renderer.setClearColor(0x050505);
-
-  const scene = new THREE.Scene();
-  // Туман — дальние развороты растворяются в чёрном
-  scene.fog = new THREE.Fog(0x050505, 25, 80);
-
-  const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200);
-  camera.position.set(0, 0, 35);
-
-  // === МЯГКИЙ СВЕТ ===
-  const ambient = new THREE.AmbientLight(0xffffff, 0.85);
-  scene.add(ambient);
-
-  const topLight = new THREE.DirectionalLight(0xffffff, 0.5);
-  topLight.position.set(0, 10, 5);
-  scene.add(topLight);
-
-  // === ТЕКСТУРЫ РАЗВОРОТОВ ===
-  const textureLoader = new THREE.TextureLoader();
-  textureLoader.crossOrigin = 'anonymous';
-
-  // Списки изображений: сад и Китай
-  const gardenImages = [
-    'https://i.ibb.co/hJNgjxzd/3.jpg',
-    'https://i.ibb.co/HfRxJ8TV/10.jpg',
-    'https://i.ibb.co/prhV74Kk/11.jpg',
-    'https://i.ibb.co/nsqfXQJn/19.jpg',
-    'https://i.ibb.co/zVTs082h/27.jpg',
-    'https://i.ibb.co/93cwpJvT/14.jpg',
-    'https://i.ibb.co/4LXN1Lh/5.jpg',
-    'https://i.ibb.co/21ZYmZmH/16.jpg',
-    'https://i.ibb.co/s9nBW9H9/17.jpg',
-    'https://i.ibb.co/hxq0QC3j/8.jpg'
-  ];
-
-  const chinaImages = [
-    'https://static.tildacdn.com/tild3133-3437-4332-a330-373035623835/15.jpg',
-    'https://static.tildacdn.com/tild6235-3034-4136-b937-633463353464/25.jpg',
-    'https://static.tildacdn.com/tild3962-3837-4665-a430-393363643133/17.jpg',
-    'https://static.tildacdn.com/tild3631-3035-4938-b031-393664346433/28.jpg',
-    'https://static.tildacdn.com/tild6166-3137-4438-b262-643832386666/24.jpg',
-    'https://static.tildacdn.com/tild3935-3535-4933-b231-396534633934/29.jpg',
-    'https://static.tildacdn.com/tild3964-3266-4135-b562-323462616132/46.jpg',
-    'https://static.tildacdn.com/tild3636-3666-4035-a230-633638386633/45.jpg',
-    'https://static.tildacdn.com/tild6230-3935-4663-a630-633266636133/02.jpg',
-    'https://static.tildacdn.com/tild3539-6636-4339-b736-393166363836/04.jpg'
-  ];
-
-  const isMobile = window.innerWidth < 768;
-
-  // === КОЛЛЕКЦИЯ РАЗВОРОТОВ ===
-  // Каждый разворот: позиция, поворот, текстура
-  // Расставляем их вдоль оси Z (камера движется по этой оси)
-  const spreads = [];
-
-  function createSpread(opts) {
-    const w = opts.width || 5;
-    const h = opts.height || 7;  // соотношение примерно как у альбома 21×30
-
-    const geometry = new THREE.PlaneGeometry(w, h);
-
-    // Сначала ставим placeholder material (серый), потом грузим текстуру
-    const material = new THREE.MeshBasicMaterial({
-      color: 0x1a1a1a,
-      side: THREE.DoubleSide
-    });
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(opts.x, opts.y, opts.z);
-    mesh.rotation.y = opts.rotY || 0;
-    mesh.rotation.z = opts.rotZ || 0;
-
-    // Загружаем текстуру асинхронно
-    if (opts.imageUrl) {
-      textureLoader.load(opts.imageUrl, (tex) => {
-        tex.colorSpace = THREE.SRGBColorSpace || tex.colorSpace;
-        material.color.setHex(0xffffff);
-        material.map = tex;
-        material.needsUpdate = true;
-      }, undefined, () => {
-        // На ошибке оставляем серый плейсхолдер
-      });
+/* ============ 2. FADE-IN ПРИ СКРОЛЛЕ ============ */
+const fadeObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
     }
-
-    scene.add(mesh);
-    spreads.push({ mesh, baseRotY: opts.rotY || 0, isEmpty: !opts.imageUrl });
-    return mesh;
-  }
-
-  // ===== РАССТАНОВКА =====
-  // Z = 25 — это около камеры
-  // Z = -50 — это далеко в глубине
-  // Камера движется от z=35 до z=-55 по скроллу
-  // Развороты расставлены вдоль этого пути
-
-  // 1. Стартовый разворот сада — далеко справа, в начале
-  createSpread({
-    x: 4, y: 2, z: 20,
-    rotY: -0.3, rotZ: 0.05,
-    width: 6, height: 8,
-    imageUrl: gardenImages[0]
   });
-  // 2. Слева на полпути
-  createSpread({
-    x: -5, y: -1, z: 10,
-    rotY: 0.35, rotZ: -0.04,
-    width: 6, height: 8,
-    imageUrl: gardenImages[1]
-  });
-  // 3. По центру дальше
-  createSpread({
-    x: 0, y: 1.5, z: 0,
-    rotY: 0, rotZ: 0,
-    width: 7, height: 9.5,
-    imageUrl: gardenImages[2]
-  });
-  // 4. Справа сада
-  createSpread({
-    x: 6, y: -0.5, z: -10,
-    rotY: -0.4, rotZ: 0.06,
-    width: 5.5, height: 7.5,
-    imageUrl: gardenImages[3]
-  });
+}, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
 
-  if (!isMobile) {
-    // 5. Дополнительные сада — слева верх
-    createSpread({
-      x: -7, y: 3, z: -5,
-      rotY: 0.5, rotZ: -0.08,
-      width: 5, height: 7,
-      imageUrl: gardenImages[4]
-    });
-  }
-
-  // Граница: дальше начинаются красные/китайские
-  // 6. Китайский — большой по центру
-  createSpread({
-    x: -1, y: 0.5, z: -22,
-    rotY: 0.15, rotZ: 0,
-    width: 7, height: 9.5,
-    imageUrl: chinaImages[0]
-  });
-  // 7. Справа выше
-  createSpread({
-    x: 6, y: 2.5, z: -28,
-    rotY: -0.35, rotZ: 0.05,
-    width: 5.5, height: 7.5,
-    imageUrl: chinaImages[1]
-  });
-  // 8. Слева ниже
-  createSpread({
-    x: -6, y: -1.5, z: -34,
-    rotY: 0.4, rotZ: -0.05,
-    width: 6, height: 8,
-    imageUrl: chinaImages[2]
-  });
-
-  if (!isMobile) {
-    // 9. Ещё китайский
-    createSpread({
-      x: 4, y: -2, z: -40,
-      rotY: -0.3, rotZ: 0.03,
-      width: 5, height: 7,
-      imageUrl: chinaImages[3]
-    });
-  }
-
-  // 10. ПУСТОЙ РАЗВОРОТ — "Ваша тема" в самом конце
-  const emptyMaterial = new THREE.MeshBasicMaterial({
-    color: 0x0a0a0a,
-    side: THREE.DoubleSide
-  });
-  const emptyGeom = new THREE.PlaneGeometry(7, 9.5);
-  const emptySpread = new THREE.Mesh(emptyGeom, emptyMaterial);
-  emptySpread.position.set(0, 0, -52);
-  scene.add(emptySpread);
-  spreads.push({ mesh: emptySpread, baseRotY: 0, isEmpty: true });
-
-  // Тонкая красная рамка вокруг пустого разворота
-  const frameGeom = new THREE.EdgesGeometry(emptyGeom);
-  const frameMat = new THREE.LineBasicMaterial({ color: 0xe8312a, linewidth: 2 });
-  const frame = new THREE.LineSegments(frameGeom, frameMat);
-  frame.position.copy(emptySpread.position);
-  scene.add(frame);
-
-  // Текст "ВАША ТЕМА" — рисуем на canvas и натягиваем как текстуру
-  function makeTextTexture(text, subtext) {
-    const cnv = document.createElement('canvas');
-    cnv.width = 700;
-    cnv.height = 950;
-    const ctx = cnv.getContext('2d');
-    ctx.fillStyle = '#0a0a0a';
-    ctx.fillRect(0, 0, cnv.width, cnv.height);
-
-    // Лейбл сверху
-    ctx.fillStyle = '#e8312a';
-    ctx.font = '500 22px "JetBrains Mono", monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('VOGARDEN · ВЫПУСК №03', cnv.width / 2, 100);
-
-    // Большой текст
-    ctx.fillStyle = '#fafafa';
-    ctx.font = '900 italic 130px "Playfair Display", serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('ваша', cnv.width / 2, cnv.height / 2 - 30);
-    ctx.font = '900 130px "Playfair Display", serif';
-    ctx.fillText('ТЕМА', cnv.width / 2, cnv.height / 2 + 100);
-
-    // Подзаголовок снизу
-    ctx.fillStyle = 'rgba(255,255,255,0.5)';
-    ctx.font = '400 18px "Inter", sans-serif';
-    ctx.fillText('— СЛЕДУЮЩИЙ ВЫПУСК —', cnv.width / 2, cnv.height - 100);
-
-    const texture = new THREE.CanvasTexture(cnv);
-    texture.colorSpace = THREE.SRGBColorSpace || texture.colorSpace;
-    return texture;
-  }
-
-  // Применим текст-текстуру когда шрифты загрузятся
-  if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(() => {
-      emptyMaterial.map = makeTextTexture();
-      emptyMaterial.color.setHex(0xffffff);
-      emptyMaterial.needsUpdate = true;
-    });
-  } else {
-    setTimeout(() => {
-      emptyMaterial.map = makeTextTexture();
-      emptyMaterial.color.setHex(0xffffff);
-      emptyMaterial.needsUpdate = true;
-    }, 800);
-  }
-
-  // === КУРСОР ===
-  let mouseX = 0, mouseY = 0;
-  window.addEventListener('mousemove', (e) => {
-    mouseX = (e.clientX / window.innerWidth) * 2 - 1;
-    mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
-  });
-
-  // === ЛЕЙБЛ ТЕКУЩЕГО ВЫПУСКА ===
-  const studioLabel = document.getElementById('studio-label');
-  const studioNum = document.getElementById('studio-num');
-  const studioName = document.getElementById('studio-name');
-  const studioDesc = document.getElementById('studio-desc');
-  const pavilionTop = document.getElementById('pavilion-top');
-  const pavilionBottom = document.getElementById('pavilion-bottom');
-
-  let currentLabelIdx = -2;
-
-  function updateLabel(idx) {
-    if (idx === currentLabelIdx) return;
-    currentLabelIdx = idx;
-
-    if (idx === null) {
-      studioLabel.classList.remove('visible');
-      return;
-    }
-
-    const data = [
-      { num: '№01 / GARDEN', name: 'САД', desc: '— ВЫПУСК О ЦВЕТЕНИИ —' },
-      { num: '№02 / CHINA',  name: 'КИТАЙ', desc: '— ВЫПУСК О ВОСТОКЕ —' },
-      { num: '№03 / ?',      name: 'ПУСТО', desc: '— ВАША ТЕМА —' }
-    ][idx];
-
-    studioNum.textContent = data.num;
-    studioName.textContent = data.name;
-    studioDesc.textContent = data.desc;
-    studioLabel.classList.add('visible');
-  }
-
-  // === СКРОЛЛ-ЛОГИКА ===
-  const pavilionSection = document.querySelector('.pavilion');
-  let cameraTargetZ = 35;
-
-  function onScroll() {
-    const rect = pavilionSection.getBoundingClientRect();
-    const sectionTop = rect.top + window.scrollY;
-    const sectionHeight = rect.height - window.innerHeight;
-    const scrollInSection = window.scrollY - sectionTop;
-    const t = Math.max(0, Math.min(1, scrollInSection / sectionHeight));
-
-    // Камера движется от z=35 (стартовый общий вид) до z=-58 (за пустым разворотом)
-    cameraTargetZ = 35 - t * 93;
-
-    // Лейбл выпуска по зоне камеры
-    let labelIdx = null;
-    if (cameraTargetZ < 22 && cameraTargetZ > -18) labelIdx = 0;       // зона сада
-    else if (cameraTargetZ <= -18 && cameraTargetZ > -45) labelIdx = 1; // зона Китая
-    else if (cameraTargetZ <= -45) labelIdx = 2;                        // пустой
-    updateLabel(labelIdx);
-
-    pavilionTop.classList.toggle('visible', t < 0.10);
-    pavilionBottom.classList.toggle('visible', t < 0.06);
-  }
-  window.addEventListener('scroll', onScroll);
-  onScroll();
-
-  // === АНИМАЦИЯ ===
-  function animate() {
-    requestAnimationFrame(animate);
-
-    // Плавно догоняем целевую Z камеры
-    camera.position.z += (cameraTargetZ - camera.position.z) * 0.08;
-
-    // Лёгкое движение камеры от курсора (parallax)
-    const parallaxX = mouseX * 1.5;
-    const parallaxY = mouseY * 0.8;
-    camera.position.x += (parallaxX - camera.position.x) * 0.04;
-    camera.position.y += (parallaxY - camera.position.y) * 0.04;
-
-    // Камера всегда смотрит вперёд (но с лёгкой корректировкой от курсора)
-    camera.lookAt(parallaxX * 0.3, parallaxY * 0.3, camera.position.z - 10);
-
-    // Лёгкое колебание разворотов (как будто парят на ветру)
-    const time = performance.now() * 0.0003;
-    spreads.forEach((s, i) => {
-      s.mesh.rotation.y = s.baseRotY + Math.sin(time + i * 0.7) * 0.02;
-      s.mesh.position.y += Math.sin(time * 1.5 + i) * 0.001;
-    });
-
-    renderer.render(scene, camera);
-  }
-  animate();
-
-  window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  });
-})();
-
-
-
-/* ============ 3. NEXT-CTA — 3D пустая студия повторно ============ */
-(function() {
-  if (typeof THREE === 'undefined') return;
-  const canvas = document.getElementById('next-canvas');
-  if (!canvas) return;
-
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-  const w = () => canvas.parentElement.offsetWidth;
-  const h = () => canvas.parentElement.offsetHeight;
-  renderer.setSize(w(), h());
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-  renderer.setClearColor(0x000000, 0);
-
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(55, w() / h(), 0.1, 100);
-  camera.position.set(0, 1.5, 8);
-
-  // Лёгкий амбиент
-  scene.add(new THREE.AmbientLight(0xffffff, 0.2));
-
-  // Силуэт-проволочная фигура в центре, по которой "ездит" свет
-  const wireGroup = new THREE.Group();
-  const wireMat = new THREE.LineBasicMaterial({
-    color: 0xe8312a,
-    opacity: 0.5,
-    transparent: true
-  });
-
-  function addLine(points) {
-    const geom = new THREE.BufferGeometry().setFromPoints(points.map(p => new THREE.Vector3(...p)));
-    wireGroup.add(new THREE.Line(geom, wireMat));
-  }
-
-  // голова (круг)
-  const headCurve = new THREE.EllipseCurve(0, 2.4, 0.4, 0.4, 0, 2*Math.PI);
-  addLine(headCurve.getPoints(60).map(p => [p.x, p.y, 0]));
-  // тело
-  addLine([[0, 2, 0], [0, 0, 0]]);
-  // плечи
-  addLine([[-0.8, 1.6, 0], [0.8, 1.6, 0]]);
-  // руки
-  addLine([[-0.8, 1.6, 0], [-0.9, 0.2, 0]]);
-  addLine([[0.8, 1.6, 0], [0.9, 0.2, 0]]);
-  // бёдра
-  addLine([[-0.4, 0, 0], [0.4, 0, 0]]);
-  // ноги
-  addLine([[-0.3, 0, 0], [-0.3, -2.4, 0]]);
-  addLine([[0.3, 0, 0], [0.3, -2.4, 0]]);
-
-  scene.add(wireGroup);
-
-  // Подвижный софит
-  const spot = new THREE.SpotLight(0xffffff, 2, 12, Math.PI / 6, 0.5);
-  spot.position.set(0, 5, 3);
-  scene.add(spot);
-  scene.add(spot.target);
-
-  // Halo
-  const halo = new THREE.Mesh(
-    new THREE.ConeGeometry(2.2, 6, 24, 1, true),
-    new THREE.MeshBasicMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0.04,
-      side: THREE.DoubleSide,
-      depthWrite: false
-    })
-  );
-  halo.position.set(0, 2, 2);
-  halo.rotation.x = Math.PI;
-  scene.add(halo);
-
-  let time = 0;
-  function animate() {
-    requestAnimationFrame(animate);
-    time += 0.01;
-    wireGroup.rotation.y = Math.sin(time * 0.5) * 0.3;
-    spot.position.x = Math.sin(time * 0.7) * 2;
-    halo.position.x = spot.position.x * 0.6;
-    renderer.render(scene, camera);
-  }
-  animate();
-
-  window.addEventListener('resize', () => {
-    renderer.setSize(w(), h());
-    camera.aspect = w() / h();
-    camera.updateProjectionMatrix();
-  });
-})();
+document.querySelectorAll('.fade-in').forEach(el => fadeObserver.observe(el));
 </script>
 </body>
 </html>
