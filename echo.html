@@ -141,7 +141,7 @@
 
   .intro-mini-grid .mini-cell {
     aspect-ratio: 1 / 1;
-    background: var(--light-gray);
+    background: var(--ink);
     overflow: hidden;
     position: relative;
   }
@@ -150,7 +150,31 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    filter: grayscale(1) contrast(0.95);
+    /* Стартовое состояние — "непроявленная плёнка": почти чёрный квадрат */
+    filter: grayscale(1) brightness(0) contrast(2);
+    opacity: 0.15;
+    transition: filter 1.2s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Проявленное состояние — добавляется JS-классом */
+  .intro-mini-grid .mini-cell.developed img {
+    filter: grayscale(1) brightness(1) contrast(0.95);
+    opacity: 1;
+  }
+
+  /* Лёгкое мерцание во время проявки — как в фотолаборатории */
+  .intro-mini-grid .mini-cell.developing img {
+    animation: developFlicker 1.2s ease-out;
+  }
+
+  @keyframes developFlicker {
+    0%   { filter: grayscale(1) brightness(0) contrast(2); opacity: 0.15; }
+    20%  { filter: grayscale(1) brightness(0.2) contrast(1.8); opacity: 0.4; }
+    35%  { filter: grayscale(1) brightness(0.15) contrast(1.5); opacity: 0.3; }
+    55%  { filter: grayscale(1) brightness(0.5) contrast(1.3); opacity: 0.7; }
+    75%  { filter: grayscale(1) brightness(0.85) contrast(1.05); opacity: 0.95; }
+    100% { filter: grayscale(1) brightness(1) contrast(0.95); opacity: 1; }
   }
 
   .intro-mini-grid .mini-cell .mini-num {
@@ -1203,10 +1227,45 @@ if (introMiniGrid) {
     const num = (i + 1).toString().padStart(2, '0');
     div.innerHTML = `
       <span class="mini-num">${num}</span>
-      <img src="${url}" alt="" loading="lazy">
+      <img src="${url}" alt="" loading="eager">
     `;
     introMiniGrid.appendChild(div);
   });
+
+  // Эффект проявления плёнки — случайный порядок
+  let developStarted = false;
+  function startFilmDevelopment() {
+    if (developStarted) return;
+    developStarted = true;
+
+    const cells = Array.from(introMiniGrid.querySelectorAll('.mini-cell'));
+    // Перемешиваем массив
+    const shuffled = cells.slice().sort(() => Math.random() - 0.5);
+
+    shuffled.forEach((cell, i) => {
+      // Случайная задержка с небольшим разбросом
+      const delay = i * 180 + Math.random() * 100;
+      setTimeout(() => {
+        cell.classList.add('developing');
+        // После окончания анимации фиксируем "проявленное" состояние
+        setTimeout(() => {
+          cell.classList.add('developed');
+          cell.classList.remove('developing');
+        }, 1200);
+      }, delay);
+    });
+  }
+
+  // Запускаем при появлении сетки в viewport (с небольшой задержкой для эффекта)
+  const introObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        setTimeout(startFilmDevelopment, 400);
+        introObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.2 });
+  introObserver.observe(introMiniGrid);
 }
 
 // Финальная мини-сетка — последние 8 портретов
