@@ -72,7 +72,7 @@
     min-height: 100vh;
     width: 100%;
     display: grid;
-    grid-template-columns: 100px 1fr 1fr;
+    grid-template-columns: 200px 1fr 1fr;
     padding: 60px 60px 60px 0;
     position: relative;
     gap: 40px;
@@ -106,20 +106,20 @@
   .intro-echo-col {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
-    padding-left: 20px;
-    overflow: hidden;
+    justify-content: center;
+    overflow: visible;
+    position: relative;
+    height: 100%;
   }
 
   .echo-vertical {
     font-family: 'Inter', sans-serif;
     font-weight: 900;
-    font-size: clamp(80px, 14vw, 200px);
-    line-height: 0.78;
+    font-size: clamp(140px, 22vh, 280px);
+    line-height: 0.9;
     letter-spacing: -0.05em;
     color: var(--ink);
     transform: rotate(-90deg);
-    transform-origin: center center;
     white-space: nowrap;
     user-select: none;
   }
