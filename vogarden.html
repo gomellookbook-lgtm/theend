@@ -6,51 +6,48 @@
 <title>VOGARDEN — THE END / LYKBOOK</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+SC:wght@400;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   :root {
-    --paper: #fafafa;
-    --paper-warm: #f8f4ec;       /* тёплый фон для GARDEN */
-    --garden: #5a8a3a;            /* зелёный акцент GARDEN */
-    --garden-soft: #9ab27a;
+    --paper: #fdfdfd;
     --ink: #0a0a0a;
-    --gray: #b8b8b8;
+    --gray: #888;
     --light-gray: #e8e8e8;
     --red: #e8312a;
-    --china: #b81812;
-    --china-dark: #5a0808;
+    --hairline: rgba(10, 10, 10, 0.12);
   }
 
   html, body {
-    background: var(--ink);
-    color: var(--paper);
+    background: var(--paper);
+    color: var(--ink);
     font-family: 'Inter', sans-serif;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   @media (hover: hover) and (pointer: fine) {
     html, body, * { cursor: none !important; }
   }
 
-  /* === КАСТОМНЫЙ КУРСОР === */
+  /* === КУРСОР === */
   .cursor-dot, .cursor-ring {
     position: fixed; top: 0; left: 0;
     pointer-events: none; z-index: 10000;
     transform: translate(-50%, -50%); will-change: transform;
-    mix-blend-mode: difference;
   }
   .cursor-dot {
-    width: 5px; height: 5px;
-    background: var(--paper); border-radius: 50%;
+    width: 4px; height: 4px;
+    background: var(--ink); border-radius: 50%;
   }
   .cursor-ring {
-    width: 30px; height: 30px;
-    border: 1px solid var(--paper); border-radius: 50%;
+    width: 26px; height: 26px;
+    border: 1px solid var(--ink); border-radius: 50%;
     transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-                height 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+                height 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.3s ease;
   }
   .cursor-ring.hover {
     width: 60px; height: 60px;
@@ -59,702 +56,568 @@
     .cursor-dot, .cursor-ring { display: none; }
   }
 
-  /* === FIXED УГЛОВЫЕ НАДПИСИ === */
-  .corner {
-    position: fixed; z-index: 50;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px; letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.7);
-    line-height: 1.5;
-    mix-blend-mode: difference;
-    pointer-events: none;
-  }
-  .corner-tl { top: 24px; left: 24px; }
-  .corner-tr { top: 24px; right: 24px; text-align: right; }
-  .corner-bl { bottom: 24px; left: 24px; }
-  .corner-br { bottom: 24px; right: 24px; text-align: right; }
-  .corner .red-dot {
-    display: inline-block; width: 6px; height: 6px;
-    background: var(--red); border-radius: 50%;
-    margin-right: 6px; vertical-align: middle;
-    animation: pulse 2s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(1.3); }
-  }
-
-  /* ============================================ */
-  /* 1. ОБЛОЖКА VOGARDEN                          */
-  /* ============================================ */
-  .magazine-cover {
-    min-height: 100vh;
-    background: var(--ink);
-    color: var(--paper);
-    display: grid;
-    grid-template-columns: 1.4fr 1fr;
-    gap: 60px;
-    padding: 100px 60px;
-    align-items: center;
-    position: relative;
-  }
-
-  .cover-left {
-    position: relative;
-  }
-
-  .cover-eyebrow {
-    font-family: 'JetBrains Mono', monospace;
+  /* === ОБЩИЕ КЛАССЫ === */
+  .smallcaps {
+    font-family: 'Inter', sans-serif;
     font-size: 11px;
-    letter-spacing: 4px;
-    color: var(--red);
-    text-transform: uppercase;
-    margin-bottom: 32px;
-  }
-
-  .cover-title {
-    font-family: 'Playfair Display', serif;
-    font-weight: 900;
-    font-size: clamp(80px, 14vw, 240px);
-    line-height: 0.82;
-    letter-spacing: -0.04em;
-    margin-bottom: 32px;
-  }
-
-  .cover-title em {
-    font-style: italic;
-    font-weight: 400;
-    color: var(--red);
-  }
-
-  .cover-manifesto {
-    font-family: 'Playfair Display', serif;
-    font-weight: 400;
-    font-style: italic;
-    font-size: clamp(20px, 2.4vw, 32px);
-    line-height: 1.35;
-    color: rgba(250,250,250,0.85);
-    max-width: 540px;
-    margin-bottom: 32px;
-  }
-
-  .cover-manifesto b {
-    font-style: normal;
-    font-weight: 700;
-    color: var(--paper);
-  }
-
-  .cover-meta {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 2px;
-    color: rgba(250,250,250,0.4);
-    text-transform: uppercase;
-    line-height: 1.8;
-  }
-
-  .cover-right {
-    aspect-ratio: 3 / 4;
-    background: var(--light-gray);
-    overflow: hidden;
-    position: relative;
-    box-shadow: 0 30px 80px rgba(0,0,0,0.4);
-  }
-
-  .cover-right img {
-    width: 100%; height: 100%;
-    object-fit: cover;
-    transition: transform 8s ease;
-  }
-
-  .cover-right:hover img {
-    transform: scale(1.05);
-  }
-
-  .cover-issue-tag {
-    position: absolute;
-    bottom: 24px; left: 24px;
-    background: var(--paper);
-    color: var(--ink);
-    padding: 8px 14px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
     font-weight: 500;
-  }
-
-  .scroll-hint {
-    position: absolute;
-    bottom: 40px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 3px;
-    color: rgba(250,250,250,0.5);
+    letter-spacing: 0.28em;
     text-transform: uppercase;
-    text-align: center;
-    animation: scrollBounce 2s ease-in-out infinite;
-  }
-  @keyframes scrollBounce {
-    0%, 100% { transform: translateX(-50%) translateY(0); }
-    50% { transform: translateX(-50%) translateY(10px); }
-  }
-
-  @media (max-width: 900px) {
-    .magazine-cover {
-      grid-template-columns: 1fr;
-      padding: 80px 24px 60px;
-      gap: 40px;
-    }
-  }
-
-  /* ============================================ */
-  /* 2. РАЗДЕЛИТЕЛЬ ВЫПУСКА                       */
-  /* ============================================ */
-  .issue-divider {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 80px 60px;
-    position: relative;
-  }
-
-  .issue-divider.divider-garden {
-    background: var(--paper-warm);
-    color: var(--ink);
-  }
-
-  .issue-divider.divider-china {
-    background: var(--china);
-    color: var(--paper);
-  }
-
-  .issue-divider.divider-empty {
-    background: var(--ink);
-    color: var(--paper);
-  }
-
-  .divider-num {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    letter-spacing: 5px;
-    text-transform: uppercase;
-    margin-bottom: 32px;
-    opacity: 0.6;
-  }
-
-  .divider-name {
-    font-family: 'Playfair Display', serif;
-    font-weight: 900;
-    font-size: clamp(80px, 16vw, 280px);
-    line-height: 0.85;
-    letter-spacing: -0.05em;
-    text-transform: uppercase;
-    margin-bottom: 32px;
-  }
-
-  .divider-name em {
-    font-style: italic;
-    font-weight: 400;
-  }
-
-  .divider-desc {
-    font-family: 'Playfair Display', serif;
-    font-style: italic;
-    font-size: clamp(18px, 2vw, 26px);
-    color: currentColor;
-    opacity: 0.7;
-    max-width: 540px;
     line-height: 1.4;
   }
 
-  .divider-china .divider-num,
-  .divider-empty .divider-num {
-    color: rgba(250,250,250,0.6);
+  .smallcaps-red {
+    color: var(--red);
   }
 
-  /* Иероглиф / символ выпуска */
-  .divider-symbol {
-    position: absolute;
-    font-family: 'Noto Serif SC', serif;
-    font-weight: 700;
-    font-size: clamp(180px, 30vw, 480px);
-    opacity: 0.06;
-    line-height: 1;
-    pointer-events: none;
+  .serif {
+    font-family: 'Cormorant Garamond', serif;
+  }
+
+  .italic {
+    font-style: italic;
+    font-weight: 400;
+  }
+
+  /* ============================================ */
+  /* HEADER NAV (мини бар сверху)                 */
+  /* ============================================ */
+  .topbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 90;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 40px;
+    background: rgba(253, 253, 253, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .topbar-left, .topbar-right {
+    display: flex;
+    gap: 32px;
+    align-items: center;
+  }
+
+  .topbar a {
+    color: var(--ink);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+  .topbar a:hover { color: var(--red); }
+
+  .topbar-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    font-size: 18px;
+    letter-spacing: 0.05em;
+  }
+
+  /* ============================================ */
+  /* 1. HERO                                       */
+  /* ============================================ */
+  .hero {
+    min-height: 100vh;
+    padding: 140px 60px 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+  }
+
+  .hero-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 60px;
+  }
+
+  .hero-categories {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+
+  .hero-category {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--gray);
+  }
+
+  .hero-category.active {
+    color: var(--ink);
+  }
+
+  .hero-category .num {
+    color: var(--red);
+    margin-right: 6px;
+  }
+
+  /* === ОГРОМНЫЙ ЛОГОТИП ВОГАДЕН === */
+  .hero-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    font-size: clamp(80px, 16vw, 280px);
+    line-height: 0.85;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    color: var(--ink);
     user-select: none;
   }
 
-  .divider-garden .divider-symbol {
-    color: var(--garden);
-    opacity: 0.12;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
+  /* Разрыв между группами букв как у L'OISEAU */
+  .hero-logo .gap {
+    display: inline-block;
+    width: 0.3em;
   }
 
-  .divider-china .divider-symbol {
-    color: var(--paper);
-    opacity: 0.1;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
+  .hero-logo em {
+    font-style: italic;
+    font-weight: 400;
   }
 
-  /* ============================================ */
-  /* 3. ОБЛОЖКА ВЫПУСКА (внутри журнала)          */
-  /* ============================================ */
-  .issue-cover-page {
-    min-height: 100vh;
-    padding: 60px;
+  .hero-bottom {
     display: grid;
-    grid-template-columns: 1fr 1.2fr;
+    grid-template-columns: 1fr 1.4fr 1fr;
     gap: 60px;
-    align-items: stretch;
+    align-items: end;
+    margin-top: 60px;
   }
 
-  .issue-cover-page.garden {
-    background: var(--paper-warm);
+  .hero-tagline {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(22px, 2.4vw, 32px);
+    line-height: 1.35;
     color: var(--ink);
   }
 
-  .issue-cover-page.china {
-    background: var(--china);
-    color: var(--paper);
+  .hero-tagline b {
+    font-style: normal;
+    font-weight: 500;
   }
 
-  .issue-cover-text {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-
-  .issue-cover-num {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    margin-bottom: 32px;
-    opacity: 0.6;
-  }
-
-  .issue-cover-name {
-    font-family: 'Playfair Display', serif;
-    font-weight: 900;
-    font-size: clamp(60px, 10vw, 160px);
-    line-height: 0.85;
-    letter-spacing: -0.04em;
-    text-transform: uppercase;
-    margin-bottom: 40px;
-  }
-
-  .issue-cover-name em {
-    font-style: italic;
-    font-weight: 400;
-  }
-
-  .issue-cover-text p {
-    font-family: 'Playfair Display', serif;
-    font-style: italic;
-    font-weight: 400;
-    font-size: clamp(18px, 1.8vw, 24px);
-    line-height: 1.5;
-    max-width: 480px;
-    margin-bottom: 32px;
-    opacity: 0.8;
-  }
-
-  .issue-cover-img {
-    background: var(--light-gray);
-    overflow: hidden;
-    position: relative;
-    box-shadow: 0 30px 80px rgba(0,0,0,0.2);
-  }
-
-  .issue-cover-img img {
-    width: 100%; height: 100%;
-    object-fit: cover;
-  }
-
-  @media (max-width: 900px) {
-    .issue-cover-page {
-      grid-template-columns: 1fr;
-      padding: 60px 24px;
-      gap: 40px;
-    }
-    .issue-cover-img {
-      aspect-ratio: 3 / 4;
-    }
-  }
-
-  /* ============================================ */
-  /* 4. РАЗВОРОТ — sticky на полный экран         */
-  /* ============================================ */
-  .spread-container {
-    position: relative;
-    background: var(--ink);
-  }
-
-  .spread-container.garden { background: var(--paper-warm); }
-  .spread-container.china { background: var(--china-dark); }
-
-  .spread-page {
-    min-height: 100vh;
-    padding: 60px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 40px;
-    align-items: center;
-  }
-
-  /* Полноэкранный разворот */
-  .spread-fullwidth {
-    width: 100%;
-    height: 100vh;
-    overflow: hidden;
-    position: relative;
-  }
-
-  .spread-fullwidth img {
-    width: 100%; height: 100%;
-    object-fit: contain;
-    object-position: center;
-    background: var(--ink);
-  }
-
-  .spread-fullwidth.garden { background: var(--paper-warm); }
-  .spread-fullwidth.garden img { background: var(--paper-warm); }
-
-  .spread-fullwidth.china { background: var(--china-dark); }
-  .spread-fullwidth.china img { background: var(--china-dark); }
-
-  /* Подпись разворота */
-  .spread-caption {
-    position: absolute;
-    bottom: 30px; left: 60px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 2px;
-    color: rgba(250,250,250,0.6);
-    text-transform: uppercase;
-    background: rgba(0,0,0,0.5);
-    backdrop-filter: blur(8px);
-    padding: 10px 14px;
-  }
-
-  /* Разворот с текстом сбоку (журнальная вёрстка) */
-  .spread-text {
-    padding: 60px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-
-  .spread-text.garden { color: var(--ink); }
-  .spread-text.china { color: var(--paper); }
-
-  .spread-text-eyebrow {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    margin-bottom: 24px;
-    opacity: 0.5;
-  }
-
-  .spread-headline {
-    font-family: 'Playfair Display', serif;
-    font-weight: 900;
-    font-style: italic;
-    font-size: clamp(40px, 5vw, 84px);
-    line-height: 0.95;
-    letter-spacing: -0.03em;
-    margin-bottom: 32px;
-  }
-
-  .spread-quote-text {
-    font-family: 'Playfair Display', serif;
-    font-style: italic;
-    font-size: clamp(20px, 2vw, 28px);
-    line-height: 1.4;
-    margin-bottom: 24px;
-    max-width: 480px;
-  }
-
-  .spread-quote-meta {
+  .hero-meta {
     font-family: 'Inter', sans-serif;
-    font-weight: 700;
-    font-size: 14px;
-    letter-spacing: 1px;
-    margin-bottom: 8px;
-  }
-
-  .spread-quote-sub {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 2px;
+    font-size: 11px;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
-    opacity: 0.5;
+    color: var(--gray);
+    line-height: 1.8;
   }
 
-  .spread-img-box {
+  .hero-meta b {
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  .hero-scroll {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--ink);
+    text-align: right;
+    animation: scrollPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes scrollPulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+
+  /* Маленькая обложка-картинка в hero */
+  .hero-cover {
+    position: absolute;
+    top: 50%;
+    right: 60px;
+    transform: translateY(-50%);
+    width: 220px;
     aspect-ratio: 3 / 4;
-    overflow: hidden;
     background: var(--light-gray);
-    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+    z-index: 1;
   }
 
-  .spread-img-box img {
+  .hero-cover img {
     width: 100%; height: 100%;
     object-fit: cover;
-    transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .spread-img-box:hover img {
-    transform: scale(1.03);
+  .hero-cover-tag {
+    position: absolute;
+    bottom: 12px; left: 12px;
+    background: var(--paper);
+    color: var(--ink);
+    padding: 6px 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    font-weight: 500;
+    text-transform: uppercase;
   }
 
-  @media (max-width: 900px) {
-    .spread-page { grid-template-columns: 1fr; padding: 60px 24px; gap: 30px; }
-    .spread-text { padding: 0; }
-    .spread-fullwidth img { object-fit: contain; }
+  @media (max-width: 1100px) {
+    .hero-cover {
+      position: static;
+      transform: none;
+      margin: 40px auto;
+      width: 200px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .hero {
+      padding: 100px 24px 60px;
+    }
+    .hero-bottom {
+      grid-template-columns: 1fr;
+      gap: 30px;
+    }
   }
 
   /* ============================================ */
-  /* 5. ОГЛАВЛЕНИЕ                                */
+  /* 2. SECTION TITLE — общий                      */
   /* ============================================ */
-  .toc {
-    min-height: 100vh;
-    padding: 100px 60px;
-  }
-
-  .toc.garden { background: var(--paper-warm); color: var(--ink); }
-  .toc.china { background: var(--ink); color: var(--paper); }
-
-  .toc-header {
+  .section-title-block {
+    padding: 100px 60px 40px;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
-    max-width: 1400px;
-    margin: 0 auto 80px;
-    padding-bottom: 30px;
-    border-bottom: 1px solid currentColor;
+    flex-wrap: wrap;
+    gap: 40px;
+    border-top: 1px solid var(--hairline);
   }
 
-  .toc-title {
-    font-family: 'Playfair Display', serif;
-    font-weight: 900;
-    font-style: italic;
-    font-size: clamp(56px, 8vw, 120px);
-    letter-spacing: -0.04em;
-    text-transform: uppercase;
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    font-size: clamp(48px, 7vw, 120px);
     line-height: 0.9;
+    letter-spacing: -0.02em;
+    color: var(--ink);
   }
 
-  .toc-meta {
-    font-family: 'JetBrains Mono', monospace;
+  .section-title em { font-style: italic; font-weight: 400; }
+
+  .section-meta {
+    font-family: 'Inter', sans-serif;
     font-size: 11px;
-    letter-spacing: 2px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gray);
+    line-height: 1.8;
+    text-align: right;
+  }
+
+  .section-meta b { color: var(--ink); font-weight: 500; }
+
+  @media (max-width: 768px) {
+    .section-title-block { padding: 60px 24px 30px; }
+  }
+
+  /* ============================================ */
+  /* 3. ISSUE BLOCK (один выпуск с сеткой)         */
+  /* ============================================ */
+  .issue-block {
+    padding: 0 60px 80px;
+  }
+
+  .issue-header {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 40px;
+    align-items: end;
+    padding: 60px 0 40px;
+    border-bottom: 1px solid var(--hairline);
+    margin-bottom: 30px;
+  }
+
+  .issue-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    font-size: clamp(36px, 5vw, 72px);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+  }
+
+  .issue-name em { font-style: italic; font-weight: 400; }
+
+  .issue-tagline {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(16px, 1.5vw, 22px);
+    color: var(--gray);
+    padding-bottom: 8px;
+  }
+
+  .issue-count {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    color: var(--gray);
     text-transform: uppercase;
     text-align: right;
-    line-height: 1.8;
-    opacity: 0.6;
+    padding-bottom: 8px;
+    line-height: 1.6;
   }
 
-  .toc-list {
-    max-width: 1400px;
-    margin: 0 auto;
+  .issue-count b {
+    color: var(--ink);
+    font-size: 14px;
+    display: block;
+  }
+
+  /* === СЕТКА РАЗВОРОТОВ === */
+  .spreads-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 24px 60px;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
   }
 
-  .toc-item {
-    display: grid;
-    grid-template-columns: 80px 1fr;
-    gap: 20px;
-    align-items: baseline;
-    padding: 12px 0;
-    border-bottom: 1px solid rgba(0,0,0,0.1);
+  @media (max-width: 1200px) { .spreads-grid { grid-template-columns: repeat(5, 1fr); } }
+  @media (max-width: 900px)  { .spreads-grid { grid-template-columns: repeat(4, 1fr); } }
+  @media (max-width: 600px)  { .spreads-grid { grid-template-columns: repeat(3, 1fr); } }
+
+  .spread-cell {
+    aspect-ratio: 4 / 3;  /* как разворот журнала (две страницы) */
+    background: var(--light-gray);
+    overflow: hidden;
+    position: relative;
+    transition: z-index 0s linear 0.4s;  /* z-index возвращается с задержкой */
   }
 
-  .toc.china .toc-item {
-    border-bottom-color: rgba(255,255,255,0.15);
+  .spread-cell img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .toc-num {
-    font-family: 'Playfair Display', serif;
-    font-weight: 900;
-    font-size: 24px;
-    letter-spacing: -0.02em;
-  }
-
-  .toc-name {
+  /* Тэг номера разворота на каждой миниатюре */
+  .spread-tag {
+    position: absolute;
+    top: 8px; left: 8px;
     font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    font-weight: 500;
+    color: rgba(255,255,255,0.9);
+    text-transform: uppercase;
+    background: rgba(10,10,10,0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 4px 8px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  .spread-cell:hover .spread-tag {
+    opacity: 1;
+  }
+
+  /* === HOVER — увеличение === */
+  .spread-cell:hover {
+    z-index: 50;
+    transition: z-index 0s linear 0s;
+  }
+
+  .spread-cell:hover img {
+    transform: scale(2.4);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+  }
+
+  /* Затемнение остальных при hover любой ячейки сетки */
+  .spreads-grid:hover .spread-cell:not(:hover) img {
+    filter: brightness(0.5) blur(1px);
+    transition: filter 0.4s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Mobile — без hover (тач) */
+  @media (hover: none) or (pointer: coarse) {
+    .spread-cell:hover img {
+      transform: none;
+    }
+    .spreads-grid:hover .spread-cell:not(:hover) img {
+      filter: none;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .issue-block { padding: 0 24px 40px; }
+    .issue-header { grid-template-columns: 1fr; gap: 16px; }
+    .issue-count { text-align: left; }
+  }
+
+  /* ============================================ */
+  /* 4. MANIFESTO (между выпусками или после)      */
+  /* ============================================ */
+  .manifesto {
+    padding: 120px 60px;
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 80px;
+    align-items: center;
+    border-top: 1px solid var(--hairline);
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .manifesto-eyebrow {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 20px;
+  }
+
+  .manifesto-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    font-size: clamp(56px, 8vw, 140px);
+    line-height: 0.9;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+  }
+
+  .manifesto-title em {
+    font-style: italic;
     font-weight: 400;
-    font-size: 16px;
-    opacity: 0.75;
+    color: var(--red);
+  }
+
+  .manifesto-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(20px, 2vw, 28px);
+    line-height: 1.45;
+    color: var(--gray);
+    margin-bottom: 40px;
+    max-width: 520px;
+  }
+
+  .manifesto-text b {
+    color: var(--ink);
+    font-style: normal;
+    font-weight: 500;
+  }
+
+  .manifesto-themes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 40px;
+  }
+
+  .theme-chip {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    color: var(--gray);
+    text-transform: uppercase;
+    border: 1px solid var(--hairline);
+    padding: 10px 16px;
+    transition: all 0.3s ease;
+    background: var(--paper);
+  }
+
+  .theme-chip:hover {
+    border-color: var(--ink);
+    color: var(--ink);
   }
 
   @media (max-width: 900px) {
-    .toc { padding: 60px 24px; }
-    .toc-list { grid-template-columns: repeat(2, 1fr); gap: 16px 30px; }
-  }
-  @media (max-width: 600px) {
-    .toc-list { grid-template-columns: 1fr; gap: 12px; }
+    .manifesto {
+      grid-template-columns: 1fr;
+      gap: 40px;
+      padding: 80px 24px;
+    }
   }
 
   /* ============================================ */
-  /* 6. ВИДЕО                                      */
+  /* 5. VIDEO                                      */
   /* ============================================ */
   .video-section {
-    background: var(--ink);
-    padding: 120px 60px;
-    text-align: center;
+    padding: 100px 60px;
+    border-bottom: 1px solid var(--hairline);
   }
 
-  .video-eyebrow {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 4px;
-    color: var(--red);
-    text-transform: uppercase;
-    margin-bottom: 24px;
+  .video-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 30px;
+    margin-bottom: 60px;
   }
 
-  .video-title {
-    font-family: 'Playfair Display', serif;
-    font-weight: 900;
-    font-size: clamp(40px, 6vw, 80px);
+  .video-section h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    font-size: clamp(40px, 5vw, 80px);
+    line-height: 0.9;
     letter-spacing: -0.02em;
     text-transform: uppercase;
-    margin-bottom: 50px;
-    color: var(--paper);
-    line-height: 1;
   }
 
-  .video-title em { font-style: italic; font-weight: 400; }
+  .video-section h2 em { font-style: italic; font-weight: 400; }
+
+  .video-section-meta {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--gray);
+    text-transform: uppercase;
+  }
 
   .video-wrap {
     max-width: 1100px;
     margin: 0 auto;
     aspect-ratio: 16 / 9;
     background: #000;
-    border: 1px solid rgba(255,255,255,0.1);
+    overflow: hidden;
   }
 
   .video-wrap iframe {
     width: 100%; height: 100%; border: 0; display: block;
   }
 
-  /* ============================================ */
-  /* 7. CTA — ВАША ТЕМА                            */
-  /* ============================================ */
-  .next-cta {
-    background: var(--ink);
-    color: var(--paper);
-    min-height: 100vh;
-    padding: 120px 60px;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .next-num {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    letter-spacing: 5px;
-    color: var(--red);
-    text-transform: uppercase;
-    margin-bottom: 40px;
-  }
-
-  .next-title {
-    font-family: 'Playfair Display', serif;
-    font-weight: 900;
-    font-size: clamp(56px, 11vw, 200px);
-    line-height: 0.85;
-    letter-spacing: -0.04em;
-    text-transform: uppercase;
-    margin-bottom: 40px;
-  }
-
-  .next-title em {
-    font-style: italic;
-    font-weight: 400;
-    color: var(--red);
-  }
-
-  .next-text {
-    font-family: 'Playfair Display', serif;
-    font-style: italic;
-    font-size: clamp(18px, 2vw, 28px);
-    line-height: 1.5;
-    color: rgba(255,255,255,0.75);
-    margin-bottom: 50px;
-    max-width: 700px;
-  }
-
-  .next-themes {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 12px;
-    margin-bottom: 60px;
-    max-width: 800px;
-  }
-
-  .theme-chip {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 2px;
-    color: rgba(255,255,255,0.7);
-    text-transform: uppercase;
-    border: 1px solid rgba(255,255,255,0.2);
-    padding: 10px 18px;
-    transition: all 0.3s ease;
-  }
-
-  .theme-chip:hover {
-    border-color: var(--red);
-    color: var(--red);
-    background: rgba(232, 49, 42, 0.05);
+  @media (max-width: 768px) {
+    .video-section { padding: 60px 24px; }
   }
 
   /* ============================================ */
-  /* 8. СПЕЦИФИКАЦИЯ                              */
+  /* 6. SPECS                                      */
   /* ============================================ */
   .specs {
-    background: var(--paper);
-    color: var(--ink);
-    padding: 120px 60px;
-  }
-
-  .specs-grid {
-    max-width: 1200px;
-    margin: 0 auto;
+    padding: 100px 60px;
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 80px;
     align-items: center;
   }
 
-  @media (max-width: 900px) {
-    .specs { padding: 60px 24px; }
-    .specs-grid { grid-template-columns: 1fr; gap: 50px; }
-  }
-
   .specs-image {
     aspect-ratio: 3 / 4;
     background: var(--light-gray);
     overflow: hidden;
-    position: relative;
   }
 
   .specs-image img {
@@ -762,33 +625,36 @@
     object-fit: cover;
   }
 
-  .specs-eyebrow {
-    font-family: 'JetBrains Mono', monospace;
+  .specs-text-eyebrow {
+    font-family: 'Inter', sans-serif;
     font-size: 11px;
-    letter-spacing: 4px;
+    font-weight: 500;
+    letter-spacing: 0.28em;
     color: var(--red);
     text-transform: uppercase;
     margin-bottom: 24px;
   }
 
-  .specs-title {
-    font-family: 'Playfair Display', serif;
-    font-weight: 900;
+  .specs-text-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
     font-size: clamp(40px, 5vw, 72px);
     line-height: 1;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.02em;
     text-transform: uppercase;
     margin-bottom: 32px;
   }
 
-  .specs-title em { font-style: italic; font-weight: 400; }
+  .specs-text-title em { font-style: italic; font-weight: 400; }
 
   .specs-desc {
-    color: rgba(0,0,0,0.75);
-    font-size: 16px;
-    line-height: 1.7;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 18px;
+    line-height: 1.5;
+    color: var(--gray);
     margin-bottom: 40px;
-    max-width: 480px;
+    max-width: 460px;
   }
 
   .specs-list {
@@ -800,106 +666,153 @@
     display: flex;
     justify-content: space-between;
     padding: 14px 0;
-    border-bottom: 1px solid var(--light-gray);
-    font-family: 'JetBrains Mono', monospace;
+    border-bottom: 1px solid var(--hairline);
+    font-family: 'Inter', sans-serif;
     font-size: 11px;
-    letter-spacing: 2px;
+    letter-spacing: 0.2em;
+    font-weight: 500;
     text-transform: uppercase;
   }
 
   .specs-list li span:first-child { color: var(--gray); }
-  .specs-list li span:last-child { color: var(--ink); font-weight: 500; }
+  .specs-list li span:last-child { color: var(--ink); }
 
   .specs-price {
-    font-family: 'Playfair Display', serif;
-    font-weight: 900;
-    font-size: 56px;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    font-size: 64px;
     letter-spacing: -0.02em;
     margin-bottom: 8px;
     line-height: 1;
   }
 
   .specs-price-sub {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Inter', sans-serif;
     font-size: 10px;
-    letter-spacing: 2px;
+    letter-spacing: 0.25em;
     color: var(--gray);
     text-transform: uppercase;
     margin-bottom: 40px;
   }
 
-  /* === КНОПКИ === */
   .btn-row {
     display: flex;
-    gap: 16px;
+    gap: 12px;
     flex-wrap: wrap;
-    justify-content: center;
   }
 
   .btn {
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    padding: 18px 28px;
-    border: 1px solid rgba(255,255,255,0.4);
-    color: var(--paper);
-    background: transparent;
-    font-family: 'JetBrains Mono', monospace;
+    padding: 16px 26px;
+    border: 1px solid var(--ink);
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
     font-size: 11px;
-    letter-spacing: 2px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
     text-decoration: none;
     transition: all 0.3s ease;
-    font-weight: 500;
   }
 
   .btn:hover {
-    background: var(--paper);
-    color: var(--ink);
+    background: var(--ink);
+    color: var(--paper);
   }
 
-  .btn-red {
+  .btn-dark {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .btn-dark:hover {
     background: var(--red);
     border-color: var(--red);
     color: var(--paper);
   }
-  .btn-red:hover {
+
+  @media (max-width: 900px) {
+    .specs { grid-template-columns: 1fr; gap: 40px; padding: 60px 24px; }
+  }
+
+  /* ============================================ */
+  /* 7. FOOTER                                     */
+  /* ============================================ */
+  .footer {
+    padding: 80px 60px 40px;
+    border-top: 1px solid var(--hairline);
     background: var(--paper);
-    color: var(--red);
-    border-color: var(--paper);
   }
 
-  .specs .btn {
-    border-color: var(--ink);
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 60px;
+  }
+
+  .footer-tagline {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 22px;
+    line-height: 1.4;
     color: var(--ink);
-  }
-  .specs .btn:hover {
-    background: var(--ink);
-    color: var(--paper);
-  }
-  .specs .btn-red {
-    background: var(--ink);
-    border-color: var(--ink);
-    color: var(--paper);
-  }
-  .specs .btn-red:hover {
-    background: var(--red);
-    border-color: var(--red);
+    max-width: 380px;
   }
 
-  /* === FADE-IN ПРИ СКРОЛЛЕ === */
+  .footer-col h4 {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.28em;
+    color: var(--gray);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .footer-col p,
+  .footer-col a {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: var(--ink);
+    text-decoration: none;
+    line-height: 1.6;
+  }
+
+  .footer-col a:hover { color: var(--red); }
+
+  .footer-bottom {
+    border-top: 1px solid var(--hairline);
+    padding-top: 24px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.25em;
+    color: var(--gray);
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 768px) {
+    .footer { padding: 60px 24px 30px; }
+    .footer-grid { grid-template-columns: 1fr; gap: 30px; }
+  }
+
+  /* === FADE-IN === */
   .fade-in {
     opacity: 0;
-    transform: translateY(40px);
-    transition: opacity 1.2s ease, transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: translateY(30px);
+    transition: opacity 1s ease, transform 1s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .fade-in.visible {
     opacity: 1;
     transform: translateY(0);
-  }
-
-  @media (max-width: 768px) {
-    .corner { font-size: 9px; }
   }
 </style>
 </head>
@@ -909,259 +822,216 @@
 <div class="cursor-dot" id="cursor-dot"></div>
 <div class="cursor-ring" id="cursor-ring"></div>
 
-<!-- УГЛОВЫЕ НАДПИСИ -->
-<div class="corner corner-tl">
-  THE END / VOGARDEN<br>
-  EST. 2024
-</div>
-<div class="corner corner-tr">
-  <span class="red-dot"></span>RECORDING<br>
-  BY LYKBOOK
-</div>
-<div class="corner corner-bl">
-  PROJECT<br>
-  03 / 05
-</div>
-<div class="corner corner-br">
-  VOGARDEN LINE<br>
-  BY LYKBOOK
-</div>
+<!-- TOPBAR -->
+<nav class="topbar">
+  <div class="topbar-left">
+    <a href="/" class="topbar-logo">THE END</a>
+    <a href="/" class="smallcaps" style="color: var(--gray);">← все проекты</a>
+  </div>
+  <div class="topbar-right">
+    <a href="#issues" class="smallcaps">Выпуски</a>
+    <a href="#concept" class="smallcaps">Концепция</a>
+    <a href="#order" class="smallcaps smallcaps-red">Заказать</a>
+  </div>
+</nav>
 
 <!-- ============================================ -->
-<!-- 1. ОБЛОЖКА VOGARDEN                          -->
+<!-- 1. HERO                                      -->
 <!-- ============================================ -->
-<section class="magazine-cover">
-  <div class="cover-left">
-    <div class="cover-eyebrow">— ЖУРНАЛ ВЫПУСКНОГО АЛЬБОМА —</div>
-    <h1 class="cover-title">VO<em>garden</em></h1>
-    <p class="cover-manifesto">
-      Один <b>журнал</b>. Бесконечные <b>миры</b>.
-      Каждый выпуск — новая концепция под класс.
-      Сад, Китай — или ваша вселенная.
-    </p>
-    <div class="cover-meta">
-      ВЫПУСКОВ В КОЛЛЕКЦИИ: 02<br>
-      ФОРМАТ: 21 × 30 СМ<br>
-      ОТ 30 ЭКЗЕМПЛЯРОВ
+<section class="hero">
+  <div class="hero-top">
+    <div class="hero-categories">
+      <span class="hero-category active"><span class="num">№01</span>GARDEN</span>
+      <span class="hero-category"><span class="num">№02</span>CHINA</span>
+      <span class="hero-category"><span class="num">№03</span>YOURS?</span>
     </div>
+    <span class="smallcaps" style="color: var(--gray);">MAGAZINE / EST. 2024</span>
   </div>
-  <div class="cover-right">
+
+  <h1 class="hero-logo">VO<span class="gap"></span>GAR<span class="gap"></span>DEN</h1>
+
+  <div class="hero-cover">
     <img src="https://i.ibb.co/hJNgjxzd/3.jpg" alt="VOGARDEN cover">
-    <div class="cover-issue-tag">VOGARDEN · 2024</div>
+    <div class="hero-cover-tag">№01 GARDEN</div>
   </div>
-  <div class="scroll-hint">↓ ЛИСТАЙ ЖУРНАЛ</div>
-</section>
 
-<!-- ============================================ -->
-<!-- 2. РАЗДЕЛИТЕЛЬ — GARDEN                       -->
-<!-- ============================================ -->
-<section class="issue-divider divider-garden">
-  <div class="divider-symbol">花</div>
-  <div class="divider-num fade-in">— ВЫПУСК №01 —</div>
-  <h2 class="divider-name fade-in">VO<em>garden</em><br>GARDEN</h2>
-  <p class="divider-desc fade-in">
-    «Сад как метафора выпуска: цветение, расцвет, лёгкость.»
-  </p>
-</section>
-
-<!-- ============================================ -->
-<!-- 3. ОБЛОЖКА ВЫПУСКА GARDEN                    -->
-<!-- ============================================ -->
-<section class="issue-cover-page garden">
-  <div class="issue-cover-text fade-in">
-    <div class="issue-cover-num">VOGARDEN · ВЫПУСК №01</div>
-    <h2 class="issue-cover-name">G<em>arden</em></h2>
-    <p>
-      Райский сад, цветение, fashion-портреты в духе Vogue.
-      Один разворот — одна выпускница, как героиня обложки.
+  <div class="hero-bottom">
+    <p class="hero-tagline">
+      <em>One magazine.</em><br>
+      Infinite <b>worlds</b>.
     </p>
-    <div class="cover-meta" style="color: rgba(0,0,0,0.5);">
-      ОБЛОЖКА · ОГЛАВЛЕНИЕ<br>
-      24 ГЕРОЯ · 96 СТРАНИЦ
+    <div class="hero-meta">
+      <b>VOGARDEN</b> — журнал выпускного альбома.<br>
+      Одна вёрстка, разные концепции под класс.<br>
+      Сад, Китай — или ваша вселенная.
+    </div>
+    <div class="hero-scroll">↓ Каталог разворотов</div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- 2. CATALOG TITLE                              -->
+<!-- ============================================ -->
+<div class="section-title-block" id="issues">
+  <h2 class="section-title">Issues <em>2024</em></h2>
+  <div class="section-meta">
+    Выпусков: <b>02 + ваш</b><br>
+    Разворотов всего: <b>20</b><br>
+    Heroes: <b>48 учеников</b>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- 3. ISSUE №01 GARDEN                           -->
+<!-- ============================================ -->
+<section class="issue-block fade-in">
+  <div class="issue-header">
+    <h3 class="issue-name">№01 <em>Garden</em></h3>
+    <p class="issue-tagline">fresh, blooming, light</p>
+    <div class="issue-count">Разворотов<b>10</b></div>
+  </div>
+
+  <div class="spreads-grid">
+    <div class="spread-cell">
+      <img src="https://i.ibb.co/hJNgjxzd/3.jpg" alt="Garden 1">
+      <div class="spread-tag">№01 · стр 04-05</div>
+    </div>
+    <div class="spread-cell">
+      <img src="https://i.ibb.co/HfRxJ8TV/10.jpg" alt="Garden 2">
+      <div class="spread-tag">№01 · стр 06-07</div>
+    </div>
+    <div class="spread-cell">
+      <img src="https://i.ibb.co/prhV74Kk/11.jpg" alt="Garden 3">
+      <div class="spread-tag">№01 · стр 08-09</div>
+    </div>
+    <div class="spread-cell">
+      <img src="https://i.ibb.co/nsqfXQJn/19.jpg" alt="Garden 4">
+      <div class="spread-tag">№01 · стр 10-11</div>
+    </div>
+    <div class="spread-cell">
+      <img src="https://i.ibb.co/hxq0QC3j/8.jpg" alt="Garden 5">
+      <div class="spread-tag">№01 · стр 12-13</div>
+    </div>
+    <div class="spread-cell">
+      <img src="https://i.ibb.co/zVTs082h/27.jpg" alt="Garden 6">
+      <div class="spread-tag">№01 · стр 14-15</div>
+    </div>
+    <div class="spread-cell">
+      <img src="https://i.ibb.co/93cwpJvT/14.jpg" alt="Garden 7">
+      <div class="spread-tag">№01 · стр 16-17</div>
+    </div>
+    <div class="spread-cell">
+      <img src="https://i.ibb.co/4LXN1Lh/5.jpg" alt="Garden 8">
+      <div class="spread-tag">№01 · стр 18-19</div>
+    </div>
+    <div class="spread-cell">
+      <img src="https://i.ibb.co/21ZYmZmH/16.jpg" alt="Garden 9">
+      <div class="spread-tag">№01 · стр 20-21</div>
+    </div>
+    <div class="spread-cell">
+      <img src="https://i.ibb.co/s9nBW9H9/17.jpg" alt="Garden 10">
+      <div class="spread-tag">№01 · стр 22-23</div>
     </div>
   </div>
-  <div class="issue-cover-img fade-in">
-    <img src="https://i.ibb.co/hJNgjxzd/3.jpg" alt="Garden cover">
-  </div>
 </section>
 
-<!-- ОГЛАВЛЕНИЕ GARDEN -->
-<section class="toc garden">
-  <div class="toc-header fade-in">
-    <h3 class="toc-title">Содер<em>жание</em></h3>
-    <div class="toc-meta">
-      VOGARDEN №01<br>
-      GARDEN · 2024
+<!-- ============================================ -->
+<!-- 4. ISSUE №02 CHINA                            -->
+<!-- ============================================ -->
+<section class="issue-block fade-in">
+  <div class="issue-header">
+    <h3 class="issue-name">№02 <em>China</em></h3>
+    <p class="issue-tagline">red, eastern, bold</p>
+    <div class="issue-count">Разворотов<b>10</b></div>
+  </div>
+
+  <div class="spreads-grid">
+    <div class="spread-cell">
+      <img src="https://static.tildacdn.com/tild3133-3437-4332-a330-373035623835/15.jpg" alt="China 1">
+      <div class="spread-tag">№02 · стр 04-05</div>
+    </div>
+    <div class="spread-cell">
+      <img src="https://static.tildacdn.com/tild6235-3034-4136-b937-633463353464/25.jpg" alt="China 2">
+      <div class="spread-tag">№02 · стр 06-07</div>
+    </div>
+    <div class="spread-cell">
+      <img src="https://static.tildacdn.com/tild3962-3837-4665-a430-393363643133/17.jpg" alt="China 3">
+      <div class="spread-tag">№02 · стр 08-09</div>
+    </div>
+    <div class="spread-cell">
+      <img src="https://static.tildacdn.com/tild3631-3035-4938-b031-393664346433/28.jpg" alt="China 4">
+      <div class="spread-tag">№02 · стр 10-11</div>
+    </div>
+    <div class="spread-cell">
+      <img src="https://static.tildacdn.com/tild6166-3137-4438-b262-643832386666/24.jpg" alt="China 5">
+      <div class="spread-tag">№02 · стр 12-13</div>
+    </div>
+    <div class="spread-cell">
+      <img src="https://static.tildacdn.com/tild3935-3535-4933-b231-396534633934/29.jpg" alt="China 6">
+      <div class="spread-tag">№02 · стр 14-15</div>
+    </div>
+    <div class="spread-cell">
+      <img src="https://static.tildacdn.com/tild3964-3266-4135-b562-323462616132/46.jpg" alt="China 7">
+      <div class="spread-tag">№02 · стр 16-17</div>
+    </div>
+    <div class="spread-cell">
+      <img src="https://static.tildacdn.com/tild3636-3666-4035-a230-633638386633/45.jpg" alt="China 8">
+      <div class="spread-tag">№02 · стр 18-19</div>
+    </div>
+    <div class="spread-cell">
+      <img src="https://static.tildacdn.com/tild6230-3935-4663-a630-633266636133/02.jpg" alt="China 9">
+      <div class="spread-tag">№02 · стр 20-21</div>
+    </div>
+    <div class="spread-cell">
+      <img src="https://static.tildacdn.com/tild3539-6636-4339-b736-393166363836/04.jpg" alt="China 10">
+      <div class="spread-tag">№02 · стр 22-23</div>
     </div>
   </div>
-  <div class="toc-list fade-in">
-    <div class="toc-item"><span class="toc-num">04-05</span><span class="toc-name">Общая фотография</span></div>
-    <div class="toc-item"><span class="toc-num">06-07</span><span class="toc-name">Голикова Анна</span></div>
-    <div class="toc-item"><span class="toc-num">08-09</span><span class="toc-name">Ковалёв Илья</span></div>
-    <div class="toc-item"><span class="toc-num">10-11</span><span class="toc-name">Петрова Мария</span></div>
-    <div class="toc-item"><span class="toc-num">12-13</span><span class="toc-name">Сидоров Тимур</span></div>
-    <div class="toc-item"><span class="toc-num">14-15</span><span class="toc-name">Романова Алиса</span></div>
-    <div class="toc-item"><span class="toc-num">16-17</span><span class="toc-name">Андреев Лев</span></div>
-    <div class="toc-item"><span class="toc-num">18-19</span><span class="toc-name">Кузнецова Дарья</span></div>
-    <div class="toc-item"><span class="toc-num">20-21</span><span class="toc-name">Морозов Артём</span></div>
-    <div class="toc-item"><span class="toc-num">22-23</span><span class="toc-name">Соколова Полина</span></div>
-    <div class="toc-item"><span class="toc-num">42-43</span><span class="toc-name">Класс 11А</span></div>
-    <div class="toc-item"><span class="toc-num">88-89</span><span class="toc-name">Учителя</span></div>
-    <div class="toc-item"><span class="toc-num">92-93</span><span class="toc-name">Бэкстейдж</span></div>
-    <div class="toc-item"><span class="toc-num">94-95</span><span class="toc-name">Пожелания</span></div>
-  </div>
 </section>
 
-<!-- РАЗВОРОТ 1 GARDEN — полный экран -->
-<div class="spread-fullwidth garden fade-in">
-  <img src="https://i.ibb.co/HfRxJ8TV/10.jpg" alt="Garden spread 1">
-  <div class="spread-caption">VOGARDEN №01 · РАЗВОРОТ 06-07</div>
-</div>
-
-<!-- РАЗВОРОТ 2 GARDEN — журнальная вёрстка (картинка + текст) -->
-<section class="spread-page spread-container garden">
-  <div class="spread-img-box fade-in">
-    <img src="https://i.ibb.co/prhV74Kk/11.jpg" alt="Garden portrait">
+<!-- ============================================ -->
+<!-- 5. MANIFESTO — Ваша тема                      -->
+<!-- ============================================ -->
+<section class="manifesto" id="concept">
+  <div>
+    <div class="manifesto-eyebrow">— Выпуск №03 —</div>
+    <h2 class="manifesto-title">Your <em>theme</em></h2>
   </div>
-  <div class="spread-text garden fade-in">
-    <div class="spread-text-eyebrow">— СТРАНИЦА 08-09 —</div>
-    <h3 class="spread-headline">время<br>цветения</h3>
-    <p class="spread-quote-text">
-      «Самое короткое — поэтому самое настоящее.
-      Школа закончилась, но цвет остался.»
+  <div>
+    <p class="manifesto-text">
+      Garden и China — только начало. Следующий выпуск
+      <b>придумывает класс</b>. Музыка, кино, литература, спорт,
+      мода, киберпанк — любая концепция превращается в журнал.
+      <b>Один журнал. Бесконечные миры.</b>
     </p>
-    <div class="spread-quote-meta">ПЕТРОВА МАРИЯ</div>
-    <div class="spread-quote-sub">11А · 2024 · VOGARDEN №01</div>
-  </div>
-</section>
-
-<!-- РАЗВОРОТ 3 GARDEN — полный экран -->
-<div class="spread-fullwidth garden fade-in">
-  <img src="https://i.ibb.co/nsqfXQJn/19.jpg" alt="Garden spread 3">
-  <div class="spread-caption">VOGARDEN №01 · РАЗВОРОТ 14-15</div>
-</div>
-
-<!-- РАЗВОРОТ 4 GARDEN — полный экран -->
-<div class="spread-fullwidth garden fade-in">
-  <img src="https://i.ibb.co/zVTs082h/27.jpg" alt="Garden spread 4">
-  <div class="spread-caption">VOGARDEN №01 · РАЗВОРОТ 20-21</div>
-</div>
-
-<!-- ============================================ -->
-<!-- 4. РАЗДЕЛИТЕЛЬ — CHINA                       -->
-<!-- ============================================ -->
-<section class="issue-divider divider-china">
-  <div class="divider-symbol">高明美</div>
-  <div class="divider-num fade-in">— ВЫПУСК №02 —</div>
-  <h2 class="divider-name fade-in">VO<em>garden</em><br>CHINA</h2>
-  <p class="divider-desc fade-in">
-    «Та же вёрстка. Совсем другой мир.»
-  </p>
-</section>
-
-<!-- ============================================ -->
-<!-- 5. ОБЛОЖКА ВЫПУСКА CHINA                     -->
-<!-- ============================================ -->
-<section class="issue-cover-page china">
-  <div class="issue-cover-text fade-in">
-    <div class="issue-cover-num">VOGARDEN · ВЫПУСК №02</div>
-    <h2 class="issue-cover-name">C<em>hina</em></h2>
-    <p>
-      Иероглифы, красный шёлк, восточная эстетика.
-      Тот же дизайн вёрстки — совсем другая вселенная.
-    </p>
-    <div class="cover-meta" style="color: rgba(255,255,255,0.6);">
-      ОБЛОЖКА · ОГЛАВЛЕНИЕ<br>
-      24 ГЕРОЯ · 96 СТРАНИЦ
+    <div class="manifesto-themes">
+      <span class="theme-chip">Music</span>
+      <span class="theme-chip">Cinema</span>
+      <span class="theme-chip">Literature</span>
+      <span class="theme-chip">Sport</span>
+      <span class="theme-chip">Fashion</span>
+      <span class="theme-chip">Cyberpunk</span>
+      <span class="theme-chip">Vintage</span>
+      <span class="theme-chip">Architecture</span>
+      <span class="theme-chip">Your idea?</span>
+    </div>
+    <div class="btn-row">
+      <a href="https://wa.me/79581002777" class="btn btn-dark">Придумать выпуск →</a>
     </div>
   </div>
-  <div class="issue-cover-img fade-in">
-    <img src="https://static.tildacdn.com/tild3133-3437-4332-a330-373035623835/15.jpg" alt="China cover">
-  </div>
-</section>
-
-<!-- ОГЛАВЛЕНИЕ CHINA -->
-<section class="toc china">
-  <div class="toc-header fade-in">
-    <h3 class="toc-title">Содер<em>жание</em></h3>
-    <div class="toc-meta">
-      VOGARDEN №02<br>
-      CHINA · 2024
-    </div>
-  </div>
-  <div class="toc-list fade-in">
-    <div class="toc-item"><span class="toc-num">04-05</span><span class="toc-name">Общая фотография</span></div>
-    <div class="toc-item"><span class="toc-num">06-07</span><span class="toc-name">Амелякина Софья</span></div>
-    <div class="toc-item"><span class="toc-num">08-09</span><span class="toc-name">Гоева Анастасия</span></div>
-    <div class="toc-item"><span class="toc-num">10-11</span><span class="toc-name">Кашина Таисия</span></div>
-    <div class="toc-item"><span class="toc-num">16-17</span><span class="toc-name">Бухтоярова Ольга</span></div>
-    <div class="toc-item"><span class="toc-num">18-19</span><span class="toc-name">Зудилин Леонид</span></div>
-    <div class="toc-item"><span class="toc-num">20-21</span><span class="toc-name">Часовских Софья</span></div>
-    <div class="toc-item"><span class="toc-num">26-27</span><span class="toc-name">Гринько Тимофей</span></div>
-    <div class="toc-item"><span class="toc-num">28-29</span><span class="toc-name">Комаровский Арсений</span></div>
-    <div class="toc-item"><span class="toc-num">34-35</span><span class="toc-name">Куракин Кирилл</span></div>
-    <div class="toc-item"><span class="toc-num">36-37</span><span class="toc-name">Сергиенко Карина</span></div>
-    <div class="toc-item"><span class="toc-num">84-85</span><span class="toc-name">Наши учителя</span></div>
-    <div class="toc-item"><span class="toc-num">92-93</span><span class="toc-name">Бэкстейдж</span></div>
-    <div class="toc-item"><span class="toc-num">94-95</span><span class="toc-name">Пожелания</span></div>
-  </div>
-</section>
-
-<!-- РАЗВОРОТ 1 CHINA — полный экран -->
-<div class="spread-fullwidth china fade-in">
-  <img src="https://static.tildacdn.com/tild6235-3034-4136-b937-633463353464/25.jpg" alt="China spread 1">
-  <div class="spread-caption">VOGARDEN №02 · РАЗВОРОТ 06-07</div>
-</div>
-
-<!-- РАЗВОРОТ 2 CHINA — журнальная вёрстка -->
-<section class="spread-page spread-container china">
-  <div class="spread-text china fade-in">
-    <div class="spread-text-eyebrow">— СТРАНИЦА 06-07 —</div>
-    <h3 class="spread-headline">райская<br>жизнь</h3>
-    <p class="spread-quote-text">
-      «Если хочешь жизни райской — изучай язык китайской.»
-    </p>
-    <div class="spread-quote-meta">— ВАСИЛИЙ ИВАНОВИЧ</div>
-    <div class="spread-quote-sub">VOGARDEN №02 · CHINA</div>
-  </div>
-  <div class="spread-img-box fade-in">
-    <img src="https://static.tildacdn.com/tild3962-3837-4665-a430-393363643133/17.jpg" alt="China portrait">
-  </div>
-</section>
-
-<!-- РАЗВОРОТ 3 CHINA — полный экран -->
-<div class="spread-fullwidth china fade-in">
-  <img src="https://static.tildacdn.com/tild3631-3035-4938-b031-393664346433/28.jpg" alt="China spread 3">
-  <div class="spread-caption">VOGARDEN №02 · РАЗВОРОТ 14-15</div>
-</div>
-
-<!-- РАЗВОРОТ 4 CHINA — полный экран -->
-<div class="spread-fullwidth china fade-in">
-  <img src="https://static.tildacdn.com/tild6166-3137-4438-b262-643832386666/24.jpg" alt="China spread 4">
-  <div class="spread-caption">VOGARDEN №02 · РАЗВОРОТ 24-25</div>
-</div>
-
-<!-- ============================================ -->
-<!-- 6. РАЗДЕЛИТЕЛЬ — ВАША ТЕМА                   -->
-<!-- ============================================ -->
-<section class="issue-divider divider-empty">
-  <div class="divider-num fade-in" style="color: var(--red);">— ВЫПУСК №03 —</div>
-  <h2 class="divider-name fade-in">ВАША<br><em>тема</em></h2>
-  <p class="divider-desc fade-in">
-    «Следующий номер — за вами.<br>
-    Один журнал. Бесконечные миры.»
-  </p>
 </section>
 
 <!-- ============================================ -->
-<!-- 7. ВИДЕО                                      -->
+<!-- 6. VIDEO                                      -->
 <!-- ============================================ -->
 <section class="video-section">
-  <div class="video-eyebrow fade-in">— ВИДЕО-ТИЗЕР —</div>
-  <h2 class="video-title fade-in">Смотри как <em>живёт</em><br>VOGARDEN</h2>
-  <div class="video-wrap fade-in">
+  <div class="video-section-header">
+    <h2>Watch <em>how it lives</em></h2>
+    <div class="video-section-meta">Тизер · 2024</div>
+  </div>
+  <div class="video-wrap">
     <iframe
-      src="https://player.vimeo.com/video/1187985473?autoplay=0&loop=1&muted=0&controls=1"
+      src="https://player.vimeo.com/video/1187985473?autoplay=0&loop=1&controls=1"
       frameborder="0"
       allow="autoplay; fullscreen; picture-in-picture"
       allowfullscreen>
@@ -1170,64 +1040,70 @@
 </section>
 
 <!-- ============================================ -->
-<!-- 8. CTA — ВАША ТЕМА                            -->
+<!-- 7. SPECS                                      -->
 <!-- ============================================ -->
-<section class="next-cta">
-  <div class="next-num fade-in">VOGARDEN · ВЫПУСК №03</div>
-  <h2 class="next-title fade-in">ВАША <em>тема</em></h2>
-  <p class="next-text fade-in">
-    Garden и China — это только два из бесконечности.<br>
-    Музыка, кино, литература, спорт, мода, киберпанк.<br>
-    Принесите идею — превратим в журнал.
-  </p>
-  <div class="next-themes fade-in">
-    <span class="theme-chip">МУЗЫКА</span>
-    <span class="theme-chip">КИНО</span>
-    <span class="theme-chip">ЛИТЕРАТУРА</span>
-    <span class="theme-chip">СПОРТ</span>
-    <span class="theme-chip">МОДА</span>
-    <span class="theme-chip">КИБЕРПАНК</span>
-    <span class="theme-chip">ВИНТАЖ</span>
-    <span class="theme-chip">АРХИТЕКТУРА</span>
-    <span class="theme-chip">ВАША ИДЕЯ?</span>
+<section class="specs" id="order">
+  <div class="specs-image fade-in">
+    <img src="https://i.ibb.co/zVTs082h/27.jpg" alt="VOGARDEN album">
   </div>
-  <div class="btn-row fade-in">
-    <a href="https://wa.me/79581002777" class="btn btn-red">ПРИДУМАТЬ ВЫПУСК →</a>
+  <div class="specs-text fade-in">
+    <div class="specs-text-eyebrow">— VOGARDEN · спецификация —</div>
+    <h2 class="specs-text-title">Book <em>as</em> magazine</h2>
+    <p class="specs-desc">
+      Журнальная вёрстка с засечковой типографикой.
+      Гипер-портреты на цветных фонах. Один дизайн —
+      бесконечные концепции под класс.
+    </p>
+    <ul class="specs-list">
+      <li><span>Формат</span><span>21 × 30 см</span></li>
+      <li><span>Страниц</span><span>До 100</span></li>
+      <li><span>Переплёт</span><span>Мягкий</span></li>
+      <li><span>Бумага</span><span>Мелованная 170 г</span></li>
+      <li><span>Обложка</span><span>Soft-touch</span></li>
+      <li><span>Тираж</span><span>От 30 шт</span></li>
+    </ul>
+    <div class="specs-price">10 000 ₽</div>
+    <div class="specs-price-sub">— за один экземпляр —</div>
+    <div class="btn-row">
+      <a href="https://wa.me/79581002777" class="btn btn-dark">Забронировать →</a>
+      <a href="/" class="btn">↶ К проектам</a>
+    </div>
   </div>
 </section>
 
 <!-- ============================================ -->
-<!-- 9. СПЕЦИФИКАЦИЯ                              -->
+<!-- 8. FOOTER                                     -->
 <!-- ============================================ -->
-<section class="specs">
-  <div class="specs-grid">
-    <div class="specs-image fade-in">
-      <img src="https://i.ibb.co/zVTs082h/27.jpg" alt="VOGARDEN album">
-    </div>
-    <div class="specs-text fade-in">
-      <div class="specs-eyebrow">— VOGARDEN · СПЕЦИФИКАЦИЯ —</div>
-      <h2 class="specs-title">Книга — <em>как</em><br>журнал</h2>
-      <p class="specs-desc">
-        Журнальная вёрстка с засечковой типографикой. Гипер-портреты на цветных фонах.
-        Один дизайн — бесконечные концепции под выпуск каждого класса.
+<footer class="footer">
+  <div class="footer-grid">
+    <div>
+      <p class="footer-tagline">
+        VOGARDEN — журнал, который рождается из вашей идеи.
       </p>
-      <ul class="specs-list">
-        <li><span>ФОРМАТ</span><span>21 × 30 СМ</span></li>
-        <li><span>СТРАНИЦ</span><span>ДО 100</span></li>
-        <li><span>ПЕРЕПЛЁТ</span><span>МЯГКИЙ</span></li>
-        <li><span>БУМАГА</span><span>МЕЛОВАННАЯ 170 Г</span></li>
-        <li><span>ОБЛОЖКА</span><span>SOFT-TOUCH</span></li>
-        <li><span>ТИРАЖ</span><span>ОТ 30 ШТ</span></li>
-      </ul>
-      <div class="specs-price">10 000 ₽</div>
-      <div class="specs-price-sub">— ЗА ОДИН ЭКЗЕМПЛЯР —</div>
-      <div class="btn-row" style="justify-content: flex-start;">
-        <a href="https://wa.me/79581002777" class="btn btn-red">ЗАБРОНИРОВАТЬ →</a>
-        <a href="/" class="btn">↶ К ПРОЕКТАМ</a>
-      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Студия</h4>
+      <p>THE END · LYKBOOK</p>
+      <p>Москва, 2024</p>
+    </div>
+    <div class="footer-col">
+      <h4>Связаться</h4>
+      <a href="https://wa.me/79581002777">WhatsApp</a><br>
+      <a href="https://t.me/lykbook">Telegram</a><br>
+      <a href="mailto:gomel.lookbook@gmail.com">Email</a>
+    </div>
+    <div class="footer-col">
+      <h4>Линейка</h4>
+      <a href="/">Все проекты</a><br>
+      <a href="/echo.html">ECHO</a><br>
+      <a href="/red.html">RED</a>
     </div>
   </div>
-</section>
+  <div class="footer-bottom">
+    <span>THE END / VOGARDEN · 2024</span>
+    <span>BY LYKBOOK</span>
+  </div>
+</footer>
 
 <script>
 /* ============ 1. КУРСОР ============ */
@@ -1251,19 +1127,17 @@
   }
   loop();
 
-  document.querySelectorAll('a, button, .theme-chip, .spread-img-box, .issue-cover-img, .cover-right').forEach(el => {
+  document.querySelectorAll('a, button, .spread-cell, .theme-chip').forEach(el => {
     el.addEventListener('mouseenter', () => ring.classList.add('hover'));
     el.addEventListener('mouseleave', () => ring.classList.remove('hover'));
   });
 })();
 
 
-/* ============ 2. FADE-IN ПРИ СКРОЛЛЕ ============ */
+/* ============ 2. FADE-IN ============ */
 const fadeObserver = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      entry.target.classList.add('visible');
-    }
+    if (entry.isIntersecting) entry.target.classList.add('visible');
   });
 }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
 
