@@ -6,21 +6,25 @@
 <title>ECHO — THE END / LYKBOOK</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   :root {
-    --black: #0a0a0a;
-    --white: #fff;
-    --red: #e8312a;
+    --paper: #fafafa;     /* тёплый светло-серый — основной фон */
+    --ink: #0a0a0a;        /* чёрный — основной текст */
+    --gray: #b8b8b8;       /* серый служебный */
+    --light-gray: #e8e8e8; /* очень светло-серый — рамки */
+    --red: #e8312a;        /* красный акцент бренда */
+    --paper-tint: #f3f3f3; /* для разделителей */
   }
 
   html, body {
-    background: var(--black);
-    color: var(--white);
+    background: var(--paper);
+    color: var(--ink);
     font-family: 'Inter', sans-serif;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
   }
 
   /* Скрываем системный курсор на десктопе */
@@ -35,349 +39,497 @@
     transform: translate(-50%, -50%); will-change: transform;
   }
   .cursor-dot {
-    width: 6px; height: 6px;
-    background: var(--red); border-radius: 50%;
+    width: 5px; height: 5px;
+    background: var(--ink); border-radius: 50%;
   }
   .cursor-ring {
-    width: 36px; height: 36px;
-    border: 1.5px solid var(--red); border-radius: 50%;
+    width: 28px; height: 28px;
+    border: 1px solid var(--ink); border-radius: 50%;
     transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-                height 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-                background 0.3s ease;
+                height 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .cursor-ring.hover {
-    width: 70px; height: 70px;
-    background: rgba(232, 49, 42, 0.1);
+    width: 58px; height: 58px;
   }
+  /* На чёрных секциях курсор инвертируется */
+  .cursor-dot.invert { background: var(--paper); }
+  .cursor-ring.invert { border-color: var(--paper); }
+
   @media (hover: none) or (pointer: coarse) {
     .cursor-dot, .cursor-ring { display: none; }
   }
 
-  /* === FIXED УГЛОВЫЕ НАДПИСИ === */
-  .corner {
-    position: fixed; z-index: 50;
+  /* === ОБЩИЕ КЛАССЫ === */
+  .mono {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 11px; letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.7);
-    line-height: 1.5;
-    mix-blend-mode: difference;
-    pointer-events: none;
-  }
-  .corner-tl { top: 24px; left: 24px; }
-  .corner-tr { top: 24px; right: 24px; text-align: right; }
-  .corner-bl { bottom: 24px; left: 24px; }
-  .corner-br { bottom: 24px; right: 24px; text-align: right; }
-  .corner .red-dot {
-    display: inline-block; width: 6px; height: 6px;
-    background: var(--red); border-radius: 50%;
-    margin-right: 6px; vertical-align: middle;
-    animation: pulse 2s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(1.3); }
+    font-weight: 400;
   }
 
-  /* === ИНТРО (первый экран) === */
+  /* ============================================ */
+  /* 1. ИНТРО — белый разворот с гипер-ECHO       */
+  /* ============================================ */
   .intro {
-    position: relative;
-    width: 100%;
     min-height: 100vh;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 60px;
+    position: relative;
+  }
+
+  /* Служебные подписи в углах */
+  .intro-top-left,
+  .intro-top-right,
+  .intro-bot-left,
+  .intro-bot-right {
+    position: absolute;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--ink);
+    line-height: 1.5;
+  }
+  .intro-top-left  { top: 30px; left: 30px; }
+  .intro-top-right { top: 30px; right: 30px; text-align: right; }
+  .intro-bot-left  { bottom: 30px; left: 30px; }
+  .intro-bot-right { bottom: 30px; right: 30px; text-align: right; }
+
+  .intro-top-right .label {
+    color: var(--red);
+    font-weight: 500;
+  }
+
+  /* Левая колонка — гигантский вертикальный ECHO */
+  .intro-left {
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 120px 40px 80px;
+    position: relative;
+  }
+
+  .echo-vertical {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(140px, 22vw, 320px);
+    line-height: 0.78;
+    letter-spacing: -0.05em;
+    color: var(--ink);
+    transform: rotate(-90deg);
+    transform-origin: center center;
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  /* Правая колонка — манифест */
+  .intro-right {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 80px 40px;
+    position: relative;
   }
 
   .intro-eyebrow {
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
-    letter-spacing: 4px;
-    color: var(--red);
-    text-transform: uppercase;
-    margin-bottom: 32px;
-    opacity: 0;
-    animation: fadeUp 0.8s ease 0.3s forwards;
-  }
-
-  .intro-title {
-    font-family: 'Inter', sans-serif;
-    font-weight: 900;
-    font-size: clamp(80px, 18vw, 280px);
-    letter-spacing: -0.06em;
-    line-height: 0.85;
-    color: var(--white);
-    text-transform: uppercase;
-    user-select: none;
-    margin: 0;
-    opacity: 0;
-    animation: fadeUp 1.2s ease 0.5s forwards;
-  }
-
-  .intro-subtitle {
-    margin-top: 32px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    letter-spacing: 4px;
-    color: rgba(255,255,255,0.6);
-    text-transform: uppercase;
-    text-align: center;
-    opacity: 0;
-    animation: fadeUp 0.8s ease 1.2s forwards;
-  }
-
-  .intro-manifesto {
-    margin-top: 100px;
-    max-width: 700px;
-    text-align: center;
-    font-size: 18px;
-    line-height: 1.7;
-    color: rgba(255,255,255,0.75);
-    opacity: 0;
-    animation: fadeUp 0.8s ease 1.6s forwards;
-  }
-
-  .intro-manifesto b {
-    color: var(--white);
-    font-weight: 700;
-  }
-
-  .intro-counter {
-    margin-top: 60px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
     letter-spacing: 3px;
-    color: rgba(255,255,255,0.35);
-    opacity: 0;
-    animation: fadeUp 0.8s ease 2s forwards;
-  }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* === СЕКЦИЯ С СЕТКОЙ ПОРТРЕТОВ === */
-  .grid-section {
-    position: relative;
-    width: 100%;
-    padding: 120px 40px;
-    background: var(--black);
-  }
-
-  .grid-header {
-    max-width: 1400px;
-    margin: 0 auto 60px;
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 20px;
-  }
-
-  .grid-title {
-    font-size: clamp(32px, 5vw, 64px);
-    font-weight: 900;
-    line-height: 1;
-    letter-spacing: -0.03em;
+    color: var(--ink);
     text-transform: uppercase;
-    max-width: 700px;
+    margin-bottom: 40px;
   }
 
-  .grid-title b { color: var(--red); }
-
-  .grid-meta {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 2px;
-    color: rgba(255,255,255,0.5);
-    text-transform: uppercase;
-    text-align: right;
-    line-height: 1.7;
-  }
-
-  .grid-meta b {
+  .intro-eyebrow .red-mark {
     color: var(--red);
     font-weight: 500;
   }
 
-  /* Сетка 6 столбцов на десктопе, 4 на планшете, 3 на мобилках */
-  .grid-portraits {
-    max-width: 1400px;
-    margin: 0 auto;
+  .intro-manifesto {
+    font-size: clamp(20px, 2.4vw, 32px);
+    line-height: 1.35;
+    font-weight: 400;
+    max-width: 540px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+
+  .intro-manifesto b {
+    font-weight: 700;
+  }
+
+  .intro-quote {
+    font-style: italic;
+    font-size: 14px;
+    color: var(--gray);
+    max-width: 380px;
+    line-height: 1.5;
+    margin-top: 40px;
+  }
+
+  .intro-scroll-hint {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--ink);
+    text-transform: uppercase;
+    margin-top: 60px;
+  }
+
+  /* На мобильных интро в одну колонку */
+  @media (max-width: 900px) {
+    .intro {
+      grid-template-columns: 1fr;
+      padding: 80px 30px 60px;
+    }
+    .intro-left {
+      min-height: 50vh;
+      padding: 40px 0;
+    }
+    .echo-vertical {
+      transform: none;
+      font-size: clamp(80px, 30vw, 180px);
+    }
+    .intro-right {
+      padding: 40px 0;
+    }
+  }
+
+  /* ============================================ */
+  /* 2. ОБЛОЖКА — чёрный экран с гипер ECHO       */
+  /* ============================================ */
+  .cover {
+    background: var(--ink);
+    color: var(--paper);
+    min-height: 100vh;
+    padding: 60px;
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 4px;
+    grid-template-columns: 1.5fr 1fr;
+    align-items: center;
     position: relative;
+    overflow: hidden;
+  }
+
+  .cover-title {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(120px, 28vw, 420px);
+    line-height: 0.78;
+    letter-spacing: -0.07em;
+    color: var(--paper);
+    user-select: none;
+  }
+
+  .cover-side {
+    padding: 0 0 0 40px;
+    border-left: 1px solid rgba(250,250,250,0.15);
+  }
+
+  .cover-side-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--red);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  .cover-side-text {
+    font-size: 14px;
+    line-height: 1.7;
+    color: rgba(250,250,250,0.7);
+    max-width: 320px;
+  }
+
+  .cover-side-text b {
+    color: var(--paper);
+    font-weight: 600;
+  }
+
+  .cover-side-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(250,250,250,0.4);
+    text-transform: uppercase;
+    margin-top: 40px;
+    line-height: 1.8;
   }
 
   @media (max-width: 900px) {
-    .grid-portraits { grid-template-columns: repeat(4, 1fr); }
+    .cover {
+      grid-template-columns: 1fr;
+      padding: 80px 30px;
+      min-height: 80vh;
+    }
+    .cover-side {
+      padding: 40px 0 0;
+      border-left: none;
+      border-top: 1px solid rgba(250,250,250,0.15);
+      margin-top: 40px;
+    }
+  }
+
+  /* ============================================ */
+  /* 3. КОНТАКТНАЯ ПЛЁНКА — сетка лиц белая       */
+  /* ============================================ */
+  .gallery {
+    background: var(--paper);
+    padding: 100px 60px;
+    position: relative;
+  }
+
+  .gallery-header {
+    max-width: 1500px;
+    margin: 0 auto 80px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 40px;
+  }
+
+  .gallery-title {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(40px, 5vw, 72px);
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+    text-transform: uppercase;
+    color: var(--ink);
+    max-width: 700px;
+  }
+
+  .gallery-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--ink);
+    text-transform: uppercase;
+    text-align: right;
+    line-height: 1.8;
+  }
+
+  .gallery-meta .label {
+    color: var(--gray);
+  }
+
+  .gallery-meta .red-mark {
+    color: var(--red);
+    font-weight: 500;
+  }
+
+  /* Сетка 6×4 */
+  .gallery-grid {
+    max-width: 1500px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+  }
+
+  @media (max-width: 900px) {
+    .gallery { padding: 60px 24px; }
+    .gallery-grid { grid-template-columns: repeat(4, 1fr); gap: 4px; }
   }
   @media (max-width: 600px) {
-    .grid-portraits { grid-template-columns: repeat(3, 1fr); gap: 2px; }
+    .gallery-grid { grid-template-columns: repeat(3, 1fr); }
   }
 
   .portrait {
     position: relative;
     aspect-ratio: 1 / 1;
     overflow: hidden;
-    background: #1a1a1a;
+    background: var(--light-gray);
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    will-change: transform;
   }
 
   .portrait img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    filter: grayscale(1) brightness(0.55) contrast(1.05);
+    filter: grayscale(1) contrast(0.95);
     transition: filter 0.4s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-    will-change: filter, transform;
   }
 
   .portrait .num {
     position: absolute;
-    top: 8px; left: 8px;
+    top: 8px; left: 10px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 9px;
     letter-spacing: 1px;
-    color: rgba(255,255,255,0.45);
+    color: var(--paper);
     z-index: 2;
     pointer-events: none;
+    mix-blend-mode: difference;
   }
 
-  .portrait .pname {
-    position: absolute;
-    bottom: 8px; left: 8px; right: 8px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 9px;
-    letter-spacing: 1px;
-    color: rgba(255,255,255,0.6);
-    z-index: 2;
-    pointer-events: none;
-    text-transform: uppercase;
-    opacity: 0;
-    transform: translateY(5px);
-    transition: opacity 0.3s, transform 0.3s;
-  }
-
-  /* HOVER на отдельный портрет */
   .portrait:hover img {
-    filter: grayscale(0) brightness(1.05) contrast(1);
-    transform: scale(1.06);
-  }
-  .portrait:hover .pname {
-    opacity: 1;
-    transform: translateY(0);
+    filter: grayscale(0) contrast(1);
+    transform: scale(1.05);
   }
 
-  /* Класс "dimmed" — когда другой портрет hover'нут */
-  .grid-portraits.has-active .portrait:not(.active) img {
-    filter: grayscale(1) brightness(0.18) contrast(1);
+  /* Когда какой-то портрет активен — остальные затемняются */
+  .gallery-grid.has-active .portrait:not(.active) img {
+    filter: grayscale(1) brightness(0.6) contrast(0.85);
   }
 
-  /* === КАРТОЧКА АНКЕТЫ — выезжает при hover === */
-  .anketa-card {
+  /* ============================================ */
+  /* 4. ПАНЕЛЬ АНКЕТЫ — выезжает СБОКУ            */
+  /* ============================================ */
+  .anketa-panel {
     position: fixed;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    width: 380px;
-    max-width: calc(100vw - 40px);
-    background: rgba(15, 15, 15, 0.97);
-    border: 1px solid rgba(232, 49, 42, 0.4);
-    padding: 24px 28px;
-    z-index: 100;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 20px 60px rgba(0,0,0,0.7);
-  }
-
-  .anketa-card.visible {
-    opacity: 1;
-  }
-
-  .anketa-header {
+    top: 0; right: 0;
+    width: 460px;
+    max-width: 100vw;
+    height: 100vh;
+    background: var(--paper);
+    border-left: 1px solid var(--light-gray);
+    z-index: 200;
+    transform: translateX(100%);
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    padding-bottom: 16px;
-    margin-bottom: 16px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    flex-direction: column;
+    padding: 80px 50px 50px;
+    overflow-y: auto;
+    box-shadow: -20px 0 60px rgba(0,0,0,0.08);
+  }
+
+  .anketa-panel.open {
+    transform: translateX(0);
+  }
+
+  .anketa-photo {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    background: var(--light-gray);
+    margin-bottom: 32px;
+    overflow: hidden;
+  }
+
+  .anketa-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
   .anketa-name {
-    font-size: 22px;
+    font-family: 'Inter', sans-serif;
     font-weight: 900;
-    letter-spacing: -0.02em;
-    line-height: 1;
+    font-size: 36px;
+    letter-spacing: -0.03em;
+    line-height: 0.95;
+    color: var(--ink);
     text-transform: uppercase;
+    margin-bottom: 8px;
   }
 
   .anketa-class {
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
     color: var(--red);
     text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+
+  .anketa-quote {
+    font-style: italic;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--gray);
+    border-left: 2px solid var(--red);
+    padding-left: 16px;
+    margin-bottom: 32px;
   }
 
   .anketa-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .anketa-row {
     display: grid;
-    grid-template-columns: 90px 1fr;
-    gap: 10px 16px;
-    font-size: 13px;
-    line-height: 1.5;
+    grid-template-columns: 80px 1fr;
+    gap: 16px;
+    align-items: baseline;
   }
 
   .anketa-label {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 1.5px;
-    color: rgba(255,255,255,0.4);
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--gray);
     text-transform: uppercase;
-    padding-top: 2px;
+    font-weight: 500;
   }
 
   .anketa-value {
-    color: rgba(255,255,255,0.92);
-    font-weight: 400;
-    min-height: 19px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--ink);
+    min-height: 21px;
   }
 
-  .anketa-value.quote {
-    font-style: italic;
-    color: var(--red);
-  }
-
-  .anketa-footer {
-    margin-top: 18px;
-    padding-top: 14px;
-    border-top: 1px solid rgba(255,255,255,0.1);
+  .anketa-traits {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--light-gray);
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .trait {
     font-family: 'JetBrains Mono', monospace;
     font-size: 9px;
     letter-spacing: 1.5px;
-    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+    color: var(--ink);
+    border: 1px solid var(--light-gray);
+    padding: 6px 12px;
+  }
+
+  .anketa-footer {
+    margin-top: auto;
+    padding-top: 32px;
+    display: flex;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--gray);
     text-transform: uppercase;
   }
 
-  /* === АВТО-РЕЖИМ HINT === */
+  .anketa-close {
+    position: absolute;
+    top: 28px; right: 30px;
+    width: 24px; height: 24px;
+    background: none;
+    border: none;
+    color: var(--ink);
+    font-size: 18px;
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1;
+  }
+
+  @media (max-width: 600px) {
+    .anketa-panel {
+      width: 100vw;
+      padding: 80px 30px 50px;
+    }
+  }
+
+  /* Подсказка о демо-режиме */
   .auto-hint {
     position: fixed;
-    bottom: 80px; left: 50%;
+    bottom: 24px; left: 50%;
     transform: translateX(-50%);
     font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
     letter-spacing: 2px;
-    color: rgba(255,255,255,0.4);
+    color: var(--gray);
     text-transform: uppercase;
     z-index: 60;
     pointer-events: none;
@@ -386,38 +538,42 @@
   }
   .auto-hint.visible { opacity: 1; }
 
-  /* === ВИДЕО СЕКЦИЯ === */
+  /* ============================================ */
+  /* 5. ВИДЕО                                      */
+  /* ============================================ */
   .video-section {
-    padding: 120px 40px;
+    background: var(--paper);
+    padding: 120px 60px;
     text-align: center;
-    background: var(--black);
+    border-top: 1px solid var(--light-gray);
+  }
+
+  .video-section .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--red);
+    text-transform: uppercase;
+    margin-bottom: 24px;
   }
 
   .video-section h2 {
-    font-size: clamp(28px, 4vw, 52px);
+    font-family: 'Inter', sans-serif;
     font-weight: 900;
-    letter-spacing: -0.03em;
+    font-size: clamp(40px, 5vw, 72px);
+    letter-spacing: -0.04em;
     text-transform: uppercase;
-    margin-bottom: 24px;
+    margin-bottom: 60px;
+    color: var(--ink);
     line-height: 1;
-  }
-
-  .video-section .video-sub {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 3px;
-    color: var(--red);
-    text-transform: uppercase;
-    margin-bottom: 48px;
   }
 
   .video-wrap {
     max-width: 1100px;
     margin: 0 auto;
     aspect-ratio: 16 / 9;
-    border: 1px solid rgba(232, 49, 42, 0.4);
-    box-shadow: 0 30px 80px rgba(232, 49, 42, 0.15);
-    background: #000;
+    background: var(--ink);
+    border: 1px solid var(--light-gray);
   }
 
   .video-wrap iframe {
@@ -426,44 +582,50 @@
     display: block;
   }
 
-  /* === КОРЕШОК / СПЕЦИФИКАЦИЯ === */
-  .specs-section {
-    padding: 140px 40px;
-    background: var(--black);
-    border-top: 1px solid rgba(255,255,255,0.08);
+  @media (max-width: 600px) {
+    .video-section { padding: 80px 24px; }
+  }
+
+  /* ============================================ */
+  /* 6. СПЕЦИФИКАЦИЯ                              */
+  /* ============================================ */
+  .specs {
+    background: var(--paper);
+    padding: 120px 60px;
+    border-top: 1px solid var(--light-gray);
   }
 
   .specs-grid {
-    max-width: 1200px;
+    max-width: 1300px;
     margin: 0 auto;
     display: grid;
-    grid-template-columns: 1.2fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 80px;
     align-items: center;
   }
 
   @media (max-width: 900px) {
-    .specs-grid { grid-template-columns: 1fr; gap: 50px; }
+    .specs { padding: 80px 24px; }
+    .specs-grid { grid-template-columns: 1fr; gap: 40px; }
   }
 
   .specs-image {
-    position: relative;
     aspect-ratio: 4 / 5;
-    background: #1a1a1a;
+    background: var(--light-gray);
+    position: relative;
     overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.08);
   }
 
   .specs-image .placeholder {
     position: absolute;
     inset: 0;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    flex-direction: column;
-    color: rgba(255,255,255,0.3);
+    color: var(--gray);
     font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
+    font-size: 10px;
     letter-spacing: 2px;
     text-transform: uppercase;
     text-align: center;
@@ -472,21 +634,21 @@
   }
 
   .specs-image .placeholder b {
-    color: var(--red);
-    display: block;
-    margin-bottom: 12px;
+    color: var(--ink);
     font-size: 13px;
     letter-spacing: 3px;
+    display: block;
+    margin-bottom: 12px;
   }
 
   .specs-image .placeholder small {
     display: block;
     margin-top: 14px;
-    color: rgba(255,255,255,0.2);
     font-size: 9px;
+    color: var(--gray);
   }
 
-  .specs-text-eyebrow {
+  .specs-text .label {
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
     letter-spacing: 4px;
@@ -496,21 +658,22 @@
   }
 
   .specs-text h2 {
-    font-size: clamp(32px, 4.5vw, 56px);
+    font-family: 'Inter', sans-serif;
     font-weight: 900;
+    font-size: clamp(36px, 4.5vw, 64px);
     line-height: 1;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.04em;
     text-transform: uppercase;
-    margin-bottom: 24px;
+    margin-bottom: 32px;
+    color: var(--ink);
   }
 
-  .specs-text h2 b { color: var(--red); }
-
   .specs-text p {
-    color: rgba(255,255,255,0.75);
+    color: var(--ink);
     font-size: 16px;
     line-height: 1.7;
     margin-bottom: 40px;
+    max-width: 480px;
   }
 
   .specs-list {
@@ -521,46 +684,46 @@
   .specs-list li {
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
     padding: 14px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid var(--light-gray);
     font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    letter-spacing: 1.5px;
+    font-size: 11px;
+    letter-spacing: 2px;
     text-transform: uppercase;
   }
 
   .specs-list li span:first-child {
-    color: rgba(255,255,255,0.4);
+    color: var(--gray);
   }
 
   .specs-list li span:last-child {
-    color: var(--white);
+    color: var(--ink);
     font-weight: 500;
   }
 
   .specs-price {
     font-family: 'Inter', sans-serif;
     font-weight: 900;
-    font-size: 48px;
-    letter-spacing: -0.02em;
-    margin-bottom: 32px;
+    font-size: 56px;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+    margin-bottom: 8px;
     line-height: 1;
   }
 
-  .specs-price small {
-    display: block;
+  .specs-price-sub {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
+    font-size: 10px;
     letter-spacing: 2px;
-    color: rgba(255,255,255,0.4);
-    margin-top: 8px;
-    font-weight: 400;
+    color: var(--gray);
     text-transform: uppercase;
+    margin-bottom: 40px;
   }
 
-  /* === КНОПКИ CTA === */
-  .cta-row {
+  /* ============================================ */
+  /* КНОПКИ                                        */
+  /* ============================================ */
+  .btn-row {
     display: flex;
     gap: 16px;
     flex-wrap: wrap;
@@ -571,10 +734,11 @@
     align-items: center;
     gap: 10px;
     padding: 18px 28px;
-    border: 1px solid rgba(255,255,255,0.25);
-    color: var(--white);
+    border: 1px solid var(--ink);
+    color: var(--ink);
+    background: var(--paper);
     font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
+    font-size: 11px;
     letter-spacing: 2px;
     text-transform: uppercase;
     text-decoration: none;
@@ -583,173 +747,218 @@
   }
 
   .btn:hover {
-    background: var(--white);
-    color: var(--black);
-    border-color: var(--white);
+    background: var(--ink);
+    color: var(--paper);
   }
 
-  .btn-red {
+  .btn-dark {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .btn-dark:hover {
     background: var(--red);
     border-color: var(--red);
   }
 
-  .btn-red:hover {
-    background: var(--white);
-    color: var(--red);
-    border-color: var(--white);
-  }
-
-  /* === ФИНАЛЬНЫЙ БЛОК === */
-  .final-section {
-    padding: 140px 40px 80px;
+  /* ============================================ */
+  /* 7. ФИНАЛ — чёрный экран                       */
+  /* ============================================ */
+  .final {
+    background: var(--ink);
+    color: var(--paper);
+    min-height: 100vh;
+    padding: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     text-align: center;
-    border-top: 1px solid rgba(255,255,255,0.08);
+    position: relative;
   }
 
-  .final-eyebrow {
+  .final-label {
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
     letter-spacing: 4px;
     color: var(--red);
     text-transform: uppercase;
-    margin-bottom: 32px;
+    margin-bottom: 40px;
   }
 
   .final-title {
-    font-size: clamp(36px, 6vw, 92px);
+    font-family: 'Inter', sans-serif;
     font-weight: 900;
-    line-height: 1;
-    letter-spacing: -0.04em;
+    font-size: clamp(48px, 9vw, 160px);
+    line-height: 0.9;
+    letter-spacing: -0.05em;
     text-transform: uppercase;
-    max-width: 1100px;
-    margin: 0 auto 32px;
+    max-width: 1200px;
+    margin: 0 auto 40px;
   }
-
-  .final-title b { color: var(--red); }
 
   .final-text {
     max-width: 600px;
     margin: 0 auto 60px;
-    color: rgba(255,255,255,0.7);
-    font-size: 16px;
-    line-height: 1.7;
+    color: rgba(250,250,250,0.7);
+    font-size: 17px;
+    line-height: 1.6;
   }
 
-  /* Аудио-тогглер (для звука печати) */
-  .audio-toggle {
-    position: fixed;
-    bottom: 24px; right: 24px;
-    z-index: 90;
+  .final .btn {
     background: transparent;
-    border: 1px solid rgba(255,255,255,0.2);
-    color: rgba(255,255,255,0.6);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 9px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    padding: 10px 16px;
-    cursor: pointer !important;
-    transition: all 0.3s;
+    color: var(--paper);
+    border-color: var(--paper);
   }
-
-  .audio-toggle:hover {
-    background: rgba(232, 49, 42, 0.1);
-    color: var(--red);
-    border-color: var(--red);
+  .final .btn:hover {
+    background: var(--paper);
+    color: var(--ink);
   }
-
-  .audio-toggle.active {
+  .final .btn-dark {
     background: var(--red);
-    color: var(--white);
     border-color: var(--red);
+    color: var(--paper);
+  }
+  .final .btn-dark:hover {
+    background: var(--paper);
+    color: var(--red);
   }
 
-  /* === МОБИЛЬНАЯ АДАПТАЦИЯ === */
-  @media (max-width: 768px) {
-    .intro { padding: 100px 24px 60px; }
-    .intro-manifesto { font-size: 16px; }
-    .grid-section { padding: 80px 20px; }
-    .video-section, .specs-section, .final-section { padding: 80px 24px; }
-    .anketa-card { width: calc(100% - 40px); }
-    .corner { font-size: 9px; }
+  .final-footer {
+    position: absolute;
+    bottom: 30px; left: 30px; right: 30px;
+    display: flex;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(250,250,250,0.4);
+    text-transform: uppercase;
+  }
+
+  /* Анимации появления при скролле */
+  .fade-in {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 1s ease, transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
   }
 </style>
 </head>
 <body>
 
-<!-- КАСТОМНЫЙ КУРСОР -->
+<!-- КУРСОР -->
 <div class="cursor-dot" id="cursor-dot"></div>
 <div class="cursor-ring" id="cursor-ring"></div>
 
-<!-- УГЛОВЫЕ НАДПИСИ -->
-<div class="corner corner-tl">
-  THE END / ECHO<br>
-  EST. 2024
-</div>
-<div class="corner corner-tr">
-  <span class="red-dot"></span>RECORDING<br>
-  BY LYKBOOK
-</div>
-<div class="corner corner-bl">
-  PROJECT<br>
-  04 / 05
-</div>
-<div class="corner corner-br">
-  ECHO LINE<br>
-  BY LYKBOOK
-</div>
-
-<!-- ============ ИНТРО ============ -->
-<section class="intro">
-  <div class="intro-eyebrow">— АРХИВ ЛИЧНОСТЕЙ —</div>
-  <h1 class="intro-title">ECHO</h1>
-  <div class="intro-subtitle">КАЖДЫЙ · СОХРАНЁН · КАК ГЕРОЙ</div>
-  <p class="intro-manifesto">
-    Класс — это не строка в школьном журнале. Это <b>люди</b>. Со своими любимыми
-    фильмами, песнями, страхами и мечтами. <b>ECHO</b> — альбом-анкета, где у каждого
-    есть своя страница. Свой голос. Свой след.
-  </p>
-  <div class="intro-counter">↓ НАВЕДИ НА ЛИЦО ↓</div>
-</section>
-
-<!-- ============ СЕТКА ПОРТРЕТОВ ============ -->
-<section class="grid-section">
-  <div class="grid-header">
-    <h2 class="grid-title">24 ЧЕЛОВЕКА.<br>24 <b>АНКЕТЫ.</b></h2>
-    <div class="grid-meta">
-      ВСЕГО АНКЕТ: <b>24</b><br>
-      КЛАСС: <b>11Б · 2024</b><br>
-      ЛЮБИМЫЙ ФИЛЬМ: <b>INCEPTION (4)</b><br>
-      ЛЮБИМАЯ МУЗЫКА: <b>RADIOHEAD (3)</b>
-    </div>
+<!-- ============================================ -->
+<!-- 1. ИНТРО                                      -->
+<!-- ============================================ -->
+<section class="intro" data-bg="light">
+  <div class="intro-top-left mono">
+    THE END / ECHO<br>
+    EST. 2024
+  </div>
+  <div class="intro-top-right mono">
+    <span class="label">● RECORDING</span><br>
+    BY LYKBOOK
+  </div>
+  <div class="intro-bot-left mono">
+    PROJECT<br>
+    04 / 05
+  </div>
+  <div class="intro-bot-right mono">
+    ECHO LINE
   </div>
 
-  <!-- Сетка портретов — генерируется JS -->
-  <div class="grid-portraits" id="portraits-grid"></div>
-</section>
+  <div class="intro-left">
+    <div class="echo-vertical">ECHO</div>
+  </div>
 
-<!-- Карточка анкеты — выезжает при hover -->
-<div class="anketa-card" id="anketa-card">
-  <div class="anketa-header">
+  <div class="intro-right">
     <div>
-      <div class="anketa-name" id="ank-name">АЛИСА К.</div>
+      <div class="intro-eyebrow">
+        <span class="red-mark">—</span> АРХИВ ЛИЧНОСТЕЙ
+      </div>
+      <p class="intro-manifesto">
+        Класс — это не строка в журнале. Это <b>люди</b>.
+        Со своими любимыми фильмами, песнями, страхами и мечтами.
+        У каждого <b>своя страница</b>. Свой голос. Свой след.
+      </p>
+      <p class="intro-quote">
+        «Только время — это то, чему я могу доверять.»
+      </p>
     </div>
-    <div class="anketa-class" id="ank-class">11Б · 2024</div>
+    <div class="intro-scroll-hint">↓ ЛИСТАТЬ</div>
   </div>
-  <div class="anketa-rows" id="ank-rows">
-    <!-- генерируется JS с typewriter-эффектом -->
+</section>
+
+<!-- ============================================ -->
+<!-- 2. ОБЛОЖКА                                    -->
+<!-- ============================================ -->
+<section class="cover" data-bg="dark">
+  <div class="cover-title">ECHO</div>
+  <div class="cover-side">
+    <div class="cover-side-label">— ШКОЛЬНЫЙ ВЫПУСКНОЙ —</div>
+    <p class="cover-side-text">
+      Государственное бюджетное общеобразовательное учреждение.
+      <b>Класс 11Б</b>, год выпуска <b>2024</b>. 24 личности,
+      24 анкеты, 1 книга. Сохранено навсегда.
+    </p>
+    <div class="cover-side-meta">
+      ФОРМАТ 23×30 СМ<br>
+      ТЕКСТИЛЬНЫЙ КОРЕШОК<br>
+      ЛАМИНАЦИЯ КАРТОНКАМИ
+    </div>
   </div>
+</section>
+
+<!-- ============================================ -->
+<!-- 3. КОНТАКТНАЯ ПЛЁНКА                          -->
+<!-- ============================================ -->
+<section class="gallery" data-bg="light">
+  <div class="gallery-header fade-in">
+    <h2 class="gallery-title">24 ЧЕЛОВЕКА.<br>24 АНКЕТЫ.</h2>
+    <div class="gallery-meta">
+      <span class="label">КЛАСС</span>     <span class="red-mark">11Б · 2024</span><br>
+      <span class="label">ФИЛЬМ</span>     INCEPTION (4)<br>
+      <span class="label">МУЗЫКА</span>    RADIOHEAD (3)<br>
+      <span class="label">↓ НАВЕДИ НА ЛИЦО</span>
+    </div>
+  </div>
+
+  <div class="gallery-grid" id="gallery-grid"></div>
+</section>
+
+<!-- ПАНЕЛЬ АНКЕТЫ -->
+<aside class="anketa-panel" id="anketa-panel">
+  <button class="anketa-close" id="anketa-close">✕</button>
+  <div class="anketa-photo">
+    <img id="ank-photo" src="" alt="">
+  </div>
+  <div class="anketa-name" id="ank-name">—</div>
+  <div class="anketa-class" id="ank-class">—</div>
+  <div class="anketa-quote" id="ank-quote">—</div>
+  <div class="anketa-rows" id="ank-rows"></div>
+  <div class="anketa-traits" id="ank-traits"></div>
   <div class="anketa-footer">
     <span id="ank-num">01 / 24</span>
     <span>ECHO · LYKBOOK</span>
   </div>
-</div>
+</aside>
 
-<!-- ============ ВИДЕО ============ -->
-<section class="video-section">
-  <h2>ЛИСТАЕМ <b style="color: var(--red);">КНИГУ</b></h2>
-  <div class="video-sub">— ТАК ВЫГЛЯДИТ ECHO В РУКАХ —</div>
-  <div class="video-wrap">
+<!-- Подсказка о демо-режиме -->
+<div class="auto-hint" id="auto-hint">— АВТО-РЕЖИМ —</div>
+
+<!-- ============================================ -->
+<!-- 5. ВИДЕО                                      -->
+<!-- ============================================ -->
+<section class="video-section" data-bg="light">
+  <div class="label fade-in">— ВИДЕО —</div>
+  <h2 class="fade-in">ЛИСТАЕМ КНИГУ</h2>
+  <div class="video-wrap fade-in">
     <iframe
       src="https://vk.com/video_ext.php?oid=-9271079&id=456239261&hd=2"
       frameborder="0"
@@ -759,20 +968,21 @@
   </div>
 </section>
 
-<!-- ============ СПЕЦИФИКАЦИЯ + КОРЕШОК ============ -->
-<section class="specs-section">
+<!-- ============================================ -->
+<!-- 6. СПЕЦИФИКАЦИЯ                              -->
+<!-- ============================================ -->
+<section class="specs" data-bg="light">
   <div class="specs-grid">
-    <div class="specs-image">
+    <div class="specs-image fade-in">
       <div class="placeholder">
         <b>ТКАНЕВЫЙ КОРЕШОК</b>
-        МАКРО-ФОТО ФАКТУРЫ<br>
-        БУДЕТ ЗДЕСЬ
+        МАКРО-ФОТО ФАКТУРЫ
         <small>заменим на реальное фото<br>дизайнерской бумаги и текстиля</small>
       </div>
     </div>
-    <div class="specs-text">
-      <div class="specs-text-eyebrow">— ECHO LINE / СПЕЦИФИКАЦИЯ —</div>
-      <h2>ТО, ЧЕГО НЕ <b>ПОВТОРИТ</b><br>НИКТО.</h2>
+    <div class="specs-text fade-in">
+      <div class="label">— СПЕЦИФИКАЦИЯ —</div>
+      <h2>ТО, ЧЕГО НЕ ПОВТОРИТ НИКТО.</h2>
       <p>
         Текстильный корешок ручной работы. Ламинация дизайнерской бумагой
         с фактурными картонками сверху. Внутри — индивидуальные анкеты
@@ -786,42 +996,34 @@
         <li><span>ПЕРЕПЛЁТ</span><span>НИТКА-ШОВ</span></li>
         <li><span>ТИРАЖ</span><span>ОТ 20 ШТ</span></li>
       </ul>
-      <div class="specs-price">
-        11 000 ₽
-        <small>ЗА ОДИН ЭКЗЕМПЛЯР</small>
-      </div>
-      <div class="cta-row">
-        <a href="https://wa.me/79581002777" class="btn btn-red">
-          ЗАБРОНИРОВАТЬ →
-        </a>
+      <div class="specs-price">11 000 ₽</div>
+      <div class="specs-price-sub">— ЗА ОДИН ЭКЗЕМПЛЯР —</div>
+      <div class="btn-row">
+        <a href="https://wa.me/79581002777" class="btn btn-dark">ЗАБРОНИРОВАТЬ →</a>
         <a href="/" class="btn">↶ К ПРОЕКТАМ</a>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ============ ФИНАЛ ============ -->
-<section class="final-section">
-  <div class="final-eyebrow">— ECHO —</div>
-  <h2 class="final-title">
-    КОГДА ВЫПУСКНОЙ<br>СТАНОВИТСЯ <b>ЛИЧНЫМ</b>
-  </h2>
+<!-- ============================================ -->
+<!-- 7. ФИНАЛ                                      -->
+<!-- ============================================ -->
+<section class="final" data-bg="dark">
+  <div class="final-label">— ECHO —</div>
+  <h2 class="final-title">КАЖДЫЙ.<br>СОХРАНЁН.<br>КАК ГЕРОЙ.</h2>
   <p class="final-text">
     Через 20 лет ты откроешь эту книгу и вспомнишь не просто класс —
     а каждого. Что слушала Алиса. Что писал Артём. Кого ждала Вика.
   </p>
-  <div class="cta-row" style="justify-content: center;">
-    <a href="https://wa.me/79581002777" class="btn btn-red">
-      НАПИСАТЬ В WHATSAPP →
-    </a>
+  <div class="btn-row">
+    <a href="https://wa.me/79581002777" class="btn btn-dark">НАПИСАТЬ В WHATSAPP →</a>
+  </div>
+  <div class="final-footer">
+    <span>THE END / ECHO · LYKBOOK</span>
+    <span>EST. 2024</span>
   </div>
 </section>
-
-<!-- Аудио-тогглер -->
-<button class="audio-toggle" id="audio-toggle">♪ ЗВУК ВЫКЛ</button>
-
-<!-- Подсказка о демо-режиме -->
-<div class="auto-hint" id="auto-hint">АВТО-РЕЖИМ ↑</div>
 
 <script>
 /* ============ 1. КУРСОР ============ */
@@ -845,16 +1047,27 @@
   }
   loop();
 
-  // Hover на интерактивные элементы — кольцо увеличивается
   document.querySelectorAll('a, button, .portrait').forEach(el => {
     el.addEventListener('mouseenter', () => ring.classList.add('hover'));
     el.addEventListener('mouseleave', () => ring.classList.remove('hover'));
   });
+
+  // Инверсия курсора на тёмных секциях
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+        const isDark = entry.target.dataset.bg === 'dark';
+        dot.classList.toggle('invert', isDark);
+        ring.classList.toggle('invert', isDark);
+      }
+    });
+  }, { threshold: [0, 0.5, 1] });
+  document.querySelectorAll('[data-bg]').forEach(s => observer.observe(s));
 })();
 
 
-/* ============ 2. ДАННЫЕ — ПОРТРЕТЫ И АНКЕТЫ (ПЛЕЙСХОЛДЕРЫ) ============ */
-// 24 портрета — пока ссылки из PHOTO оверлея, потом заменишь реальными портретами
+/* ============ 2. ДАННЫЕ ============ */
+// Плейсхолдеры — заменишь на реальные портреты
 const PORTRAITS = [
   'https://i.ibb.co/67kTJdV7/1.jpg',
   'https://i.ibb.co/XZdBPzJw/2.jpg',
@@ -882,37 +1095,37 @@ const PORTRAITS = [
   'https://i.ibb.co/DDL5Xy9B/24.jpg'
 ];
 
-// 24 анкеты-плейсхолдера (потом заменишь на реальные)
+// Анкеты — структура как в реальном альбоме (фильмы, сериалы, музыка, книги, игры)
 const ANKETAS = [
-  { name: 'АЛИСА К.', cls: '11Б · 2024', f: 'Inception', b: 'Мастер и Маргарита', m: 'Radiohead', s: 'Twin Peaks', q: '«и шум, и тишь»', want: 'стать врачом', fear: 'остаться одна', remember: '31 декабря' },
-  { name: 'АРТЁМ В.', cls: '11Б · 2024', f: 'Donnie Darko', b: '1984', m: 'Arctic Monkeys', s: 'Mr. Robot', q: '«будь что будет»', want: 'писать код', fear: 'застрять', remember: 'последний звонок' },
-  { name: 'ВИКА Р.', cls: '11Б · 2024', f: 'Amélie', b: 'Над пропастью во ржи', m: 'The Strokes', s: 'Skins', q: '«увидимся в новой жизни»', want: 'уехать в Питер', fear: 'забыть всех', remember: 'школьный двор' },
-  { name: 'МАКСИМ Т.', cls: '11Б · 2024', f: 'Pulp Fiction', b: 'Бойцовский клуб', m: 'Кино', s: 'Breaking Bad', q: '«никто не виноват»', want: 'снимать фильмы', fear: 'опоздать', remember: 'класс 9-го' },
-  { name: 'ПОЛИНА Н.', cls: '11Б · 2024', f: 'La La Land', b: 'Цветы для Элджернона', m: 'Lana Del Rey', s: 'Friends', q: '«я не сдамся»', want: 'танцевать', fear: 'неудачи', remember: 'свой первый день' },
-  { name: 'ИЛЬЯ Б.', cls: '11Б · 2024', f: 'Бойцовский клуб', b: 'Преступление и наказание', m: 'Linkin Park', s: 'Sherlock', q: '«всё имеет смысл»', want: 'путешествовать', fear: 'скучно жить', remember: 'выпускной' },
-  { name: 'АНАСТАСИЯ В.', cls: '11Б · 2024', f: 'Interstellar', b: 'Маленький принц', m: 'Coldplay', s: 'Stranger Things', q: '«не прощай»', want: 'учить детей', fear: 'разлуки', remember: 'класс хоровое пение' },
-  { name: 'ДАНИИЛ С.', cls: '11Б · 2024', f: 'The Dark Knight', b: 'Игра в бисер', m: 'Pink Floyd', s: 'Westworld', q: '«молчание громче»', want: 'быть архитектором', fear: 'пустоты', remember: 'дождь в апреле' },
-  { name: 'СОФИЯ М.', cls: '11Б · 2024', f: 'Lost in Translation', b: 'Норвежский лес', m: 'Lorde', s: 'Sex and the City', q: '«помни меня»', want: 'жить у моря', fear: 'забвения', remember: 'утренние линейки' },
-  { name: 'ЕГОР Л.', cls: '11Б · 2024', f: 'Trainspotting', b: 'Generation П', m: 'The Cure', s: 'Peaky Blinders', q: '«всё это уже было»', want: 'журналистом', fear: 'тупика', remember: 'класс 7-го' },
-  { name: 'КСЕНИЯ Р.', cls: '11Б · 2024', f: 'Submarine', b: 'Капитанская дочка', m: 'Tame Impala', s: 'Euphoria', q: '«каждый день думала»', want: 'писать книги', fear: 'остановиться', remember: 'Новый год 2023' },
-  { name: 'РОМАН К.', cls: '11Б · 2024', f: 'Big Lebowski', b: 'Капитан Очевидность', m: 'Daft Punk', s: 'Black Mirror', q: '«не торопись»', want: 'играть в группе', fear: 'тишины', remember: 'свой первый концерт' },
-  { name: 'МИЛАНА Д.', cls: '11Б · 2024', f: 'Юная', b: 'Анна Каренина', m: 'Florence + The Machine', s: 'The Crown', q: '«я была здесь»', want: 'стать дизайнером', fear: 'обыденности', remember: 'наш кабинет' },
-  { name: 'НИКИТА Ш.', cls: '11Б · 2024', f: 'Memento', b: 'Шантарам', m: 'Massive Attack', s: 'True Detective', q: '«поверь себе»', want: 'программистом', fear: 'не понять', remember: 'класс физики' },
-  { name: 'ЛИЛИЯ О.', cls: '11Б · 2024', f: 'Eternal Sunshine', b: 'Кафка на пляже', m: 'Phoebe Bridgers', s: 'Fleabag', q: '«всё пройдёт»', want: 'фотограф', fear: 'неправильности', remember: 'осень 11-го' },
-  { name: 'ТИМУР Ч.', cls: '11Б · 2024', f: '500 Days of Summer', b: 'Гарри Поттер', m: 'Tyler the Creator', s: 'Atypical', q: '«люблю всё это»', want: 'юристом', fear: 'давления', remember: 'ту нашу шутку' },
-  { name: 'АНЯ Б.', cls: '11Б · 2024', f: 'Whiplash', b: '451 по Фаренгейту', m: 'Beach House', s: 'BoJack Horseman', q: '«будь сильнее»', want: 'дирижёром', fear: 'фальши', remember: 'школьный хор' },
-  { name: 'ГЛЕБ Я.', cls: '11Б · 2024', f: 'Snatch', b: 'Чапаев и Пустота', m: 'Eminem', s: 'Vikings', q: '«я ещё вернусь»', want: 'киберспортом', fear: 'остаться', remember: 'выпускной' },
-  { name: 'ДАРЬЯ К.', cls: '11Б · 2024', f: 'Marie Antoinette', b: 'Маленькие женщины', m: 'Mitski', s: 'Bridgerton', q: '«цени момент»', want: 'модельером', fear: 'старения', remember: 'наши вечеринки' },
-  { name: 'СЕРГЕЙ П.', cls: '11Б · 2024', f: 'Reservoir Dogs', b: 'Generation Икс', m: 'Joy Division', s: 'Mindhunter', q: '«мы тут были»', want: 'историком', fear: 'забвения', remember: 'класс истории' },
-  { name: 'ВЕРОНИКА Д.', cls: '11Б · 2024', f: 'Moonlight', b: 'Цвет волшебства', m: 'FKA twigs', s: 'Twin Peaks', q: '«мы были не правильными»', want: 'актрисой', fear: 'непонимания', remember: 'школьный театр' },
-  { name: 'АРСЕНИЙ К.', cls: '11Б · 2024', f: 'Goodfellas', b: 'Шерлок Холмс', m: 'Run the Jewels', s: 'The Wire', q: '«школа — это люди»', want: 'предпринимателем', fear: 'застоя', remember: 'класс 5-го' },
-  { name: 'ЕЛИЗАВЕТА М.', cls: '11Б · 2024', f: 'Black Swan', b: 'Лолита', m: 'Sufjan Stevens', s: 'Killing Eve', q: '«если боишься — делай»', want: 'танцовщицей', fear: 'рутины', remember: 'утренние репетиции' },
-  { name: 'МАРК О.', cls: '11Б · 2024', f: 'Drive', b: 'Над пропастью во ржи', m: 'Tame Impala', s: 'Better Call Saul', q: '«всё свои»', want: 'дизайнером', fear: 'мечтать впустую', remember: 'наш последний звонок' }
+  { name: 'АЛИСА КОВАЛЕНКО', cls: '11Б · 2024', q: 'И шум, и тишь — всё это музыка', cinema: 'Inception, Donnie Darko, Amélie', serials: 'Twin Peaks, Skins', music: 'Radiohead, Phoebe Bridgers, The Cure', books: 'Мастер и Маргарита, 1984', games: 'Stardew Valley, Journey', traits: ['тихая', 'музыкальная', 'искренняя', 'мечтательная'] },
+  { name: 'АРТЁМ ВОЛКОВ', cls: '11Б · 2024', q: 'Будь что будет', cinema: 'Pulp Fiction, Fight Club', serials: 'Mr. Robot, Breaking Bad', music: 'Arctic Monkeys, Tame Impala', books: '1984, Бойцовский клуб', games: 'CS, Dota', traits: ['прямой', 'дерзкий', 'умный'] },
+  { name: 'ВИКА РОМАНОВА', cls: '11Б · 2024', q: 'Увидимся в новой жизни', cinema: 'Amélie, La La Land', serials: 'Sex Education, Friends', music: 'The Strokes, Lana Del Rey', books: 'Над пропастью во ржи', games: 'The Sims', traits: ['нежная', 'ранимая', 'светлая'] },
+  { name: 'МАКСИМ ТАРАСОВ', cls: '11Б · 2024', q: 'Никто не виноват', cinema: 'Pulp Fiction, Drive', serials: 'Breaking Bad, Better Call Saul', music: 'Кино, Король и Шут', books: 'Бойцовский клуб', games: 'GTA', traits: ['резкий', 'своевольный'] },
+  { name: 'ПОЛИНА НИКИТИНА', cls: '11Б · 2024', q: 'Я не сдамся', cinema: 'La La Land, Whiplash', serials: 'Friends, Euphoria', music: 'Lana Del Rey, Mitski', books: 'Цветы для Элджернона', games: 'Roblox', traits: ['целеустремлённая', 'эмоциональная'] },
+  { name: 'ИЛЬЯ БЕЛОВ', cls: '11Б · 2024', q: 'Всё имеет смысл', cinema: 'Бойцовский клуб, Memento', serials: 'Sherlock, Mr. Robot', music: 'Linkin Park, Daughtry', books: 'Преступление и наказание', games: 'Witcher', traits: ['философ', 'упорный'] },
+  { name: 'НАСТЯ ВЕТРОВА', cls: '11Б · 2024', q: 'Не прощай — помни', cinema: 'Interstellar, La La Land', serials: 'Stranger Things, The Crown', music: 'Coldplay, Florence', books: 'Маленький принц', games: 'Animal Crossing', traits: ['добрая', 'мечтательная', 'тёплая'] },
+  { name: 'ДАНИИЛ СЕРОВ', cls: '11Б · 2024', q: 'Молчание громче слов', cinema: 'The Dark Knight, Memento', serials: 'Westworld, True Detective', music: 'Pink Floyd, Massive Attack', books: 'Игра в бисер', games: 'Cyberpunk', traits: ['молчаливый', 'глубокий'] },
+  { name: 'СОФИЯ МАРКОВА', cls: '11Б · 2024', q: 'Помни меня', cinema: 'Lost in Translation', serials: 'Sex and the City, Fleabag', music: 'Lorde, Lana Del Rey', books: 'Норвежский лес', games: '—', traits: ['артистичная', 'свободная'] },
+  { name: 'ЕГОР ЛАРИН', cls: '11Б · 2024', q: 'Всё это уже было', cinema: 'Trainspotting, Snatch', serials: 'Peaky Blinders, Vikings', music: 'The Cure, Joy Division', books: 'Generation П', games: 'Red Dead', traits: ['ироничный', 'циник'] },
+  { name: 'КСЕНИЯ РУСАНОВА', cls: '11Б · 2024', q: 'Каждый день думала', cinema: 'Submarine, Lady Bird', serials: 'Euphoria, Atypical', music: 'Tame Impala, Mac DeMarco', books: 'Капитанская дочка', games: 'It Takes Two', traits: ['рефлексирующая', 'нежная'] },
+  { name: 'РОМАН КЛИМОВ', cls: '11Б · 2024', q: 'Не торопись', cinema: 'Big Lebowski, Drive', serials: 'Black Mirror, Mindhunter', music: 'Daft Punk, Justice', books: 'Капитан Очевидность', games: 'Hades', traits: ['спокойный', 'остроумный'] },
+  { name: 'МИЛАНА ДРОЗДОВА', cls: '11Б · 2024', q: 'Я была здесь', cinema: 'Marie Antoinette, Юная', serials: 'The Crown, Bridgerton', music: 'Florence + Machine', books: 'Анна Каренина', games: 'Stardew Valley', traits: ['артистичная', 'утончённая'] },
+  { name: 'НИКИТА ШИЛОВ', cls: '11Б · 2024', q: 'Поверь себе', cinema: 'Memento, Shutter Island', serials: 'True Detective, Mr. Robot', music: 'Massive Attack, Portishead', books: 'Шантарам', games: 'Disco Elysium', traits: ['замкнутый', 'умный'] },
+  { name: 'ЛИЛИЯ ОРЛОВА', cls: '11Б · 2024', q: 'Всё пройдёт', cinema: 'Eternal Sunshine, Her', serials: 'Fleabag, Normal People', music: 'Phoebe Bridgers, Beach House', books: 'Кафка на пляже', games: 'Florence', traits: ['меланхоличная', 'добрая'] },
+  { name: 'ТИМУР ЧЕРНОВ', cls: '11Б · 2024', q: 'Люблю всё это', cinema: '500 Days of Summer, La La Land', serials: 'Atypical, Sex Education', music: 'Tyler the Creator, Frank Ocean', books: 'Гарри Поттер', games: 'Pokemon', traits: ['добрый', 'весёлый'] },
+  { name: 'АНЯ БОРИСОВА', cls: '11Б · 2024', q: 'Будь сильнее', cinema: 'Whiplash, Black Swan', serials: 'BoJack Horseman, Russian Doll', music: 'Beach House, FKA twigs', books: '451 по Фаренгейту', games: '—', traits: ['сильная', 'упорная'] },
+  { name: 'ГЛЕБ ЯРОВ', cls: '11Б · 2024', q: 'Я ещё вернусь', cinema: 'Snatch, Goodfellas', serials: 'Vikings, Game of Thrones', music: 'Eminem, Travis Scott', books: 'Чапаев и Пустота', games: 'CS, FIFA', traits: ['уверенный', 'дерзкий'] },
+  { name: 'ДАРЬЯ КУЗНЕЦОВА', cls: '11Б · 2024', q: 'Цени момент', cinema: 'Marie Antoinette, Black Swan', serials: 'Bridgerton, The Crown', music: 'Mitski, Florence', books: 'Маленькие женщины', games: 'Stardew Valley', traits: ['артистичная', 'светлая'] },
+  { name: 'СЕРГЕЙ ПЕТРОВ', cls: '11Б · 2024', q: 'Мы тут были', cinema: 'Reservoir Dogs, Goodfellas', serials: 'Mindhunter, The Wire', music: 'Joy Division, The Smiths', books: 'Generation Икс', games: 'Cyberpunk', traits: ['наблюдатель', 'ироничный'] },
+  { name: 'ВЕРОНИКА ДРУЖИНИНА', cls: '11Б · 2024', q: 'Мы были не правильными', cinema: 'Moonlight, Mid90s', serials: 'Twin Peaks, Euphoria', music: 'FKA twigs, Solange', books: 'Цвет волшебства', games: '—', traits: ['творческая', 'смелая'] },
+  { name: 'АРСЕНИЙ КОРОЛЁВ', cls: '11Б · 2024', q: 'Школа — это люди', cinema: 'Goodfellas, Casino', serials: 'The Wire, Sopranos', music: 'Run the Jewels, Kendrick', books: 'Шерлок Холмс', games: 'GTA', traits: ['лидер', 'прямой'] },
+  { name: 'ЛИЗА МАЛИНИНА', cls: '11Б · 2024', q: 'Если боишься — делай', cinema: 'Black Swan, Suspiria', serials: 'Killing Eve, Russian Doll', music: 'Sufjan Stevens, Mitski', books: 'Лолита', games: '—', traits: ['смелая', 'утончённая'] },
+  { name: 'МАРК ОРЛОВ', cls: '11Б · 2024', q: 'Все свои', cinema: 'Drive, Nightcrawler', serials: 'Better Call Saul, Westworld', music: 'Tame Impala, Khruangbin', books: 'Над пропастью во ржи', games: 'Outer Wilds', traits: ['наблюдатель', 'добрый'] }
 ];
 
 
 /* ============ 3. ГЕНЕРАЦИЯ СЕТКИ ============ */
-const grid = document.getElementById('portraits-grid');
+const grid = document.getElementById('gallery-grid');
 
 PORTRAITS.forEach((url, i) => {
   const div = document.createElement('div');
@@ -921,123 +1134,111 @@ PORTRAITS.forEach((url, i) => {
   const num = (i + 1).toString().padStart(2, '0');
   div.innerHTML = `
     <span class="num">${num}</span>
-    <img src="${url}" alt="Portrait ${num}" loading="lazy">
-    <span class="pname">${ANKETAS[i].name}</span>
+    <img src="${url}" alt="${ANKETAS[i].name}" loading="lazy">
   `;
   grid.appendChild(div);
 });
 
 
-/* ============ 4. HOVER + КАРТОЧКА АНКЕТЫ С TYPEWRITER ============ */
-const card = document.getElementById('anketa-card');
-const ankRows = document.getElementById('ank-rows');
+/* ============ 4. ПАНЕЛЬ АНКЕТЫ ============ */
+const panel = document.getElementById('anketa-panel');
 const ankName = document.getElementById('ank-name');
 const ankClass = document.getElementById('ank-class');
+const ankQuote = document.getElementById('ank-quote');
+const ankRows = document.getElementById('ank-rows');
+const ankTraits = document.getElementById('ank-traits');
 const ankNum = document.getElementById('ank-num');
+const ankPhoto = document.getElementById('ank-photo');
+const ankClose = document.getElementById('anketa-close');
 
-let typewriterTimer = null;
-let isHovering = false;
-let lastIdx = -1;
+let currentIdx = -1;
 
 function showAnketa(idx) {
-  if (idx === lastIdx && card.classList.contains('visible')) return;
-  lastIdx = idx;
+  if (idx === currentIdx) return;
+  currentIdx = idx;
   const a = ANKETAS[idx];
 
+  ankPhoto.src = PORTRAITS[idx];
   ankName.textContent = a.name;
   ankClass.textContent = a.cls;
+  ankQuote.textContent = `«${a.q}»`;
   ankNum.textContent = `${(idx + 1).toString().padStart(2, '0')} / 24`;
 
-  // Подготавливаем строки
+  // Заполняем колонки анкеты
   const rows = [
-    { label: 'ФИЛЬМ',   value: a.f,        cls: '' },
-    { label: 'КНИГА',   value: a.b,        cls: '' },
-    { label: 'МУЗЫКА',  value: a.m,        cls: '' },
-    { label: 'СЕРИАЛ',  value: a.s,        cls: '' },
-    { label: 'ЦИТАТА',  value: a.q,        cls: 'quote' },
-    { label: 'ХОЧЕТ',   value: a.want,     cls: '' },
-    { label: 'БОИТСЯ',  value: a.fear,     cls: '' },
-    { label: 'ПОМНИТ',  value: a.remember, cls: '' },
+    { label: 'CINEMA',  value: a.cinema },
+    { label: 'SERIALS', value: a.serials },
+    { label: 'MUSIC',   value: a.music },
+    { label: 'BOOKS',   value: a.books },
+    { label: 'GAMES',   value: a.games }
   ];
+  ankRows.innerHTML = rows.map(r => `
+    <div class="anketa-row">
+      <div class="anketa-label">${r.label}</div>
+      <div class="anketa-value">${r.value}</div>
+    </div>
+  `).join('');
 
-  // Создаём HTML структуру
-  ankRows.innerHTML = '';
-  rows.forEach((row, i) => {
-    const labelEl = document.createElement('div');
-    labelEl.className = 'anketa-label';
-    labelEl.textContent = row.label;
-    const valueEl = document.createElement('div');
-    valueEl.className = 'anketa-value ' + row.cls;
-    valueEl.dataset.target = row.value;
-    valueEl.dataset.order = i;
-    valueEl.textContent = '';
-    ankRows.appendChild(labelEl);
-    ankRows.appendChild(valueEl);
-  });
+  // Характеристики человека
+  ankTraits.innerHTML = a.traits.map(t => `<span class="trait">${t}</span>`).join('');
 
-  card.classList.add('visible');
+  // Открываем панель
+  panel.classList.add('open');
 
-  // Подсветка активного портрета + диммирование остальных
+  // Подсвечиваем активный портрет
   grid.classList.add('has-active');
   document.querySelectorAll('.portrait').forEach(p => p.classList.remove('active'));
   document.querySelector(`.portrait[data-idx="${idx}"]`)?.classList.add('active');
-
-  // Запускаем typewriter
-  if (typewriterTimer) clearInterval(typewriterTimer);
-  let row = 0, col = 0;
-  const valueEls = ankRows.querySelectorAll('.anketa-value');
-  typewriterTimer = setInterval(() => {
-    if (row >= valueEls.length) { clearInterval(typewriterTimer); return; }
-    const target = valueEls[row].dataset.target;
-    if (col < target.length) {
-      valueEls[row].textContent = target.substring(0, col + 1);
-      col++;
-      // Звук печати (если активирован)
-      if (audioEnabled && col % 2 === 0) playTypeSound();
-    } else {
-      row++;
-      col = 0;
-    }
-  }, 24);
 }
 
 function hideAnketa() {
-  card.classList.remove('visible');
+  panel.classList.remove('open');
   grid.classList.remove('has-active');
   document.querySelectorAll('.portrait').forEach(p => p.classList.remove('active'));
-  if (typewriterTimer) clearInterval(typewriterTimer);
-  lastIdx = -1;
+  currentIdx = -1;
 }
 
+// Открытие по клику (более удобно чем hover при наличии панели сбоку)
 document.querySelectorAll('.portrait').forEach(p => {
-  p.addEventListener('mouseenter', () => {
-    isHovering = true;
+  p.addEventListener('click', () => {
     autoModeStop();
     showAnketa(parseInt(p.dataset.idx));
   });
-  p.addEventListener('mouseleave', () => {
-    isHovering = false;
-    hideAnketa();
-    autoModeReset();
+  // Hover — лёгкая подсветка, но без открытия панели
+  p.addEventListener('mouseenter', () => {
+    if (autoActive) return;
   });
 });
 
+ankClose.addEventListener('click', hideAnketa);
 
-/* ============ 5. ДЕМО-РЕЖИМ (авто-наведение) ============ */
+// Закрытие по клику вне панели
+document.addEventListener('click', (e) => {
+  if (!panel.contains(e.target) && !e.target.closest('.portrait') && panel.classList.contains('open')) {
+    hideAnketa();
+  }
+});
+
+// ESC закрывает
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') hideAnketa();
+});
+
+
+/* ============ 5. ДЕМО-РЕЖИМ ============ */
 const autoHint = document.getElementById('auto-hint');
 let autoTimer = null;
-let autoCurrentIdx = 0;
 let autoIdleTimer = null;
 let autoActive = false;
+let autoCurrentIdx = 0;
 
 function autoModeStep() {
   if (!autoActive) return;
-  // Случайный индекс не равный текущему
   let next;
   do { next = Math.floor(Math.random() * PORTRAITS.length); } while (next === autoCurrentIdx);
   autoCurrentIdx = next;
   showAnketa(next);
-  autoTimer = setTimeout(autoModeStep, 3500);
+  autoTimer = setTimeout(autoModeStep, 4500);
 }
 
 function autoModeStart() {
@@ -1056,54 +1257,30 @@ function autoModeStop() {
 function autoModeReset() {
   if (autoIdleTimer) clearTimeout(autoIdleTimer);
   autoIdleTimer = setTimeout(() => {
-    if (!isHovering) autoModeStart();
-  }, 4000);
+    if (!panel.classList.contains('open')) autoModeStart();
+  }, 6000);
 }
 
-// Стартуем демо-режим через 6 сек после загрузки
-setTimeout(autoModeReset, 2000);
-
-// Любое движение мыши останавливает демо и взводит таймер заново
 window.addEventListener('mousemove', () => {
   if (autoActive) {
     autoModeStop();
-    hideAnketa();
   }
   autoModeReset();
 });
 
+setTimeout(autoModeReset, 2000);
 
-/* ============ 6. ЗВУК ПЕЧАТНОЙ МАШИНКИ ============ */
-let audioEnabled = false;
-let audioCtx = null;
-const audioToggle = document.getElementById('audio-toggle');
 
-audioToggle.addEventListener('click', () => {
-  audioEnabled = !audioEnabled;
-  audioToggle.classList.toggle('active', audioEnabled);
-  audioToggle.textContent = audioEnabled ? '♪ ЗВУК ВКЛ' : '♪ ЗВУК ВЫКЛ';
-  if (audioEnabled && !audioCtx) {
-    try {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    } catch (e) { audioEnabled = false; }
-  }
-});
+/* ============ 6. FADE-IN ПРИ СКРОЛЛЕ ============ */
+const fadeObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.15 });
 
-function playTypeSound() {
-  if (!audioEnabled || !audioCtx) return;
-  try {
-    const o = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    o.type = 'square';
-    o.frequency.setValueAtTime(800 + Math.random() * 400, audioCtx.currentTime);
-    g.gain.setValueAtTime(0.015, audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.025);
-    o.connect(g);
-    g.connect(audioCtx.destination);
-    o.start();
-    o.stop(audioCtx.currentTime + 0.03);
-  } catch (e) {}
-}
+document.querySelectorAll('.fade-in').forEach(el => fadeObserver.observe(el));
 
 </script>
 </body>
