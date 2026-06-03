@@ -99,8 +99,8 @@
   /* Курсор-кольцо/точка на больших заголовках */
   .cursor-ring.on-negative {
     border-color: #00d4ff;
-    width: 80px;
-    height: 80px;
+    width: 90px;
+    height: 90px;
   }
 
   .cursor-dot.on-negative {
@@ -422,8 +422,14 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-                opacity 0.3s ease;
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                filter 0.4s ease;
+  }
+
+  /* Hover — лёгкое увеличение, чуть ярче */
+  .spread-cell:hover img {
+    transform: scale(1.06);
+    filter: brightness(1.05);
   }
 
   /* Тэг номера разворота на каждой миниатюре */
@@ -449,13 +455,13 @@
     opacity: 1;
   }
 
-  /* === ОВЕРЛЕЙ ДЛЯ УВЕЛИЧЕННОЙ КАРТИНКИ === */
+  /* === LIGHTBOX (по клику) === */
   .spread-overlay {
     position: fixed;
     top: 0; left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(253, 253, 253, 0.92);
+    background: rgba(253, 253, 253, 0.94);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     z-index: 5000;
@@ -501,9 +507,34 @@
     margin-right: 12px;
   }
 
-  /* Mobile — без hover (тач) */
-  @media (hover: none) or (pointer: coarse) {
-    .spread-overlay { display: none; }
+  /* Кнопка закрытия */
+  .spread-overlay-close {
+    position: absolute;
+    top: 30px; right: 30px;
+    width: 40px; height: 40px;
+    border: 1px solid var(--ink);
+    background: transparent;
+    color: var(--ink);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    line-height: 1;
+    transition: all 0.3s ease;
+  }
+
+  .spread-overlay-close:hover {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .spread-overlay-hint {
+    position: absolute;
+    bottom: 30px; left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--gray);
   }
 
   @media (max-width: 768px) {
@@ -871,13 +902,15 @@
 <div class="cursor-dot" id="cursor-dot"></div>
 <div class="cursor-ring" id="cursor-ring"></div>
 
-<!-- ОВЕРЛЕЙ ДЛЯ УВЕЛИЧЕННОГО РАЗВОРОТА -->
+<!-- ОВЕРЛЕЙ ДЛЯ УВЕЛИЧЕННОГО РАЗВОРОТА (LIGHTBOX) -->
 <div class="spread-overlay" id="spread-overlay">
+  <button class="spread-overlay-close" id="spread-overlay-close" aria-label="Закрыть">✕</button>
   <img class="spread-overlay-img" id="spread-overlay-img" src="" alt="">
   <div class="spread-overlay-caption" id="spread-overlay-caption">
     <span class="red">№01 GARDEN</span>
     <span>стр 04-05</span>
   </div>
+  <div class="spread-overlay-hint">КЛИК ИЛИ ESC — ЗАКРЫТЬ</div>
 </div>
 
 <!-- TOPBAR -->
@@ -1189,7 +1222,7 @@
   let dx = mx, dy = my, rx = mx, ry = my;
 
   const negativeEls = document.querySelectorAll('.negative-fx');
-  const NEGATIVE_RADIUS = 80;  // радиус круга-маски
+  const NEGATIVE_RADIUS = 45;  // радиус круга-маски
 
   window.addEventListener('mousemove', (e) => {
     mx = e.clientX;
@@ -1247,40 +1280,47 @@
 })();
 
 
-/* ============ 2. SPREAD HOVER OVERLAY ============ */
+/* ============ 2. LIGHTBOX РАЗВОРОТОВ ============ */
 (function() {
-  if (window.matchMedia('(hover: none)').matches) return;
-
   const overlay = document.getElementById('spread-overlay');
   const overlayImg = document.getElementById('spread-overlay-img');
   const overlayCaption = document.getElementById('spread-overlay-caption');
+  const overlayClose = document.getElementById('spread-overlay-close');
 
-  document.querySelectorAll('.spread-cell').forEach(cell => {
+  function openLightbox(cell) {
     const img = cell.querySelector('img');
     const tag = cell.querySelector('.spread-tag');
+    if (!img) return;
 
-    cell.addEventListener('mouseenter', () => {
-      if (!img) return;
-      overlayImg.src = img.src;
-      // Парсим тэг: "№01 · стр 04-05"
-      const tagText = tag ? tag.textContent.trim() : '';
-      const parts = tagText.split('·').map(s => s.trim());
-      if (parts.length === 2) {
-        overlayCaption.innerHTML = `<span class="red">${parts[0]}</span><span>${parts[1]}</span>`;
-      } else {
-        overlayCaption.innerHTML = `<span class="red">${tagText}</span>`;
-      }
-      overlay.classList.add('visible');
-    });
+    overlayImg.src = img.src;
+    const tagText = tag ? tag.textContent.trim() : '';
+    const parts = tagText.split('·').map(s => s.trim());
+    if (parts.length === 2) {
+      overlayCaption.innerHTML = `<span class="red">${parts[0]}</span><span>${parts[1]}</span>`;
+    } else {
+      overlayCaption.innerHTML = `<span class="red">${tagText}</span>`;
+    }
+    overlay.classList.add('visible');
+    document.body.style.overflow = 'hidden';  // блокируем скролл фона
+  }
 
-    cell.addEventListener('mouseleave', () => {
-      overlay.classList.remove('visible');
-    });
+  function closeLightbox() {
+    overlay.classList.remove('visible');
+    document.body.style.overflow = '';
+  }
+
+  document.querySelectorAll('.spread-cell').forEach(cell => {
+    cell.addEventListener('click', () => openLightbox(cell));
   });
 
-  // По клику на оверлей — закрыть (вдруг hover слетит)
-  overlay.addEventListener('click', () => {
-    overlay.classList.remove('visible');
+  // Закрытие
+  overlayClose.addEventListener('click', closeLightbox);
+  overlay.addEventListener('click', (e) => {
+    // Клик на фоне (не на картинке) тоже закрывает
+    if (e.target === overlay) closeLightbox();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeLightbox();
   });
 })();
 
