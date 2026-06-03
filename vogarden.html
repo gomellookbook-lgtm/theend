@@ -1178,7 +1178,8 @@
 })();
 
 
-/* ============ 2. 3D-ПАВИЛЬОН ============ */
+
+/* ============ 2. 3D-ГАЛЕРЕЯ ПАРЯЩИХ РАЗВОРОТОВ ============ */
 (function() {
   if (typeof THREE === 'undefined') return;
 
@@ -1188,383 +1189,246 @@
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  renderer.setClearColor(0x000000);
+  renderer.setClearColor(0x050505);
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.Fog(0x000000, 15, 60);
+  // Туман — дальние развороты растворяются в чёрном
+  scene.fog = new THREE.Fog(0x050505, 25, 80);
 
-  const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 200);
-  camera.position.set(0, 2, 25);
+  const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200);
+  camera.position.set(0, 0, 35);
 
-  // === АМБИЕНТ ===
-  const ambient = new THREE.AmbientLight(0xffffff, 0.15);
+  // === МЯГКИЙ СВЕТ ===
+  const ambient = new THREE.AmbientLight(0xffffff, 0.85);
   scene.add(ambient);
 
-  // === ОБЩИЙ ПОЛ ПАВИЛЬОНА ===
-  const floorGeometry = new THREE.PlaneGeometry(80, 60);
-  const floorMaterial = new THREE.MeshStandardMaterial({
-    color: 0x0a0a0a,
-    roughness: 0.85,
-    metalness: 0.1
-  });
-  const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-  floor.rotation.x = -Math.PI / 2;
-  floor.position.y = -2;
-  floor.receiveShadow = true;
-  scene.add(floor);
+  const topLight = new THREE.DirectionalLight(0xffffff, 0.5);
+  topLight.position.set(0, 10, 5);
+  scene.add(topLight);
 
-  // === ФУНКЦИЯ СОЗДАНИЯ СТУДИИ ===
-  // Каждая студия — большая закрытая ниша с задней стенкой, боковыми, подиумом, манекеном, светом
-  function createStudio(opts) {
-    const group = new THREE.Group();
-    group.position.set(opts.x, 0, 0);
+  // === ТЕКСТУРЫ РАЗВОРОТОВ ===
+  const textureLoader = new THREE.TextureLoader();
+  textureLoader.crossOrigin = 'anonymous';
 
-    // Задняя стенка студии
-    const backWall = new THREE.Mesh(
-      new THREE.PlaneGeometry(opts.width, 12),
-      new THREE.MeshStandardMaterial({
-        color: opts.wallColor,
-        roughness: 0.95,
-        metalness: 0.05
-      })
-    );
-    backWall.position.set(0, 4, -4);
-    backWall.receiveShadow = true;
-    group.add(backWall);
-
-    // Левая боковая стенка
-    const leftWall = new THREE.Mesh(
-      new THREE.PlaneGeometry(8, 12),
-      new THREE.MeshStandardMaterial({
-        color: opts.wallColor,
-        roughness: 0.95,
-        metalness: 0.05
-      })
-    );
-    leftWall.position.set(-opts.width / 2, 4, 0);
-    leftWall.rotation.y = Math.PI / 2;
-    leftWall.receiveShadow = true;
-    group.add(leftWall);
-
-    // Правая боковая стенка
-    const rightWall = new THREE.Mesh(
-      new THREE.PlaneGeometry(8, 12),
-      new THREE.MeshStandardMaterial({
-        color: opts.wallColor,
-        roughness: 0.95,
-        metalness: 0.05
-      })
-    );
-    rightWall.position.set(opts.width / 2, 4, 0);
-    rightWall.rotation.y = -Math.PI / 2;
-    rightWall.receiveShadow = true;
-    group.add(rightWall);
-
-    // Пол студии (цветной)
-    const studioFloor = new THREE.Mesh(
-      new THREE.PlaneGeometry(opts.width, 8),
-      new THREE.MeshStandardMaterial({
-        color: opts.floorColor,
-        roughness: 0.8,
-        metalness: 0.1
-      })
-    );
-    studioFloor.rotation.x = -Math.PI / 2;
-    studioFloor.position.y = -1.95;
-    studioFloor.receiveShadow = true;
-    group.add(studioFloor);
-
-    // Подиум — низкий цилиндр
-    const podium = new THREE.Mesh(
-      new THREE.CylinderGeometry(1.8, 1.8, 0.3, 32),
-      new THREE.MeshStandardMaterial({
-        color: 0x080808,
-        roughness: 0.4,
-        metalness: 0.6
-      })
-    );
-    podium.position.set(0, -1.85, 0);
-    podium.receiveShadow = true;
-    podium.castShadow = true;
-    group.add(podium);
-
-    // === МАНЕКЕН (упрощённая фигура) ===
-    if (opts.hasModel) {
-      const modelGroup = new THREE.Group();
-      const skinColor = opts.modelColor || 0xe8c4a0;
-      const clothColor = opts.clothColor || 0x202020;
-
-      // Голова — сфера
-      const head = new THREE.Mesh(
-        new THREE.SphereGeometry(0.32, 24, 24),
-        new THREE.MeshStandardMaterial({
-          color: skinColor,
-          roughness: 0.6,
-          metalness: 0.1
-        })
-      );
-      head.position.y = 3.3;
-      head.castShadow = true;
-      modelGroup.add(head);
-
-      // Шея
-      const neck = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.13, 0.15, 0.3, 16),
-        new THREE.MeshStandardMaterial({
-          color: skinColor,
-          roughness: 0.6
-        })
-      );
-      neck.position.y = 2.92;
-      neck.castShadow = true;
-      modelGroup.add(neck);
-
-      // Торс — вытянутый эллипсоид (тело + плечи)
-      const torso = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.55, 0.45, 1.5, 24),
-        new THREE.MeshStandardMaterial({
-          color: clothColor,
-          roughness: 0.85,
-          metalness: 0.05
-        })
-      );
-      torso.position.y = 2.0;
-      torso.castShadow = true;
-      modelGroup.add(torso);
-
-      // Плечи (сферы)
-      const shoulderL = new THREE.Mesh(
-        new THREE.SphereGeometry(0.2, 16, 16),
-        new THREE.MeshStandardMaterial({ color: clothColor, roughness: 0.85 })
-      );
-      shoulderL.position.set(-0.55, 2.65, 0);
-      shoulderL.castShadow = true;
-      modelGroup.add(shoulderL);
-
-      const shoulderR = shoulderL.clone();
-      shoulderR.position.x = 0.55;
-      modelGroup.add(shoulderR);
-
-      // Руки — цилиндры опущенные вниз
-      const armL = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.13, 0.13, 1.4, 16),
-        new THREE.MeshStandardMaterial({ color: clothColor, roughness: 0.85 })
-      );
-      armL.position.set(-0.62, 1.9, 0);
-      armL.castShadow = true;
-      modelGroup.add(armL);
-
-      const armR = armL.clone();
-      armR.position.x = 0.62;
-      modelGroup.add(armR);
-
-      // Бёдра — плоский цилиндр
-      const hips = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.5, 0.45, 0.4, 24),
-        new THREE.MeshStandardMaterial({ color: clothColor, roughness: 0.85 })
-      );
-      hips.position.y = 1.1;
-      hips.castShadow = true;
-      modelGroup.add(hips);
-
-      // Ноги — два цилиндра
-      const legL = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.18, 0.15, 2.2, 16),
-        new THREE.MeshStandardMaterial({ color: clothColor, roughness: 0.85 })
-      );
-      legL.position.set(-0.22, -0.1, 0);
-      legL.castShadow = true;
-      modelGroup.add(legL);
-
-      const legR = legL.clone();
-      legR.position.x = 0.22;
-      modelGroup.add(legR);
-
-      // Лёгкий наклон фигуры — позы
-      modelGroup.rotation.y = opts.modelRotation || 0;
-
-      group.add(modelGroup);
-      opts.modelRef = modelGroup;
-    } else {
-      // Пустая студия — только тонкий силуэт-проволочный манекен
-      const wireGroup = new THREE.Group();
-      const wireMat = new THREE.LineBasicMaterial({
-        color: opts.wireColor || 0xe8312a,
-        opacity: 0.6,
-        transparent: true
-      });
-      // Проволочный контур человека: голова + позвоночник + руки + ноги
-      const points = [
-        // позвоночник
-        new THREE.Vector3(0, 3.2, 0), new THREE.Vector3(0, 1.2, 0),
-      ];
-      const spineGeom = new THREE.BufferGeometry().setFromPoints(points);
-      wireGroup.add(new THREE.Line(spineGeom, wireMat));
-
-      // Голова-окружность
-      const headCurve = new THREE.EllipseCurve(0, 3.3, 0.3, 0.3, 0, 2*Math.PI, false, 0);
-      const headPoints = headCurve.getPoints(50).map(p => new THREE.Vector3(p.x, p.y, 0));
-      wireGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(headPoints), wireMat));
-
-      // Плечи горизонталь
-      const shouldersGeom = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(-0.6, 2.7, 0), new THREE.Vector3(0.6, 2.7, 0)
-      ]);
-      wireGroup.add(new THREE.Line(shouldersGeom, wireMat));
-
-      // Руки
-      const armLGeom = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(-0.6, 2.7, 0), new THREE.Vector3(-0.6, 1.2, 0)
-      ]);
-      wireGroup.add(new THREE.Line(armLGeom, wireMat));
-      const armRGeom = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0.6, 2.7, 0), new THREE.Vector3(0.6, 1.2, 0)
-      ]);
-      wireGroup.add(new THREE.Line(armRGeom, wireMat));
-
-      // Бёдра
-      const hipsGeom = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(-0.3, 1.1, 0), new THREE.Vector3(0.3, 1.1, 0)
-      ]);
-      wireGroup.add(new THREE.Line(hipsGeom, wireMat));
-
-      // Ноги
-      const legLGeom = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(-0.25, 1.1, 0), new THREE.Vector3(-0.25, -1.7, 0)
-      ]);
-      wireGroup.add(new THREE.Line(legLGeom, wireMat));
-      const legRGeom = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0.25, 1.1, 0), new THREE.Vector3(0.25, -1.7, 0)
-      ]);
-      wireGroup.add(new THREE.Line(legRGeom, wireMat));
-
-      group.add(wireGroup);
-      opts.modelRef = wireGroup;
-    }
-
-    // === СВЕТ СТУДИИ ===
-    // Софит сверху
-    const spot = new THREE.SpotLight(opts.lightColor, opts.lightIntensity || 2.5, 18, Math.PI / 5, 0.5, 1.5);
-    spot.position.set(0, 6, 1.5);
-    spot.target.position.set(0, 0, 0);
-    spot.castShadow = true;
-    spot.shadow.mapSize.width = 1024;
-    spot.shadow.mapSize.height = 1024;
-    spot.shadow.camera.near = 0.5;
-    spot.shadow.camera.far = 20;
-    group.add(spot);
-    group.add(spot.target);
-
-    // Visible cone halo (декоративный конус луча света)
-    const haloGeometry = new THREE.ConeGeometry(2.5, 7, 24, 1, true);
-    const haloMaterial = new THREE.MeshBasicMaterial({
-      color: opts.lightColor,
-      transparent: true,
-      opacity: 0.06,
-      side: THREE.DoubleSide,
-      depthWrite: false
-    });
-    const halo = new THREE.Mesh(haloGeometry, haloMaterial);
-    halo.position.set(0, 2.5, 1);
-    halo.rotation.x = Math.PI;
-    group.add(halo);
-
-    // Лёгкая боковая подсветка
-    const fillLight = new THREE.PointLight(opts.lightColor, 0.4, 10);
-    fillLight.position.set(2, 1, 2);
-    group.add(fillLight);
-
-    scene.add(group);
-    return group;
-  }
-
-  // === 3 СТУДИИ ===
-  const studios = [
-    createStudio({
-      x: -16,
-      width: 12,
-      wallColor: 0x4a6a3a,        // зелёный приглушённый — сад
-      floorColor: 0x3a5028,
-      hasModel: true,
-      modelColor: 0xe8c4a0,
-      clothColor: 0x9a4a3a,        // тёплая красно-коричневая одежда
-      modelRotation: -0.3,
-      lightColor: 0xfff4d8,         // тёплый жёлто-белый софит
-      lightIntensity: 3
-    }),
-    createStudio({
-      x: 0,
-      width: 12,
-      wallColor: 0xa01515,         // насыщенный красный — Китай
-      floorColor: 0x5a0808,
-      hasModel: true,
-      modelColor: 0xe8c4a0,
-      clothColor: 0x101010,         // чёрная одежда (контраст с красным фоном)
-      modelRotation: 0.1,
-      lightColor: 0xffe0d0,         // тёплый софит
-      lightIntensity: 3.2
-    }),
-    createStudio({
-      x: 16,
-      width: 12,
-      wallColor: 0x0a0a0a,         // чёрная пустая студия
-      floorColor: 0x080808,
-      hasModel: false,             // только проволочный силуэт
-      wireColor: 0xe8312a,
-      lightColor: 0xffffff,         // холодный белый
-      lightIntensity: 2.2
-    })
+  // Списки изображений: сад и Китай
+  const gardenImages = [
+    'https://i.ibb.co/hJNgjxzd/3.jpg',
+    'https://i.ibb.co/HfRxJ8TV/10.jpg',
+    'https://i.ibb.co/prhV74Kk/11.jpg',
+    'https://i.ibb.co/nsqfXQJn/19.jpg',
+    'https://i.ibb.co/zVTs082h/27.jpg',
+    'https://i.ibb.co/93cwpJvT/14.jpg',
+    'https://i.ibb.co/4LXN1Lh/5.jpg',
+    'https://i.ibb.co/21ZYmZmH/16.jpg',
+    'https://i.ibb.co/s9nBW9H9/17.jpg',
+    'https://i.ibb.co/hxq0QC3j/8.jpg'
   ];
 
-  // === АНИМАЦИЯ КАМЕРЫ ПО СКРОЛЛУ ===
-  // Камера движется по дуге: сначала смотрит на сад (x=-16),
-  // потом на Китай (x=0), потом на пустую студию (x=16), потом отъезд назад
-  function getCameraFromScroll(t) {
-    // t — 0..1 нормализованная позиция в pavilion-секции
-    // 0..0.20 — стартовый общий план (издалека, все видны)
-    // 0.20..0.40 — подъезд к саду
-    // 0.40..0.60 — переход к Китаю
-    // 0.60..0.80 — переход к пустой
-    // 0.80..1.00 — отъезд назад
-    let cx, cy, cz, lx, ly, lz;
+  const chinaImages = [
+    'https://static.tildacdn.com/tild3133-3437-4332-a330-373035623835/15.jpg',
+    'https://static.tildacdn.com/tild6235-3034-4136-b937-633463353464/25.jpg',
+    'https://static.tildacdn.com/tild3962-3837-4665-a430-393363643133/17.jpg',
+    'https://static.tildacdn.com/tild3631-3035-4938-b031-393664346433/28.jpg',
+    'https://static.tildacdn.com/tild6166-3137-4438-b262-643832386666/24.jpg',
+    'https://static.tildacdn.com/tild3935-3535-4933-b231-396534633934/29.jpg',
+    'https://static.tildacdn.com/tild3964-3266-4135-b562-323462616132/46.jpg',
+    'https://static.tildacdn.com/tild3636-3666-4035-a230-633638386633/45.jpg',
+    'https://static.tildacdn.com/tild6230-3935-4663-a630-633266636133/02.jpg',
+    'https://static.tildacdn.com/tild3539-6636-4339-b736-393166363836/04.jpg'
+  ];
 
-    if (t < 0.20) {
-      const p = t / 0.20;
-      cx = 0; cy = 2.5; cz = 28 - p * 3;
-      lx = 0; ly = 1.5; lz = 0;
-    } else if (t < 0.40) {
-      const p = (t - 0.20) / 0.20;
-      cx = -p * 16; cy = 2.5 - p * 1; cz = 25 - p * 11;
-      lx = -p * 16; ly = 1.5; lz = -p * 2;
-    } else if (t < 0.60) {
-      const p = (t - 0.40) / 0.20;
-      cx = -16 + p * 16; cy = 1.5; cz = 14;
-      lx = -16 + p * 16; ly = 1.5; lz = -2;
-    } else if (t < 0.80) {
-      const p = (t - 0.60) / 0.20;
-      cx = p * 16; cy = 1.5; cz = 14;
-      lx = p * 16; ly = 1.5; lz = -2;
-    } else {
-      const p = (t - 0.80) / 0.20;
-      cx = 16 - p * 16; cy = 1.5 + p * 1; cz = 14 + p * 12;
-      lx = 16 - p * 16; ly = 1.5; lz = -2 + p * 2;
+  const isMobile = window.innerWidth < 768;
+
+  // === КОЛЛЕКЦИЯ РАЗВОРОТОВ ===
+  // Каждый разворот: позиция, поворот, текстура
+  // Расставляем их вдоль оси Z (камера движется по этой оси)
+  const spreads = [];
+
+  function createSpread(opts) {
+    const w = opts.width || 5;
+    const h = opts.height || 7;  // соотношение примерно как у альбома 21×30
+
+    const geometry = new THREE.PlaneGeometry(w, h);
+
+    // Сначала ставим placeholder material (серый), потом грузим текстуру
+    const material = new THREE.MeshBasicMaterial({
+      color: 0x1a1a1a,
+      side: THREE.DoubleSide
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(opts.x, opts.y, opts.z);
+    mesh.rotation.y = opts.rotY || 0;
+    mesh.rotation.z = opts.rotZ || 0;
+
+    // Загружаем текстуру асинхронно
+    if (opts.imageUrl) {
+      textureLoader.load(opts.imageUrl, (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace || tex.colorSpace;
+        material.color.setHex(0xffffff);
+        material.map = tex;
+        material.needsUpdate = true;
+      }, undefined, () => {
+        // На ошибке оставляем серый плейсхолдер
+      });
     }
 
-    return { cx, cy, cz, lx, ly, lz };
+    scene.add(mesh);
+    spreads.push({ mesh, baseRotY: opts.rotY || 0, isEmpty: !opts.imageUrl });
+    return mesh;
   }
 
-  // Текущая видимая студия — для лейбла
-  function getStudioFromScroll(t) {
-    if (t < 0.30) return null;
-    if (t < 0.50) return 0;
-    if (t < 0.70) return 1;
-    if (t < 0.95) return 2;
-    return null;
+  // ===== РАССТАНОВКА =====
+  // Z = 25 — это около камеры
+  // Z = -50 — это далеко в глубине
+  // Камера движется от z=35 до z=-55 по скроллу
+  // Развороты расставлены вдоль этого пути
+
+  // 1. Стартовый разворот сада — далеко справа, в начале
+  createSpread({
+    x: 4, y: 2, z: 20,
+    rotY: -0.3, rotZ: 0.05,
+    width: 6, height: 8,
+    imageUrl: gardenImages[0]
+  });
+  // 2. Слева на полпути
+  createSpread({
+    x: -5, y: -1, z: 10,
+    rotY: 0.35, rotZ: -0.04,
+    width: 6, height: 8,
+    imageUrl: gardenImages[1]
+  });
+  // 3. По центру дальше
+  createSpread({
+    x: 0, y: 1.5, z: 0,
+    rotY: 0, rotZ: 0,
+    width: 7, height: 9.5,
+    imageUrl: gardenImages[2]
+  });
+  // 4. Справа сада
+  createSpread({
+    x: 6, y: -0.5, z: -10,
+    rotY: -0.4, rotZ: 0.06,
+    width: 5.5, height: 7.5,
+    imageUrl: gardenImages[3]
+  });
+
+  if (!isMobile) {
+    // 5. Дополнительные сада — слева верх
+    createSpread({
+      x: -7, y: 3, z: -5,
+      rotY: 0.5, rotZ: -0.08,
+      width: 5, height: 7,
+      imageUrl: gardenImages[4]
+    });
   }
 
-  // Лейбл студии
+  // Граница: дальше начинаются красные/китайские
+  // 6. Китайский — большой по центру
+  createSpread({
+    x: -1, y: 0.5, z: -22,
+    rotY: 0.15, rotZ: 0,
+    width: 7, height: 9.5,
+    imageUrl: chinaImages[0]
+  });
+  // 7. Справа выше
+  createSpread({
+    x: 6, y: 2.5, z: -28,
+    rotY: -0.35, rotZ: 0.05,
+    width: 5.5, height: 7.5,
+    imageUrl: chinaImages[1]
+  });
+  // 8. Слева ниже
+  createSpread({
+    x: -6, y: -1.5, z: -34,
+    rotY: 0.4, rotZ: -0.05,
+    width: 6, height: 8,
+    imageUrl: chinaImages[2]
+  });
+
+  if (!isMobile) {
+    // 9. Ещё китайский
+    createSpread({
+      x: 4, y: -2, z: -40,
+      rotY: -0.3, rotZ: 0.03,
+      width: 5, height: 7,
+      imageUrl: chinaImages[3]
+    });
+  }
+
+  // 10. ПУСТОЙ РАЗВОРОТ — "Ваша тема" в самом конце
+  const emptyMaterial = new THREE.MeshBasicMaterial({
+    color: 0x0a0a0a,
+    side: THREE.DoubleSide
+  });
+  const emptyGeom = new THREE.PlaneGeometry(7, 9.5);
+  const emptySpread = new THREE.Mesh(emptyGeom, emptyMaterial);
+  emptySpread.position.set(0, 0, -52);
+  scene.add(emptySpread);
+  spreads.push({ mesh: emptySpread, baseRotY: 0, isEmpty: true });
+
+  // Тонкая красная рамка вокруг пустого разворота
+  const frameGeom = new THREE.EdgesGeometry(emptyGeom);
+  const frameMat = new THREE.LineBasicMaterial({ color: 0xe8312a, linewidth: 2 });
+  const frame = new THREE.LineSegments(frameGeom, frameMat);
+  frame.position.copy(emptySpread.position);
+  scene.add(frame);
+
+  // Текст "ВАША ТЕМА" — рисуем на canvas и натягиваем как текстуру
+  function makeTextTexture(text, subtext) {
+    const cnv = document.createElement('canvas');
+    cnv.width = 700;
+    cnv.height = 950;
+    const ctx = cnv.getContext('2d');
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fillRect(0, 0, cnv.width, cnv.height);
+
+    // Лейбл сверху
+    ctx.fillStyle = '#e8312a';
+    ctx.font = '500 22px "JetBrains Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('VOGARDEN · ВЫПУСК №03', cnv.width / 2, 100);
+
+    // Большой текст
+    ctx.fillStyle = '#fafafa';
+    ctx.font = '900 italic 130px "Playfair Display", serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('ваша', cnv.width / 2, cnv.height / 2 - 30);
+    ctx.font = '900 130px "Playfair Display", serif';
+    ctx.fillText('ТЕМА', cnv.width / 2, cnv.height / 2 + 100);
+
+    // Подзаголовок снизу
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '400 18px "Inter", sans-serif';
+    ctx.fillText('— СЛЕДУЮЩИЙ ВЫПУСК —', cnv.width / 2, cnv.height - 100);
+
+    const texture = new THREE.CanvasTexture(cnv);
+    texture.colorSpace = THREE.SRGBColorSpace || texture.colorSpace;
+    return texture;
+  }
+
+  // Применим текст-текстуру когда шрифты загрузятся
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => {
+      emptyMaterial.map = makeTextTexture();
+      emptyMaterial.color.setHex(0xffffff);
+      emptyMaterial.needsUpdate = true;
+    });
+  } else {
+    setTimeout(() => {
+      emptyMaterial.map = makeTextTexture();
+      emptyMaterial.color.setHex(0xffffff);
+      emptyMaterial.needsUpdate = true;
+    }, 800);
+  }
+
+  // === КУРСОР ===
+  let mouseX = 0, mouseY = 0;
+  window.addEventListener('mousemove', (e) => {
+    mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+    mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+  });
+
+  // === ЛЕЙБЛ ТЕКУЩЕГО ВЫПУСКА ===
   const studioLabel = document.getElementById('studio-label');
   const studioNum = document.getElementById('studio-num');
   const studioName = document.getElementById('studio-name');
@@ -1572,33 +1436,32 @@
   const pavilionTop = document.getElementById('pavilion-top');
   const pavilionBottom = document.getElementById('pavilion-bottom');
 
-  const studioData = [
-    { num: '№01 / GARDEN', name: 'САД', desc: '— ВЫПУСК О ЦВЕТЕНИИ —' },
-    { num: '№02 / CHINA',  name: 'КИТАЙ', desc: '— ВЫПУСК О ВОСТОКЕ —' },
-    { num: '№03 / ???',    name: 'ВАША ТЕМА', desc: '— СЛЕДУЮЩИЙ ВЫПУСК —' }
-  ];
-
-  let currentStudioIdx = -2;
+  let currentLabelIdx = -2;
 
   function updateLabel(idx) {
-    if (idx === currentStudioIdx) return;
-    currentStudioIdx = idx;
+    if (idx === currentLabelIdx) return;
+    currentLabelIdx = idx;
+
     if (idx === null) {
       studioLabel.classList.remove('visible');
-    } else {
-      const d = studioData[idx];
-      studioNum.textContent = d.num;
-      studioName.textContent = d.name;
-      studioDesc.textContent = d.desc;
-      studioLabel.classList.add('visible');
+      return;
     }
+
+    const data = [
+      { num: '№01 / GARDEN', name: 'САД', desc: '— ВЫПУСК О ЦВЕТЕНИИ —' },
+      { num: '№02 / CHINA',  name: 'КИТАЙ', desc: '— ВЫПУСК О ВОСТОКЕ —' },
+      { num: '№03 / ?',      name: 'ПУСТО', desc: '— ВАША ТЕМА —' }
+    ][idx];
+
+    studioNum.textContent = data.num;
+    studioName.textContent = data.name;
+    studioDesc.textContent = data.desc;
+    studioLabel.classList.add('visible');
   }
 
-  // Скролл-логика
+  // === СКРОЛЛ-ЛОГИКА ===
   const pavilionSection = document.querySelector('.pavilion');
-  let cameraTargetX = 0, cameraTargetY = 2.5, cameraTargetZ = 25;
-  let lookAtTargetX = 0, lookAtTargetY = 1.5, lookAtTargetZ = 0;
-  const lookAt = new THREE.Vector3(0, 1.5, 0);
+  let cameraTargetZ = 35;
 
   function onScroll() {
     const rect = pavilionSection.getBoundingClientRect();
@@ -1607,41 +1470,43 @@
     const scrollInSection = window.scrollY - sectionTop;
     const t = Math.max(0, Math.min(1, scrollInSection / sectionHeight));
 
-    const cam = getCameraFromScroll(t);
-    cameraTargetX = cam.cx;
-    cameraTargetY = cam.cy;
-    cameraTargetZ = cam.cz;
-    lookAtTargetX = cam.lx;
-    lookAtTargetY = cam.ly;
-    lookAtTargetZ = cam.lz;
+    // Камера движется от z=35 (стартовый общий вид) до z=-58 (за пустым разворотом)
+    cameraTargetZ = 35 - t * 93;
 
-    updateLabel(getStudioFromScroll(t));
+    // Лейбл выпуска по зоне камеры
+    let labelIdx = null;
+    if (cameraTargetZ < 22 && cameraTargetZ > -18) labelIdx = 0;       // зона сада
+    else if (cameraTargetZ <= -18 && cameraTargetZ > -45) labelIdx = 1; // зона Китая
+    else if (cameraTargetZ <= -45) labelIdx = 2;                        // пустой
+    updateLabel(labelIdx);
 
-    // Показ/скрытие верха и подсказки
-    pavilionTop.classList.toggle('visible', t < 0.20);
-    pavilionBottom.classList.toggle('visible', t < 0.10);
+    pavilionTop.classList.toggle('visible', t < 0.10);
+    pavilionBottom.classList.toggle('visible', t < 0.06);
   }
   window.addEventListener('scroll', onScroll);
   onScroll();
 
-  // Анимация
+  // === АНИМАЦИЯ ===
   function animate() {
     requestAnimationFrame(animate);
 
-    // Плавно догоняем целевую позицию камеры
-    camera.position.x += (cameraTargetX - camera.position.x) * 0.08;
-    camera.position.y += (cameraTargetY - camera.position.y) * 0.08;
+    // Плавно догоняем целевую Z камеры
     camera.position.z += (cameraTargetZ - camera.position.z) * 0.08;
-    lookAt.x += (lookAtTargetX - lookAt.x) * 0.08;
-    lookAt.y += (lookAtTargetY - lookAt.y) * 0.08;
-    lookAt.z += (lookAtTargetZ - lookAt.z) * 0.08;
-    camera.lookAt(lookAt);
 
-    // Лёгкое вращение манекенов чтобы сцена жила
-    studios.forEach(s => {
-      if (s.children) {
-        // Каждый studio.children содержит группу — найдём model
-      }
+    // Лёгкое движение камеры от курсора (parallax)
+    const parallaxX = mouseX * 1.5;
+    const parallaxY = mouseY * 0.8;
+    camera.position.x += (parallaxX - camera.position.x) * 0.04;
+    camera.position.y += (parallaxY - camera.position.y) * 0.04;
+
+    // Камера всегда смотрит вперёд (но с лёгкой корректировкой от курсора)
+    camera.lookAt(parallaxX * 0.3, parallaxY * 0.3, camera.position.z - 10);
+
+    // Лёгкое колебание разворотов (как будто парят на ветру)
+    const time = performance.now() * 0.0003;
+    spreads.forEach((s, i) => {
+      s.mesh.rotation.y = s.baseRotY + Math.sin(time + i * 0.7) * 0.02;
+      s.mesh.position.y += Math.sin(time * 1.5 + i) * 0.001;
     });
 
     renderer.render(scene, camera);
@@ -1654,6 +1519,7 @@
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
 })();
+
 
 
 /* ============ 3. NEXT-CTA — 3D пустая студия повторно ============ */
